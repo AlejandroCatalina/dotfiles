@@ -40,12 +40,12 @@ values."
      ipython-notebook
      python
      java
+     ruby
      clojure
      haskell
      fsharp
      csharp
      github
-     ruby
      eyebrowse
      erc
      (mu4e :variables
@@ -149,7 +149,6 @@ values."
                          leuven
                          monokai
                          zenburn)
-
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
    ;; Default font. `powerline-scale' allows to quickly tweak the mode-line
@@ -346,7 +345,7 @@ layers configuration. You are free to put any user code."
   (add-hook 'clojure-mode-hook #'paredit-mode)
   (add-hook 'clojure-mode-hook #'rainbow-delimiters-mode)
 
-  (load "~/.emacs.d.bak/setup-clojure.el")
+  ;; (load "~/.emacs.d.bak/setup-clojure.el")
 
   (add-hook 'doc-view-mode-hook 'auto-revert-mode)
   (setq-default TeX-master nil)
@@ -354,10 +353,11 @@ layers configuration. You are free to put any user code."
     (lambda()
       (require 'ess-site)
       (require 'ob-emacs-lisp)
+      (require 'ob-ruby)
+      (require 'ob-clojure)
       (require 'ob-latex)
       (require 'octave)
       (require 'ob-python)
-      (require 'ob-ruby)
       (require 'ob-ipython)
       (require 'ob-sql)
       (require 'ob-shell)
@@ -394,10 +394,12 @@ layers configuration. You are free to put any user code."
   (setq org-capture-templates
         '(("d" "Todo" entry (file+headline (concat org-directory "/todo.org") "Tasks")
            "* TODO [#A]%?\nSCHEDULED: %T\nDEADLINE: %T\nCreated: %t\nMessage: %a\n")
+          ("e" "Emacs idea" entry (file+headline (concat org-directory "/todo.org") "Personal/Emacs")
+           "* TODO %^{Task}\nSCHEDULED: %T\nCREATED: %T" :immediate-finish t)
           ("m" "Mail Todo" entry (file+headline (concat org-directory "/notes.org") "Mail")
            "* TODO [#B] Read Mail%? (%:fromname about %:subject)\n%U\nMessage: %A\n")
           ("M" "Mail Followup" entry (file+headline (concat org-directory "/notes.org") "Mail")
-           "* TODO [#A] Followup Mail From %:fromname About %:subject)\nSCHEDULED: %T\nDEADLINE: %T\nCreated: %t\nMessage: %a\nExtra Notes: %?")))
+           "* TODO [#A] Followup Mail From %:fromname About %:subject)\nSCHEDULED: %T\nDEADLINE: %T\nCREATED: %t\nMessage: %a\nExtra Notes: %?")))
 
   ;; Setting org-mode key-bindings
   (spacemacs/set-leader-keys
@@ -444,41 +446,38 @@ layers configuration. You are free to put any user code."
 
   (setq-default evil-escape-key-sequence "gp")
 
+  ;; Custom rcirc-complete-nick
   (with-eval-after-load 'rcirc
     (defun rcirc-complete ()
-      "Cycle through completions from list of nicks in channel or IRC commands.
+     "Cycle through completions from list of nicks in channel or IRC commands.
 IRC command completion is performed only if '/' is the first input char."
-      (interactive)
-      (unless (rcirc-looking-at-input)
-        (error "Point not located after rcirc prompt"))
-      (if (eq last-command this-command)
-          (setq rcirc-completions
-                (append (cdr rcirc-completions) (list (car rcirc-completions))))
-        (let ((completion-ignore-case t)
-              (table (rcirc-completion-at-point)))
-          (setq rcirc-completion-start (car table))
-          (setq rcirc-completions
-                (and rcirc-completion-start
-                     (all-completions (buffer-substring rcirc-completion-start
-                                                        (cadr table))
-                                      (nth 2 table))))))
-      (let ((completion (car rcirc-completions)))
-        (when completion
-          (delete-region rcirc-completion-start (point))
-          (insert
-           (concat
-            (if (string= "*irc.gitter.im*" (buffer-name rcirc-server-buffer))
-                "@"
-              "")
-            (cond
-             ((= (aref completion 0) ?/) (concat completion " "))
-             ((= rcirc-completion-start rcirc-prompt-end-marker)
-              (format rcirc-nick-completion-format completion))
-             (t completion))))))))
-
-  (setq erc-autojoin-channels-alist
-        '(("freenode.net" "#emacs" "#clojure" "#clojure-beginners")
-          ("gitter.im" "#syl20bnr/spacemacs")))
+     (interactive)
+     (unless (rcirc-looking-at-input)
+       (error "Point not located after rcirc prompt"))
+     (if (eq last-command this-command)
+         (setq rcirc-completions
+               (append (cdr rcirc-completions) (list (car rcirc-completions))))
+       (let ((completion-ignore-case t)
+             (table (rcirc-completion-at-point)))
+         (setq rcirc-completion-start (car table))
+         (setq rcirc-completions
+               (and rcirc-completion-start
+                    (all-completions (buffer-substring rcirc-completion-start
+                                                       (cadr table))
+                                     (nth 2 table))))))
+     (let ((completion (car rcirc-completions)))
+       (when completion
+         (delete-region rcirc-completion-start (point))
+         (insert
+          (concat
+           (if (string= (buffer-name rcirc-server-buffer) "*irc.gitter.im*")
+               "@"
+             "")
+           (cond
+            ((= (aref completion 0) ?/) (concat completion " "))
+            ((= rcirc-completion-start rcirc-prompt-end-marker)
+             (format rcirc-nick-completion-format completion))
+            (t completion))))))))
 
   (setq rcirc-server-alist
         '(("irc.freenode.net"
@@ -543,15 +542,13 @@ IRC command completion is performed only if '/' is the first input char."
 
   ;; Setting some global variables i'll need
   (setq elisp-dev-directory "~/dev/emacs/elisp")
+  (setq python-dev-directory "~/dev/catedra/notebooks")
   (add-to-load-path elisp-dev-directory)
 
-  ;; Loading my custom utilities to handle spaceline segments insertions
+  ;; Loading my custom utilities
   (load-file (concat elisp-dev-directory "/spaceline-utils.el"))
   (load-file (concat elisp-dev-directory "/evil-mc-setup.el"))
   (load-file (concat elisp-dev-directory "/init-pdf-tools.el"))
-
-  ;; Custom evil-insert-mode binding to go back and forth to evil-lisp-state
-  (define-key evil-insert-state-map (kbd "M-l") 'evil-lisp-state)
 
   ;; Setting up mu4e
   (setq mu4e-maildir "~/.mail")
@@ -618,7 +615,7 @@ IRC command completion is performed only if '/' is the first input char."
   ;; don't keep message buffers around
   (setq message-kill-buffer-on-exit t)
 
-;;; Bookmarks
+  ;;; Bookmarks
   (setq mu4e-bookmarks
         `(("flag:unread AND NOT flag:trashed" "Unread messages" ?u)
           ("date:today..now" "Today's messages" ?t)
@@ -690,18 +687,14 @@ This command does the reverse of `fill-region'."
              :nick "AlejandroCatalina"
              :password "c3359bed7a81b8871deb92679c73cb715ee784dc"))
 
-  (spacemacs|define-custom-layout "@TFG"
-    :binding "t"
-    :body
-    (find-file "~/dev/tfg/TFG esUS/PLANTILLA_TFG.tex"))
-
-  (spacemacs|define-custom-layout "@Org"
-    :binding "o"
+  (spacemacs|define-custom-layout "@python"
+    :binding "p"
     :body
     (progn
-      (mapc 'find-file org-agenda-files)
+      (ein:notebooklist-open 8888)
       (split-window-right-and-focus)
-      (org-agenda)))
+      (python-start-or-switch-repl)
+      (other-window -1)))
 
   (spacemacs|define-custom-layout "@clojure"
     :binding "c"
@@ -712,6 +705,15 @@ This command does the reverse of `fill-region'."
       (cider-jack-in)
       (other-window 1)))
 
+  (spacemacs|define-custom-layout "@Org"
+    :binding "o"
+    :body
+    (progn
+      (mapc 'find-file org-agenda-files)
+      (switch-to-buffer "todo.org")
+      (split-window-right-and-focus)
+      (org-agenda)))
+
   (spacemacs|define-custom-layout "@elisp"
     :binding "l"
     :body
@@ -719,6 +721,11 @@ This command does the reverse of `fill-region'."
       (switch-to-buffer "*scratch")
       (split-window-right)
       (find-file elisp-dev-directory)))
+
+  (spacemacs|define-custom-layout "@TFG"
+    :binding "t"
+    :body
+    (find-file "~/dev/tfg/TFG esUS/PLANTILLA_TFG.tex"))
 
   (pdf-tools-install)
   )
@@ -729,10 +736,6 @@ This command does the reverse of `fill-region'."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   (quote
-    ("8be2f617818294dd4c919737ab22cd4ed03be3ad994a477d9e0f74f718d3e6e8" "f25c30c1de1994cc0660fa65c6703706f3dc509a342559e3b5b2102e50d83e4f" default)))
- '(markdown-command "pandoc")
  '(org-agenda-files
    (quote
     ("~/dev/org/seviri.org" "~/dev/org/notes.org" "~/dev/org/todo.org" "~/dev/catedra/notebooks/cathedra_notes.org" "~/dev/org/schedule.org")))
