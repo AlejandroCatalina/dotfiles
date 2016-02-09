@@ -556,6 +556,15 @@ IRC command completion is performed only if '/' is the first input char."
   (load-file (concat elisp-dev-directory "/init-pdf-tools.el"))
   (require 'ac-org-clock)
 
+  ;; Fix scrolling
+  (setq scroll-conservatively 10000
+        scroll-preserve-screen-position t)
+
+  ;; Add little hook to keep this file updated on github
+  (add-hook 'after-save-hook '(lambda ()
+                                (and (equal (buffer-file-name) "/home/alex/.spacemacs")
+                                     (shell-command "cp /home/alex/.spacemacs /home/alex/dev/emacs/dot-files/"))))
+
   ;; Setting up mu4e
   (setq mu4e-maildir "~/.mail")
 
