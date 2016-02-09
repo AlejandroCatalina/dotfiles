@@ -44,8 +44,6 @@ values."
      ruby
      clojure
      haskell
-     fsharp
-     csharp
      github
      eyebrowse
      erc
