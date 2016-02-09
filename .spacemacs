@@ -394,7 +394,7 @@ layers configuration. You are free to put any user code."
         '(("d" "Todo" entry (file+headline (concat org-directory "/todo.org") "Tasks")
            "* TODO [#A]%?\nSCHEDULED: %T\nDEADLINE: %T\nCreated: %t\nMessage: %a\n")
           ("e" "Emacs idea" entry (file+headline (concat org-directory "/todo.org") "Emacs")
-           "* TODO %^{Task}\nSCHEDULED: %T\nCREATED: %T" :immediate-finish t)
+           "* TODO %^{Task}:emacs\nSCHEDULED: %T\nCREATED: %T" :immediate-finish t)
           ("m" "Mail Todo" entry (file+headline (concat org-directory "/notes.org") "Mail")
            "* TODO [#B] Read Mail%? (%:fromname about %:subject)\n%U\nMessage: %A\n")
           ("M" "Mail Followup" entry (file+headline (concat org-directory "/notes.org") "Mail")
