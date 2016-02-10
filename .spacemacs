@@ -409,13 +409,14 @@ layers configuration. You are free to put any user code."
 
   ;; New TODO Workflow
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "INPROGRESS(i)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)")
+        '((sequence "TODO(t)" "INPROGRESS(i)" "WAITING(w)" "|" "DONE(d)" "DEFERRED(D)" "CANCELED(c)")
           (sequence "BUGREPORT(b)" "|" "FIXED(f)")))
 
   (setq org-todo-keyword-faces
         '(("TODO"      .  ((:foreground "red")))
           ("INPROGRESS" . ((:foreground "orange")))
           ("WAITING" . ((:foreground "blue")))
+          ("DEFERRED" . ((:foreground "purple")))
           ("BUGREPORT" . ((:foreground "VioletRed4" :weight bold)))
           ("FIXED" . ((:foreground "SpringGreen4" :weight bold)))
           ("CANCELED"  . ((:foreground "blue" :weight bold)))))
