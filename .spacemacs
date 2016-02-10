@@ -440,7 +440,7 @@ layers configuration. You are free to put any user code."
     "#+email: alecatfel@gmail.com\n"
     "#+INFOJS_OPT: \n"
     "#+BABEL: :session :cache yes :results output graphics :exports both :tangle yes \n"
-    "-----")
+    "#+STARTUP: content\n\n")
 
   (spacemacs/set-leader-keys-for-major-mode 'org-mode
     "Ss" 'org-skeleton)
