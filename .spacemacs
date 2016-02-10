@@ -85,7 +85,7 @@ values."
    ;; configuration in `dotspacemacs/config'.
    dotspacemacs-additional-packages '(paredit multiple-cursors ag helm-ag ess pdf-tools
                                               clojure-mode-extra-font-locking cl-generic
-                                              ob-ipython eclipse-theme)
+                                              ob-ipython eclipse-theme color-theme-github)
    ;; A list of packages and/or extensions that will not be install and loaded.
    dotspacemacs-excluded-packages '()
    ;; If non-nil spacemacs will delete any orphan packages, i.e. packages that
@@ -141,6 +141,7 @@ values."
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
    dotspacemacs-themes '(eclipse
+                         color-theme-github
                          spacemacs-dark
                          spacemacs-light
                          solarized-light
