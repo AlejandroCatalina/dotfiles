@@ -85,7 +85,9 @@ values."
    ;; configuration in `dotspacemacs/config'.
    dotspacemacs-additional-packages '(paredit multiple-cursors ag helm-ag ess pdf-tools
                                               clojure-mode-extra-font-locking cl-generic
-                                              ob-ipython eclipse-theme color-theme-github)
+                                              ob-ipython eclipse-theme color-theme-github
+                                              (evil-mu4e :location (recipe :fetcher github
+                                                                           :repo "JorisE/evil-mu4e")))
    ;; A list of packages and/or extensions that will not be install and loaded.
    dotspacemacs-excluded-packages '()
    ;; If non-nil spacemacs will delete any orphan packages, i.e. packages that
@@ -301,6 +303,8 @@ layers configuration. You are free to put any user code."
 
   (require 're-builder)
   (setq reb-re-syntax 'string)
+
+  (require 'evil-mu4e)
 
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
