@@ -30,7 +30,9 @@ values."
      git
      markdown
      org
+     ibuffer
      (shell :variables
+            shell-default-shell 'eshell
             shell-default-height 30
             shell-default-position 'bottom)
      spell-checking
@@ -83,11 +85,16 @@ values."
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages then consider to create a layer, you can also put the
    ;; configuration in `dotspacemacs/config'.
-   dotspacemacs-additional-packages '(paredit multiple-cursors ag helm-ag ess pdf-tools
-                                              clojure-mode-extra-font-locking cl-generic
-                                              ob-ipython eclipse-theme color-theme-github
-                                              (evil-mu4e :location (recipe :fetcher github
-                                                                           :repo "JorisE/evil-mu4e")))
+   dotspacemacs-additional-packages '(ag
+                                      cl-generic
+                                      clojure-mode-extra-font-locking
+                                      eclipse-theme
+                                      ess
+                                      helm-ag
+                                      multiple-cursors
+                                      ob-ipython
+                                      pdf-tools
+                                      paredit)
    ;; A list of packages and/or extensions that will not be install and loaded.
    dotspacemacs-excluded-packages '()
    ;; If non-nil spacemacs will delete any orphan packages, i.e. packages that
@@ -304,6 +311,9 @@ layers configuration. You are free to put any user code."
   (require 're-builder)
   (setq reb-re-syntax 'string)
 
+  (add-to-list 'custom-theme-load-path "~/dev/emacs/themes/")
+
+  (add-to-list 'load-path "~/dev/emacs/evil-mu4e/")
   (require 'evil-mu4e)
 
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
