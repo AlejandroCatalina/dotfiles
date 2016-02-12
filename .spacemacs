@@ -431,7 +431,7 @@ layers configuration. You are free to put any user code."
         '(("TODO"      .  ((:foreground "red")))
           ("INPROGRESS" . ((:foreground "orange")))
           ("WAITING" . ((:foreground "blue")))
-          ("DEFERRED" . ((:foreground "purple")))
+          ("DEFERRED" . ((:foreground "purple" :weight bold)))
           ("BUGREPORT" . ((:foreground "VioletRed4" :weight bold)))
           ("FIXED" . ((:foreground "SpringGreen4" :weight bold)))
           ("CANCELED"  . ((:foreground "blue" :weight bold)))))
