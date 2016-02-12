@@ -31,6 +31,7 @@ values."
      markdown
      org
      ibuffer
+     ranger
      (shell :variables
             shell-default-shell 'eshell
             shell-default-height 30
@@ -48,6 +49,8 @@ values."
      haskell
      github
      eyebrowse
+     semantic
+     unimpaired
      erc
      (mu4e :variables
            mu4e-installation-path "/usr/local/share/emacs/site-lisp/mu4e"
@@ -560,7 +563,7 @@ IRC command completion is performed only if '/' is the first input char."
       (ispell-kill-ispell t)))
 
   ;; Setting some global variables i'll need
-  (setq elisp-dev-directory "~/dev/emacs/elisp")
+  (setq elisp-dev-directory "~/dev/emacs")
   (setq python-dev-directory "~/dev/catedra/notebooks")
   (add-to-load-path elisp-dev-directory)
 
@@ -673,7 +676,7 @@ IRC command completion is performed only if '/' is the first input char."
   (spacemacs/set-leader-keys "oil" 'org-insert-link)
 
   ;; Little powerline/spaceline tweak
-  (setq powerline-default-separator 'arrow)
+  (setq powerline-default-separator 'alternate)
 
   ;; Lispy-mode settings and configurations
   (add-hook 'emacs-lisp-mode-hook (lambda () (lispy-mode 1)))
