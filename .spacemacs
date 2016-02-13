@@ -51,6 +51,7 @@ values."
      eyebrowse
      semantic
      unimpaired
+     dvorak
      erc
      (mu4e :variables
            mu4e-installation-path "/usr/local/share/emacs/site-lisp/mu4e"
