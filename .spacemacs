@@ -50,7 +50,7 @@ values."
      github
      eyebrowse
      semantic
-     unimpaired
+     ;; unimpaired
      dvorak
      erc
      (mu4e :variables
