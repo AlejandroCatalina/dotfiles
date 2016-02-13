@@ -423,12 +423,15 @@ layers configuration. You are free to put any user code."
   (setq org-agenda-start-on-weekday 7)
 
   (spaceline-toggle-org-clock-on)
+  (setq org-directory "~/dev/org")
 
   (setq org-capture-templates
         '(("d" "Todo" entry (file+headline (concat org-directory "/todo.org") "Tasks")
            "* TODO [#A]%?\nSCHEDULED: %T\nDEADLINE: %T\nCreated: %t\nMessage: %a\n")
           ("e" "Emacs idea" entry (file+headline (concat org-directory "/todo.org") "Emacs")
-           "* TODO %^{Task}:emacs:\nSCHEDULED: %T\nCREATED: %T" :immediate-finish t)
+           "* TODO %^{Task}\t:emacs:\nSCHEDULED: %T\nCREATED: %T" :immediate-finish t)
+          ("n" "Note" entry (file+headline (concat org-directory "/notes.org") "Notes")
+           "* %^{Note}\nCREATED: %t\nLink: \n")
           ("m" "Mail Todo" entry (file+headline (concat org-directory "/notes.org") "Mail")
            "* TODO [#B] Read Mail%? (%:fromname about %:subject)\n%U\nMessage: %A\n")
           ("M" "Mail Followup" entry (file+headline (concat org-directory "/notes.org") "Mail")
