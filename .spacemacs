@@ -2,7 +2,7 @@
 ;; This file is loaded by Spacemacs at startup.
 ;; It must be stored in your home directory.
 
-(defun dotspacemacs/layers ()
+ (defun dotspacemacs/layers ()
   "Configuration Layers declaration.
 You should not put any user code in this function besides modifying the variable
 values."
@@ -53,6 +53,22 @@ values."
      ;; unimpaired
      dvorak
      erc
+     (elfeed :variables
+             elfeed-feeds '("http://www.howardism.org/index.xml" ;; My Blog
+                            "http://endlessparentheses.com/atom.xml" ;; Emacs Blog
+                            "http://www.masteringemacs.org/feed/" ;; Emacs Blog
+                            "http://emacs-fu.blogspot.com/feeds/posts/default"
+                            "http://emacsredux.com/atom.xml" ;; Emacs Blog
+                            "http://www.lunaryorn.com/feed.atom" ;; Emacs Blog
+                            "http://emacshorrors.com/feed.atom"
+                            "http://swannodette.github.com/atom.xml" ;; David Nolen, duh.
+                            "http://batsov.com/atom.xml" ;; Bozhidar Batsov
+                            "http://twogreenleaves.org/index.php?feed=rss"
+                            "https://medium.com/feed/@hlship/" ;; Programming
+                            "http://gigasquidsoftware.com/atom.xml" ;; Clojure
+                            "http://blog.fogus.me/feed/" ;; Programming
+                            "http://steve-yegge.blogspot.com/atom.xml"
+                            "http://www.rkn.io/feed.xml")) ;; Programming
      (mu4e :variables
            mu4e-installation-path "/usr/local/share/emacs/site-lisp/mu4e"
            mu4e-alert-notifications-spaceline t
@@ -294,8 +310,7 @@ values."
    ;; `trailing' to delete only the whitespace at end of lines, `changed'to
    ;; delete only whitespace for changed lines or `nil' to disable cleanup.
    ;; (default nil)
-   dotspacemacs-whitespace-cleanup nil
-   ))
+   dotspacemacs-whitespace-cleanup nil))
 
 (defun dotspacemacs/user-init ()
   "Initialization function for user code.
@@ -729,6 +744,11 @@ This command does the reverse of `fill-region'."
       (split-window-right-and-focus)
       (python-start-or-switch-repl)
       (other-window -1)))
+
+  (spacemacs|define-custom-layout "@elfeed"
+    :binding "f"
+    :body
+    (elfeed))
 
   (spacemacs|define-custom-layout "@clojure"
     :binding "c"
