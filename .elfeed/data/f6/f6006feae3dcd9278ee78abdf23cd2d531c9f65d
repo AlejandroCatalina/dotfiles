@@ -1,0 +1,48 @@
+<p>Clojure&rsquo;s <em>partition</em> and <em>partition-all</em> functions are very useful.
+However, I have been bitten a few times using <em>partition</em> when I
+really wanted <em>partition-all</em>.  So to help myself and all of you to
+remember it, I have made some diagrams with <a href="http://www.designswan.com/archives/the-pugs-of-westeros-cute-pugs-dressed-up-like-characters-in-game-of-thrones.html">pugs from the Game of Thrones</a></p>
+
+<p>In code, <a href="http://clojuredocs.org/clojure.core/partition">partition</a> takes a collection and returns a lazy sequence of
+lists, each containing n items.</p>
+
+<p>To demonstrate this with pugs, we will partition 5 pugs into groups of
+twos.</p>
+
+<p><img src="https://c4.staticflickr.com/8/7301/15757758964_570d260a31_c.jpg"></p>
+
+<p>This partition will give you two groups of two pugs.</p>
+
+<p><img src="https://c4.staticflickr.com/8/7350/16380203235_91c8c4e9ee_c.jpg"></p>
+
+<p>Notice, (and here is the important part), the last pug is missing.  The Joffrey pug is not included because <em>partition</em> will not include items that do not make a complete partition.  In this case, because there is no group of 2 pugs for the Joffrey pug to be in, it gets dropped.</p>
+
+<p><em>This is the thing that has bitten me in the past.</em></p>
+
+<p>A common use for wanting to partition things is to control the number
+of things that you process at one time.  An example of this is sending only 500 items to be processed in a batch job at one time.  If you have a few thousand items to be processed, partitioning them is a good way of chuncking.  However, if you have an arbitrary number of items, you most certainly want to process them <em>all</em> and not drop any.  This is where you should use <em>partition-all</em> instead.</p>
+
+<p><a href="http://clojuredocs.org/clojure.core/partition-all">Partition-all</a> chunks the items as well, but also includes any leftovers.  Demonstrating again with pugs.</p>
+
+<p><img src="https://c4.staticflickr.com/8/7427/15757758884_20bfd014eb_c.jpg"></p>
+
+<p>This <em>partition-all</em> will give you three groups of pugs.</p>
+
+<p><img src="https://c4.staticflickr.com/8/7323/16193980179_229343f7f3_c.jpg"></p>
+
+<p>This time pug Joffrey is not left out!</p>
+
+<p>Remember, think carefully before using <em>partition</em>.  Don&rsquo;t leave a pug out.</p>
+
+<p>By the way, I can&rsquo;t wait till the next season of Game of Thrones.  Until then ..</p>
+
+<div class="ratio-4-3 embed-video-container" onclick="var myAnchor = document.getElementById('2EoQCtPR2-I');var tmpDiv = document.createElement('div');tmpDiv.innerHTML = '&lt;iframe style=&quot;vertical-align:top;width:100%;height:100%;position:absolute;&quot; src=&quot;http://www.youtube.com/embed/2EoQCtPR2-I?autoplay=1&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;';myAnchor.parentNode.replaceChild(tmpDiv.firstChild, myAnchor);return false;" title="click here to play">
+<a class="youtube-lazy-link" style="width:100%;height:100%;background:#000 url(http://i2.ytimg.com/vi/2EoQCtPR2-I/0.jpg) center center no-repeat;background-size:contain;position:absolute" href="http://www.youtube.com/watch?v=2EoQCtPR2-I" id="2EoQCtPR2-I" onclick="return false;">
+<div class="youtube-lazy-link-div"></div>
+<div class="youtube-lazy-link-info"></div>
+</a>
+<div class="video-info" ></div>
+</div>
+
+
+

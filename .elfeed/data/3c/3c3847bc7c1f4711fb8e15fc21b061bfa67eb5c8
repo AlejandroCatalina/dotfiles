@@ -1,0 +1,74 @@
+<p>I guess every Emacs user knows this particular phenomenon: Windows constantly
+pop up at almost, but not quite, entirely undesired places.  It is a
+surprisingly hard challenge to make Emacs display buffers in a sane way.
+Packages like winner and pop-win tell stories about the pain of generations of
+Emacs users.  Well, it <em>used</em> to be a hard, but now it became much easier in
+Emacs 24.1 with the new <code class="highlighter-rouge">display-buffer-alist</code> option.</p>
+
+<!--more-->
+
+<p>This option maps regular expressions for buffer names to actions which tell
+Emacs how to display a buffer with a matching name.  This sounds a little
+abstract at first, so let’s see this in action.  The following piece of code
+adds a mapping for <a href="http://www.flycheck.org">Flycheck</a>’s error list:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nv">add-to-list</span> <span class="ss">'display-buffer-alist</span>
+             <span class="o">`</span><span class="p">(</span><span class="o">,</span><span class="p">(</span><span class="nv">rx</span> <span class="nv">bos</span> <span class="s">"*Flycheck errors*"</span> <span class="nv">eos</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">display-buffer-reuse-window</span>
+                <span class="nv">display-buffer-in-side-window</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">reusable-frames</span> <span class="o">.</span> <span class="nv">visible</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">side</span>            <span class="o">.</span> <span class="nv">bottom</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">window-height</span>   <span class="o">.</span> <span class="mf">0.4</span><span class="p">)))</span>
+</code></pre>
+</div>
+
+<p>Let’s dissect this:</p>
+
+<ol>
+  <li>The first item is a regular expression which matches the buffer name of
+Flycheck’s error list.  I use <code class="highlighter-rouge">rx</code> since I can never remember whether
+it’s <code class="highlighter-rouge">\`</code> or <code class="highlighter-rouge">\'</code> for the beginning of a string :)</li>
+  <li>Next follows a list of display functions.  Emacs tries these functions in the
+order of appearance to create a window for the buffer.</li>
+  <li>The remaining elements are cons cells of options to fine-tune the behaviour
+of the display functions.</li>
+</ol>
+
+<p>In our example we start with <code class="highlighter-rouge">display-buffer-reuse-window</code> which will reuse an
+existing window already showing the buffer: If the error list is already visible
+in some window, there’s no need to show it twice.  By default, this function
+only considers windows in the current frame, but with the option
+<code class="highlighter-rouge">(reusable-frames . visible)</code> we extend its scope to all visible frames.
+I don’t need to see the error list twice, if it’s already shown in another frame
+on my secondary monitory.</p>
+
+<p>If there’s no existing window with the error list Emacs will try the next
+function, in our case <code class="highlighter-rouge">display-buffer-in-side-window</code>.  This function creates a
+special “side” window for the error list.  A side windows always fixed to a
+specific side of the frame and cannot be moved or splitted.  It behaves much
+like the “dock windows” known from popular IDEs like IntelliJ or Visual Studio.</p>
+
+<p>With the options <code class="highlighter-rouge">(side . bottom)</code> and <code class="highlighter-rouge">(height . 0.4)</code>,
+<code class="highlighter-rouge">display-buffer-in-side-window</code> creates a side window at the bottom of the frame
+with a height of 40% of the frame’s height.  If there’s already a side window at
+the bottom of the current frame, <code class="highlighter-rouge">display-buffer-in-side-window</code> replaces the
+existing side window with new side window for the error list.</p>
+
+<p>In other words, Flycheck’s error list always pops up at the bottom of the
+current frame now, occupying 40% of its height, just like error lists in Visual
+Studio or IntelliJ.</p>
+
+<p>I like to combine this feature with this little command:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">defun</span> <span class="nv">lunaryorn-quit-bottom-side-windows</span> <span class="p">()</span>
+  <span class="s">"Quit side windows of the current frame."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">dolist</span> <span class="p">(</span><span class="nv">window</span> <span class="p">(</span><span class="nv">window-at-side-list</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">quit-window</span> <span class="no">nil</span> <span class="nv">window</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"C-c q"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">lunaryorn-quit-bottom-side-windows</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Now I can press <code class="highlighter-rouge">C-c ! l</code> to show a list of all Flycheck errors at the bottom of
+my frame, and <code class="highlighter-rouge">C-c q</code> to close it again :)</p>

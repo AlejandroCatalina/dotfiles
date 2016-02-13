@@ -1,0 +1,22 @@
+<div class="date">8 Nov 2015</div>
+
+    <p>
+    My daughter read a book about Ada Lovelace, which generated
+    discussion about Alan Turing, which generated discussions about
+    computers, which showed me how much kids not only don’t know about
+    computers, but how unlikely they are to understand <i>the guts
+    underneath the icons</i>.
+    </p>
+
+    <p>
+    Over the weekend, I completed my personal hack-a-thon on a project
+    to <a href="http://www.floraabrams.com/ada">demonstrate the depths of a computer</a>, but in a simpler way.
+    I may give it to my after school computer club that I run at a local
+    middle school.
+    </p>
+
+    <p>
+    Pretty simple as my entire assembly language parser was written as a
+    single <code>reduce</code> function.
+    </p>
+    

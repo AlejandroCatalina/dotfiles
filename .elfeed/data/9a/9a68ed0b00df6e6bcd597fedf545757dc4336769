@@ -1,0 +1,168 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>   
+  I few months ago, I introduced <code>mu4e</code>, a modest little emacs mail client that
+  I wrote. It seems many people picked it up, great!
+</p>
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1">what's new?</h3>
+<div class="outline-text-3" id="text-1-1">
+
+
+<p>
+  I have just released <a href="http://code.google.com/p/mu0/downloads/detail?name=mu-0.9.9.tar.gz">mu/mu4e version 0.9.9</a>. There are quite a few changes,
+  both user-visible and 'under-the-hood'. I've also spent some time on improving
+  <a href="http://code.google.com/p/mu0/downloads/detail?name=mu4e-manual-0.9.9.pdf">the manual</a> (pdf), and I'm quite happy about it.
+</p>
+<p>
+  Some of the more visible new things in <code>mu4e</code> are:
+</p>
+<ul>
+<li>Support for crypto (decrypting messages, signing them)
+</li>
+<li>Support for <i>refiling</i> (like <code>mutt</code>, Wanderlust)
+</li>
+<li>Dynamic folders (instead of hard-coding the sent/draft/trash/refile folder,
+    they can be <i>functions</i> that return different folders based on the message
+    we're dealing with, see the example below)
+</li>
+<li>Same for the folder to save attachments
+</li>
+<li>A lot of smaller and bigger UI improvements
+</li>
+</ul>
+
+
+<p>
+  Also, the core <code>mu</code> program has seen a lot of improvements (many of which
+  directly improve <code>mu4e</code> as well)
+</p>
+<ul>
+<li>Better support for non-ascii locales / character sets, such as <code>ISO-2022-JP</code>
+</li>
+<li>Improved on-line help ('<code>mu help ...</code>')
+</li>
+<li>Performance improvements for threaded display  (~ 25% for 23K messages) 
+</li>
+</ul>
+
+
+<p> 
+  For a more complete list, see <a href="https://github.com/djcb/mu/blob/master/NEWS">NEWS</a>.   
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2">dynamic folders</h3>
+<div class="outline-text-3" id="text-1-2">
+
+
+<p>
+   As mentioned, <code>mu4e</code> now supports <i>dynamic folders</i>. Before, you'd set your
+   trash folder to some static string:
+</p>
+
+
+
+<pre class="src src-elisp">(<span class="org-keyword">setq</span> mu4e-trash-folder <span class="org-string">"/trash"</span>)
+</pre>
+
+
+<p>
+   In some cases, you may want to have a bit more flexibility – for example,
+   have a separate trash-folder (or sent-folder, drafts-folder, refile-folder)
+   for private mail and work mail. You can now do something like:
+</p>
+
+
+
+<pre class="src src-elisp">(<span class="org-keyword">setq</span> mu4e-trash-folder
+  (<span class="org-keyword">lambda</span> (msg)
+    (<span class="org-keyword">if</span> (and msg <span class="org-comment-delimiter">;; </span><span class="org-comment">msg may be nil</span>
+          (mu4e-message-contact-field-matches msg <span class="org-builtin">:to</span> <span class="org-string">"me@work.com"</span>))
+      <span class="org-string">"/trash-work"</span>
+      <span class="org-string">"/trash"</span>)))
+</pre>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-3" class="outline-3">
+<h3 id="sec-1-3">refiling</h3>
+<div class="outline-text-3" id="text-1-3">
+
+
+<p>
+   After I have dealt with some e-mail, I either delete it or move it to some
+   archive folder – <i>refiling</i>. For this, there is now the <code>r</code> keybinding, and
+   <code>mu4e-refile-folder</code>; and a place where dynamic folders really shine:
+</p>
+
+
+
+<pre class="src src-elisp">(<span class="org-keyword">setq</span> mu4e-refile-folder
+  (<span class="org-keyword">lambda</span> (msg)
+    (<span class="org-keyword">cond</span>
+      <span class="org-comment-delimiter">;; </span><span class="org-comment">messages to the mu mailing list go to the /mu folder</span>
+      ((mu4e-message-contact-field-matches msg <span class="org-builtin">:to</span>
+         <span class="org-string">"mu-discuss@googlegroups.com"</span>)
+        <span class="org-string">"/mu"</span>)
+      <span class="org-comment-delimiter">;; </span><span class="org-comment">messages sent directly to me go to /archive</span>
+      <span class="org-comment-delimiter">;; </span><span class="org-comment">also `</span><span class="org-comment"><span class="org-constant">mu4e-user-mail-address-regexp</span></span><span class="org-comment">' can be used</span>
+      ((mu4e-message-contact-field-matches msg <span class="org-builtin">:to</span> <span class="org-string">"me@example.com"</span>)
+        <span class="org-string">"/private"</span>)
+      <span class="org-comment-delimiter">;; </span><span class="org-comment">messages with football or soccer in the subject go to /football</span>
+      ((string-match <span class="org-string">"football</span><span class="org-string"><span class="org-regexp-grouping-backslash">\\</span></span><span class="org-string"><span class="org-regexp-grouping-construct">|</span></span><span class="org-string">soccer"</span> (or (mu4e-message-field msg <span class="org-builtin">:subject</span>) <span class="org-string">""</span>))
+        <span class="org-string">"/football"</span>)
+      <span class="org-comment-delimiter">;; </span><span class="org-comment">everything else goes to /archive</span>
+      <span class="org-comment-delimiter">;; </span><span class="org-comment">important to have a catch-all at the end!</span>
+      (t <span class="org-string">"/archive"</span>))))
+</pre>
+
+
+<p>
+   How cool is that? After reading my inbox folder, I select all messages (<code>C-x    h</code>), press <code>r</code>, and they're all moved to the right refiling folder.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4" class="outline-3">
+<h3 id="sec-1-4">crypto support</h3>
+<div class="outline-text-3" id="text-1-4">
+
+
+<p>
+   <code>mu4e</code> already supported signing/encrypting messages, but now it supports
+   decryption and verifying signatures as well. This was one of the most
+   requested new features. I think it is still a bit rough, but it has been
+   working very well for me.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-5" class="outline-3">
+<h3 id="sec-1-5">so&hellip;</h3>
+<div class="outline-text-3" id="text-1-5">
+
+
+<p>
+   I think version 0.9.9 is a great new step for <code>mu4e</code>. It already goes far
+   beyond I ever planned to do. I received a lot of suggestions for new
+   features, which is great! I'm not planning to implement all of those, but I
+   will try to make <code>mu4e</code> even more programmable – it should be easy to augment
+   <code>mu4e</code> with your own little elisp-snippets – the <i>Barbapapa principle</i> of
+   software, already so clearly present in emacs itself.
+</p></div>
+</div>
+</div>

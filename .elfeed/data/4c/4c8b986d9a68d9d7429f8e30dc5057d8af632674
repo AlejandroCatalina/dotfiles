@@ -1,0 +1,69 @@
+<p>
+Almost every directory I work with, is either directly under “~/Dropbox/” or
+under “~/Dropbox/Work/”. However, I never actually visit these two directories,
+only the directories inside them. The number of possible targets for <code>find-file</code>
+is approaching the outer borders of two-digit land, so there's no hope for my
+brain to remember registers for all of these.
+</p>
+
+<p>
+The best solution I've found is to compile a list of all possible targets
+(directories inside those directories) and offer them using <a href="http://www.emacswiki.org/InteractivelyDoThings">ido</a>. This is
+somewhat similar to using a bookmark for each possible destination, except it
+it's always up to date with the directory contents and doesn't clog up my actual
+bookmarks.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">require</span> <span class="ss">'ido</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">require</span> <span class="ss">'cl-lib</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nv">defcustom</span> <span class="nv">endless/favorite-directories</span> 
+  <span class="o">'</span><span class="p">(</span><span class="s">"~/Dropbox/Trabalho/"</span> <span class="s">"~/Dropbox/"</span><span class="p">)</span>
+  <span class="s">"List of favorite directories.
+Used in `endless/visit-favorite-dir'. The order here 
+affects the order that completions will be offered."</span>
+  <span class="ss">:type</span> <span class="o">'</span><span class="p">(</span><span class="nv">repeat</span> <span class="nb">directory</span><span class="p">)</span>
+  <span class="ss">:group</span> <span class="ss">'endless</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/visit-favorite-dir</span> <span class="p">(</span><span class="nv">files-too</span><span class="p">)</span>
+  <span class="s">"Offer all directories inside a set of directories.
+Compile a list of all directories inside each element of
+`endless/favorite-directories', and visit one of them with
+`ido-completing-read'.
+With prefix argument FILES-TOO also offer to find files."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">completions</span>
+         <span class="p">(</span><span class="nb">mapcar</span> <span class="nf">#'</span><span class="nv">abbreviate-file-name</span>
+           <span class="p">(</span><span class="nv">cl-remove-if-not</span>
+            <span class="p">(</span><span class="k">if</span> <span class="nv">files-too</span> <span class="nf">#'</span><span class="nv">file-readable-p</span>
+              <span class="nf">#'</span><span class="nv">file-directory-p</span><span class="p">)</span>
+            <span class="p">(</span><span class="nb">apply</span> <span class="nf">#'</span><span class="nb">append</span>
+              <span class="p">(</span><span class="nb">mapcar</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+                        <span class="p">(</span><span class="nv">directory-files</span>
+                         <span class="p">(</span><span class="nv">expand-file-name</span> <span class="nv">x</span><span class="p">)</span>
+                         <span class="no">t</span> <span class="s">"^[^\.].*"</span> <span class="no">t</span><span class="p">))</span>
+                <span class="nv">endless/favorite-directories</span><span class="p">))))))</span>
+    <span class="p">(</span><span class="nv">dired</span>
+     <span class="p">(</span><span class="nv">ido-completing-read</span> <span class="s">"Open directory: "</span>
+                          <span class="nv">completions</span> <span class="ss">'ignored</span> <span class="no">nil</span> <span class="s">""</span><span class="p">))))</span>
+
+<span class="c1">;; Note that C-x d is usually bound to dired. I find</span>
+<span class="c1">;; this redundant with C-x C-f, so I don't mind</span>
+<span class="c1">;; overriding it, but you should know before you do.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">ctl-x-map</span> <span class="s">"d"</span> <span class="nf">#'</span><span class="nv">endless/visit-favorite-dir</span><span class="p">)</span></code></pre></figure>
+<p>
+Some random notes:
+</p>
+
+<ul class="org-ul">
+<li>Having a quick key for this is fantastic. Whenever I want to get work done, I
+just hit <kbd>C-x d</kbd> and I'll my options are presented before me.
+</li>
+<li>With a prefix argument it also shows files instead of just directories.
+</li>
+<li>If ido is not your completion engine of choice, that's trivial to change.
+</li>
+<li>This works best when combined with <code>ido-vertical</code>.
+</li>
+</ul>
+
+   <p><a href="http://endlessparentheses.com/visit-directory-inside-a-set-of-directories.html?source=rss#disqus_thread">Comment on this.</a></p>

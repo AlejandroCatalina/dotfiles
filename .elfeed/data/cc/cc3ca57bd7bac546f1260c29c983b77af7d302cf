@@ -1,0 +1,75 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  When performing system administration tasks, one often needs to edit files
+  owned by <code>root</code>.
+</p>
+<p>
+  For both security and safety reasons, it's a good idea to do as <i>little</i> as
+  possible as root (or with root privileges). For that reason, you probably
+  don't want to run Emacs as 'root', because it's simply <i>too powerful</i>. I often
+  see people use <code>vi</code> (usually, <code>vim</code>) instead &ndash; but since it allows you to do
+  just about anything as well (like running shell commands), that's not much of
+  an improvement.
+</p>
+<p>  
+  Now, a while back we discussed <a href="http://emacs-fu.blogspot.com/2009/10/editing-files-owned-by-root.html">editing files owned by root with tramp</a> &ndash; you
+  can use emacs with your normal user-account, and use <code>sudo</code> to write the
+  root-owned file. That makes it much harder to screw things up.
+</p>
+<p>
+  Another reason people use <code>vi</code> for little editing jobs is because its startup
+  time is significantly shorter than the startup time for a new emacs
+  instance. For that, however, we have <a href="http://emacs-fu.blogspot.com/2009/02/emacs-daemon.html">emacs daemon</a>.
+</p>
+<p>
+  Combining <i>tramp</i> and <i>emacs daemon</i> and a shell function:
+</p>
+
+
+
+<pre class="src src-sh"><span class="org-comment-delimiter"># </span><span class="org-comment">edit file with root privs</span>
+<span class="org-keyword">function</span> <span class="org-function-name">E</span>() {
+         emacsclient -c -a emacs <span class="org-string">"/sudo:root@localhost:$1"</span>
+}               
+</pre>
+
+
+
+<p>
+  Now, we can very quickly edit any file owned by root using 'E' --
+</p>
+
+
+
+
+<pre class="example">$ E /etc/hosts
+</pre>
+
+
+
+<p>  
+  So, if you prefer emacs, there's little reason to use <code>vi</code>, even for editing
+  system files &ndash; although I have to admit that it takes time to evict 'sudo vi
+  &lt;system file&gt;' from my muscle memory.
+</p>
+<p>
+<b>Update</b> reader <i>Yi Wang</i> mentions that, in fact, we can make this a bit more
+general using <code>sudoedit</code>; so, instead of using Tramp, we can use:
+</p>
+
+
+
+<pre class="src src-sh"><span class="org-comment-delimiter"># </span><span class="org-comment">edit file with root privs</span>
+<span class="org-builtin">alias</span> <span class="org-variable-name">E</span>=<span class="org-string">"SUDO_EDITOR=\"emacsclient -c -a emacs\" sudoedit"</span>   
+</pre>
+
+
+
+
+<p>
+This works also without absolute paths.
+</p></div>
+</div>

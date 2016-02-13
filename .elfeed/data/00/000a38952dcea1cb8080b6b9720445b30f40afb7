@@ -1,0 +1,44 @@
+<div class="date">22 Feb 2015</div>
+
+    <p>
+    After reading the Wired article, <a href="http://www.wired.com/2015/02/on-the-joy-of-mastery">Why We Should Design Some Things to
+    Be <i>Difficult</i> to Use</a>, I finally realize that Emacs <i>should</i> be hard
+    to use, and we really should just give up changing it to be easier
+    for new-comers.
+    </p>
+
+    <p>
+    This quote sums up my 20 year experience with Emacs:
+    </p>
+
+    <blockquote>
+    <p>
+    [Fujifilm took] the controls out of deep menu functions and putting
+    them back on chrome knobs that just beg to be twiddled.
+    </p>
+
+    <p>
+    I bought a Fujifilm X100 two years ago. It was the first piece of
+    technology I’d bought in 15 years where I had to read the
+    manual. Actually, I’ve read the manual at least four times. Now I’m
+    taking the best pictures of my life, and I love it. By being hard to
+    use, my X100 made me a better photographer.
+    </p>
+    </blockquote>
+
+    <p>
+    Seems like Emacs users are now in some elite club where the hazing
+    ritual amounts to learning Lisp. Consequently, I’ve decided to start
+    signing all my Emacs-related correspondence with:
+    </p>
+
+    <blockquote>
+    <p>
+    Yours in Emacs,
+    </p>
+
+    <p>
+    Howard
+    </p>
+    </blockquote>
+    

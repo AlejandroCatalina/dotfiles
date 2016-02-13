@@ -1,0 +1,73 @@
+<p>
+<a href="http://proofgeneral.inf.ed.ac.uk/">Proof-general</a> is a powerful client for the <a href="https://coq.inria.fr/">Coq proof assistant</a>, and <a href="http://www.cis.upenn.edu/~bcpierce/sf/current/index.html">Software
+Foundations</a> is great interactive tutorial for the language. As I was following
+the tutorial, I felt the need to speed things up a little bit. Today’s post is
+just some configuration code I wrote for that effect. 
+</p>
+
+<p>
+Parts of it might be useful for coq in general, but its mostly optimized to
+minimize keystrokes in the tutorial, and sometimes it leaves bad indentation or
+extra lines all over the place.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="c1">;; I appreciate the effort of writing a splash-screen, but the angry</span>
+<span class="c1">;; general on the gif scares me.</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">proof-splash-seen</span> <span class="no">t</span><span class="p">)</span>
+
+<span class="c1">;;; Hybrid mode is by far the best.</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">proof-three-window-mode-policy</span> <span class="ss">'hybrid</span><span class="p">)</span>
+
+<span class="c1">;;; I don't know who wants to evaluate comments</span>
+<span class="c1">;;; one-by-one, but I don't.</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">proof-script-fly-past-comments</span> <span class="no">t</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nv">with-eval-after-load</span> <span class="ss">'coq</span>
+  <span class="c1">;; The most common command by far. Having a 3(!)</span>
+  <span class="c1">;; keys long sequence for this command is just a</span>
+  <span class="c1">;; crime.</span>
+  <span class="p">(</span><span class="nv">define-key</span> <span class="nv">coq-mode-map</span> <span class="s">"\M-n"</span>
+    <span class="nf">#'</span><span class="nv">proof-assert-next-command-interactive</span><span class="p">)</span>
+
+  <span class="c1">;; Proof navigation didn't work for me. So please</span>
+  <span class="c1">;; stand aside for my paragraph navigation.</span>
+  <span class="c1">;; http://endlessparentheses.com/meta-binds-part-2-a-peeve-with-paragraphs.html</span>
+  <span class="p">(</span><span class="nv">define-key</span> <span class="nv">coq-mode-map</span> <span class="s">"\M-e"</span> <span class="no">nil</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">define-key</span> <span class="nv">coq-mode-map</span> <span class="s">"\M-a"</span> <span class="no">nil</span><span class="p">)</span>
+
+  <span class="c1">;; Small convenience for commonly written commands.</span>
+  <span class="p">(</span><span class="nv">define-key</span> <span class="nv">coq-mode-map</span> <span class="s">"\C-c\C-m"</span> <span class="s">"\nend\t"</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">define-key</span> <span class="nv">coq-mode-map</span> <span class="s">"\C-c\C-e"</span>
+    <span class="nf">#'</span><span class="nv">endless/qed</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/qed</span> <span class="p">()</span>
+    <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">memq</span> <span class="p">(</span><span class="nv">char-before</span><span class="p">)</span> <span class="o">'</span><span class="p">(</span><span class="nv">?\s</span> <span class="nv">?\n</span> <span class="nv">?\r</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">insert</span> <span class="s">" "</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">insert</span> <span class="s">"Qed."</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">proof-assert-next-command-interactive</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">open-after-coq-command</span> <span class="p">()</span>
+  <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nv">looking-at-p</span> <span class="s">" *(\\*"</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">open-line</span> <span class="mi">1</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nv">advice-add</span> <span class="ss">'proof-assert-next-command-interactive</span>
+            <span class="ss">:after</span> <span class="nf">#'</span><span class="nv">open-after-coq-command</span><span class="p">)</span></code></pre></figure>
+
+<p>
+These are some common abbrevs, and an advice so you don’t have to hit <kbd>SPC</kbd>
+before <kbd>M-n</kbd>.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-abbrev-table</span> <span class="ss">'coq-mode-abbrev-table</span> <span class="o">'</span><span class="p">())</span>
+<span class="p">(</span><span class="nv">define-abbrev</span> <span class="nv">coq-mode-abbrev-table</span> <span class="s">"re"</span> <span class="s">"reflexivity."</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-abbrev</span> <span class="nv">coq-mode-abbrev-table</span> <span class="s">"id"</span> <span class="s">"induction"</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-abbrev</span> <span class="nv">coq-mode-abbrev-table</span> <span class="s">"si"</span> <span class="s">"simpl."</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">advice-add</span> <span class="ss">'proof-assert-next-command-interactive</span>
+            <span class="ss">:before</span> <span class="nf">#'</span><span class="nv">expand-abbrev</span><span class="p">)</span></code></pre></figure>
+
+<p>
+And finally, the most important snippet. Just make sure you install
+<code>company-coq</code> from Melpa.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nb">fboundp</span> <span class="ss">'company-coq-initialize</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'coq-mode-hook</span> <span class="nf">#'</span><span class="nv">company-coq-initialize</span><span class="p">))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/proof-general-configuration-for-the-coq-software-foundations-tutorial.html?source=rss#disqus_thread">Comment on this.</a></p>

@@ -1,0 +1,77 @@
+<p>
+If you’ve taken the time to browse some Elisp source files, you’ve no doubt run
+into that odd little <code>^L</code>, a.k.a. the form feed character. Emacs uses these
+white space characters as page delimiters. This makes for a very convenient way
+to split a file into sections, and quickly navigate between them. I won’t go too
+deep into them, as Eric James has already written a great <a href="http://ericjmritz.name/2015/08/29/using-page-breaks-in-gnu-emacs/">crash course on pages</a>
+that you should go check out.
+</p>
+
+<p>
+What I wanted to write about is the way that I do page navigation in Emacs.
+Firstly, I find the default keys to be nothing short of abhorrent. Take a prefix
+key with the <kbd>Control</kbd> modifier, attach to it a non-modified key, and then make that key
+be something not-so-easy to hit, like <kbd>]</kbd>, and you have the recipe for painful
+fingers.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-key</span> <span class="nv">prog-mode-map</span> <span class="s">"\C-x\C-n"</span> <span class="nf">#'</span><span class="nv">forward-page</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">prog-mode-map</span> <span class="s">"\C-x\C-p"</span> <span class="nf">#'</span><span class="nv">backward-page</span><span class="p">)</span></code></pre></figure>
+<p>
+These keys would normally be bound to <code>set-goal-column</code> and <code>mark-page</code>, which
+I’ve never ever <i>ever</i> used (in fact, the former is disabled by default).
+</p>
+
+<p>
+Then there’s a minor peeve. In some corner cases Emacs might leave the cursor at
+the bottom of the screen after moving. Here we make sure that never happens.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/-recenter-advice</span> <span class="p">(</span><span class="k">&amp;rest</span> <span class="nv">_</span><span class="p">)</span>
+  <span class="s">"Recenter to page start."</span>
+  <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nv">called-interactively-p</span> <span class="ss">'any</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">recenter</span> <span class="mi">5</span><span class="p">)))</span>
+
+<span class="c1">;; Requires Emacs 24.5</span>
+<span class="p">(</span><span class="nv">advice-add</span> <span class="nf">#'</span><span class="nv">backward-page</span> <span class="ss">:after</span>
+            <span class="nf">#'</span><span class="nv">endless/-recenter-advice</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">advice-add</span> <span class="nf">#'</span><span class="nv">forward-page</span>  <span class="ss">:after</span>
+            <span class="nf">#'</span><span class="nv">endless/-recenter-advice</span><span class="p">)</span></code></pre></figure>
+
+<p>
+And then there’s the best part. It turns out you don’t need the form-feed
+character to delimit pages. That’s important because some languages aren’t that
+nice about them, and some dev teams might prefer you don’t stick those
+<code>^L</code> all over the place. In Clojure, for instance, <code>cljfmt</code> confuses it for a
+blank line and freaks out a little.
+</p>
+
+<p>
+Fortunately, Elisp style already recommends using <code>;;;</code> to indicate comment
+sections, and the form feed character is most commonly placed right above these
+sections. So why not use that instead?
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="k">setq</span> <span class="nv">page-delimiter</span>
+      <span class="p">(</span><span class="nv">rx</span> <span class="nv">bol</span> <span class="p">(</span><span class="nb">or</span> <span class="s">"\f"</span> <span class="s">";;;"</span><span class="p">)</span>
+          <span class="p">(</span><span class="nb">not</span> <span class="p">(</span><span class="nv">any</span> <span class="s">"#"</span><span class="p">))</span> <span class="p">(</span><span class="nb">*</span> <span class="nv">not-newline</span><span class="p">)</span> <span class="s">"\n"</span>
+          <span class="p">(</span><span class="nb">*</span> <span class="p">(</span><span class="nb">*</span> <span class="nv">blank</span><span class="p">)</span> <span class="p">(</span><span class="nv">opt</span> <span class="s">";"</span> <span class="p">(</span><span class="nb">*</span> <span class="nv">not-newline</span><span class="p">))</span> <span class="s">"\n"</span><span class="p">)))</span>
+<span class="c1">;; Expanded regexp:</span>
+<span class="c1">;; "^;;;[^#].*\n\\(?:[[:blank:]]*\\(?:;.*\\)?\n\\)*"</span></code></pre></figure>
+<p>
+The regexp above is a bit special. We’re setting the page delimiter to be a
+<code>;;;</code> at the start of a line, plus any number of empty lines or comment lines
+that follow it (that <code>#</code> part is to exclude <code>;;;###autoload</code> cookies).
+</p>
+
+<p>
+Consequently, when we hit <kbd>C-x C-n</kbd> or <kbd>C-x C-p</kbd>, the point is left right at the
+start of the first code-line after the <code>;;;</code>. That’s usually where I want to be,
+and it works even on buffers without <code>^L</code>, Clojure and Elisp. No doubt you can
+extended that to your programming language of choice by replacing the semicolons
+with the appropriate comment character.
+</p>
+
+<p>
+Even better, why not write up a general solution based on the <a href="http://doc.endlessparentheses.com/Var/comment-start"><code>comment-start</code></a>
+variable?
+</p>
+
+   <p><a href="http://endlessparentheses.com/improving-page-navigation.html?source=rss#disqus_thread">Comment on this.</a></p>

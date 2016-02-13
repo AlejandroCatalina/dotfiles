@@ -1,0 +1,64 @@
+<p>
+Cluttered as our keyboards are with key-binds, it's always nice when we can
+combine two disjoint functionalities in the same key. I have <kbd>M-k</kbd> and <kbd>C-M-k</kbd>
+bound to killing the next and previous sexp, respectively, but that is never
+something I need inside a string or when typing a file name in the minibuffer.
+Then these keys become utterly useless!
+</p>
+
+<p>
+The solution to this conundrum is, of course, to find another use for them in
+these cases. Something that comes up regularly inside strings (or file-name
+prompts) is killing an entire directory name. 
+</p>
+
+<p>
+The code below, binds <kbd>M-k</kbd> to a command that automatically decides whether to
+kill a sexp or a directory name. The decision making is a little tricky, but it
+has yet to let me down.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="c1">;; Note you may want to swap the following two keybinds.</span>
+<span class="c1">;; Emacs' default keymap has `kill-sexp' on `C-M-k'.</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"M-k"</span><span class="p">)</span>
+                <span class="nf">#'</span><span class="nv">endless/forward-kill-sexp-or-dir</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"C-M-k"</span><span class="p">)</span>
+                <span class="nf">#'</span><span class="nv">endless/backward-kill-sexp-or-dir</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/forward-kill-sexp-or-dir</span> <span class="p">(</span><span class="k">&amp;optional</span> <span class="nv">p</span><span class="p">)</span>
+  <span class="s">"Kill forward sexp or directory.
+If inside a string or minibuffer, and if it looks like
+we're typing a directory name, kill forward until the next
+/. Otherwise, `kill-sexp'"</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"p"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">&lt;</span> <span class="nv">p</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">endless/backward-kill-sexp-or-dir</span> <span class="p">(</span><span class="nb">-</span> <span class="nv">p</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">r</span> <span class="p">(</span><span class="nv">point</span><span class="p">)))</span>
+      <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">in-string-p</span><span class="p">)</span>
+                   <span class="p">(</span><span class="nv">minibuffer-window-active-p</span>
+                    <span class="p">(</span><span class="nv">selected-window</span><span class="p">)))</span>
+               <span class="p">(</span><span class="nv">looking-at</span> <span class="s">"[^[:blank:]\n\r]*[/\\\\]"</span><span class="p">))</span>
+          <span class="p">(</span><span class="k">progn</span> <span class="p">(</span><span class="nv">search-forward-regexp</span>
+                  <span class="s">"[/\\\\]"</span> <span class="no">nil</span> <span class="no">nil</span> <span class="nv">p</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nv">kill-region</span> <span class="nv">r</span> <span class="p">(</span><span class="nv">point</span><span class="p">)))</span>
+        <span class="p">(</span><span class="nv">kill-sexp</span> <span class="nv">p</span><span class="p">)))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/backward-kill-sexp-or-dir</span> <span class="p">(</span><span class="k">&amp;optional</span> <span class="nv">p</span><span class="p">)</span>
+  <span class="s">"Kill backwards sexp or directory."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"p"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">&lt;</span> <span class="nv">p</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">endless/forward-kill-sexp-or-dir</span> <span class="p">(</span><span class="nb">-</span> <span class="nv">p</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">r</span> <span class="p">(</span><span class="nv">point</span><span class="p">))</span>
+          <span class="p">(</span><span class="nv">l</span> <span class="p">(</span><span class="nv">save-excursion</span>
+               <span class="p">(</span><span class="nv">point</span><span class="p">))))</span>
+      <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">in-string-p</span><span class="p">)</span>
+                   <span class="p">(</span><span class="nv">minibuffer-window-active-p</span>
+                    <span class="p">(</span><span class="nv">selected-window</span><span class="p">)))</span>
+               <span class="p">(</span><span class="nv">looking-back</span> <span class="s">"[/\\\\][^[:blank:]\n\r]*"</span><span class="p">))</span>
+          <span class="p">(</span><span class="k">progn</span> <span class="p">(</span><span class="nv">backward-char</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nv">search-backward-regexp</span>
+                  <span class="s">"[/\\\\]"</span> <span class="p">(</span><span class="nv">point-min</span><span class="p">)</span> <span class="no">nil</span> <span class="nv">p</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nv">forward-char</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nv">kill-region</span> <span class="p">(</span><span class="nv">point</span><span class="p">)</span> <span class="nv">l</span><span class="p">))</span>
+        <span class="p">(</span><span class="nv">kill-sexp</span> <span class="p">(</span><span class="nb">-</span> <span class="nv">p</span><span class="p">))))))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/kill-sexp-or-directory.html?source=rss#disqus_thread">Comment on this.</a></p>

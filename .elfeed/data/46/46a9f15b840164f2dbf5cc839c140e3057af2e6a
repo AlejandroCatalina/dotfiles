@@ -1,0 +1,329 @@
+<style>
+  #ex0 #ex0-out {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.3em;
+  }
+  .proc-1 {
+    color: #ff6666;
+  }
+  .proc-2 {
+    color: #66ff66;
+  }
+  .proc-3 {
+    color: #6666ff;
+  }
+  .example {
+    position: relative;
+    margin-top: 20px;
+    height: 200px;
+    border: 1px solid #ccc;
+    background: #efefef;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+  }
+  .out {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+    color: #666;
+    text-align: center;
+    line-height: 200px;
+    font-family: 'Inconsolata', sans-serif; font-size: 72px;
+  }
+  #ex4 {
+    height: 100px;
+    text-align: center;
+  }
+  #ex4 button:active {
+    background-color: #ccc;
+  }
+  #ex4 button {
+    margin-top: 15px;
+    font-size: 18px;
+    padding: 6px 15px;
+    background-color: white;
+    border: 1px solid #333;
+    cursor: pointer;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+  }
+  #ex4 #ex4-out {
+    margin-top: 20px;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 18px;
+    line-height: 1.3em;
+    color: #666;
+  }
+</style>
+
+<p>With the arrival of
+<a href="http://github.com/clojure/core.async">core.async</a>,
+<a href="http://github.com/clojure/clojurescript">ClojureScript</a> provides a
+powerful advantage over other popular compile to JavaScript languages
+like <a href="http://coffeescript.org/">CoffeeScript</a>,
+<a href="http://www.dartlang.org/">Dart</a>, and
+<a href="http://www.typescriptlang.org/">TypeScript</a>. These languages fail to
+address the single largest source of incidental complexity for any
+sizeable client side application - concurrency. In my experience no
+amount of simple syntactic sugar, class abstraction, or type annotation can
+plug this particular geyser of incidental complexity. These languages
+offer no tools beyond the weak ones already offered by JavaScript
+libraries or JavaScript itself -
+<a href="http://github.com/promises-aplus/promises-spec">promises</a> and
+<a href="http://wiki.ecmascript.org/doku.php?id=harmony:generators">generators</a>.</p>
+
+<p>JavaScript promises don&#39;t solve the inversion of control problem -
+callback hell is unnested but it&#39;s still callback hell. ECMAScript 6
+generators suffer in various ways from being too simplistic, you need
+to manage coordination by hand or provide your own scheduler. You can
+<a href="http://jlongster.com/A-Study-on-Solving-Callbacks-with-JavaScript-Generators">combine generators with promises</a>
+but now you&#39;re managing two abstractions instead of one (Dart
+<a href="http://api.dartlang.org/docs/releases/latest/dart_async/Stream.html">appears to suffer from the same dualism</a>
+but there it&#39;s Future/Stream).</p>
+
+<p>Enough rhetoric, let&#39;s see how core.async works in practice.</p>
+
+<p>First let&#39;s start off with something dramatic (in fact something that
+should seem impossible for those familiar with JavaScript). We will
+coordinate three independent processes running at three different
+speeds via a fourth process which shows the results of the
+coordination <em>without any obvious use of mutation</em> - only recursion.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(def c (chan))
+
+(defn render [q]
+  (apply str
+    (for [p (reverse q)]
+      (str &quot;&lt;div class=&#39;proc-&quot; p &quot;&#39;&gt;Process &quot; p &quot;&lt;/div&gt;&quot;))))
+
+(go (while true (&lt;! (timeout 250)) (&gt;! c 1)))
+(go (while true (&lt;! (timeout 1000)) (&gt;! c 2)))
+(go (while true (&lt;! (timeout 1500)) (&gt;! c 3)))
+
+(defn peekn
+  &quot;Returns vector of (up to) n items from the end of vector v&quot;
+  [v n]
+  (if (&gt; (count v) n)
+    (subvec v (- (count v) n))
+    v))
+
+(let [el  (by-id &quot;ex0&quot;)
+      out (by-id &quot;ex0-out&quot;)]
+  (go (loop [q []]
+        (set-html! out (render q))
+        (recur (-&gt; (conj q (&lt;! c)) (peekn 10))))))
+</code></pre></div>
+<div id="ex0" class="example">
+    <div id="ex0-out" class="out"></div>
+</div>
+
+<p>As expected we see process 1 more often than process 2, and process 2
+more often than process 3. It appears that we have independent
+processes, we can coordinate them, and there&#39;s not a callback in
+sight.</p>
+
+<p>If you haven&#39;t fallen out of your chair, let&#39;s look at some simpler
+examples to build up our intuition.</p>
+
+<p>The code snippets in this post may look familiar to fans of
+<a href="http://reactive-extensions.github.io/RxJS/">functional reactive programming</a>,
+but fear not, we&#39;ll get to the good stuff eventually.</p>
+
+<p>The following code convert events on a DOM element into a channel
+we can read from:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn listen [el type]
+  (let [c (chan)]
+    (events/listen el type #(put! c %))
+    c))
+</code></pre></div>
+<p>I&#39;ve intentionally kept the code as simple as possible to limit the amount
+of novelty that we need to introduce (nearly everything I will show
+can look prettier/shorter either with more higher order channel operations or
+a touch of sweetening via macro sugar). <code>listen</code> takes a DOM element
+and an event type. The event listener callback puts the DOM event into the
+channel, since we&#39;re not in a <code>go</code> block we do this with an async <code>put!</code>.</p>
+
+<p>Channels are like the channels found in
+<a href="http://www.usingcsp.com/cspbook.pdf">Tony Hoare&#39;s Communicating Sequential Processes</a>. The
+<a href="http://golang.org">Go community</a> is visibly enjoying the benefits of
+Hoare&#39;s abstraction - but of course programming languages have offered
+its treasures since the 1980s (<a href="http://en.wikipedia.org/wiki/Occam-">occam-pi</a>,
+<a href="http://cml.cs.uchicago.edu">Concurrent ML</a>,
+<a href="http://www.cs.kent.ac.uk/projects/ofa/jcsp/">JCSP</a>). Interestingly both
+<a href="http://swtch.com/%7Ersc/thread/cws.pdf">Rob Pike</a> and
+<a href="http://alleystoughton.us/eXene/1991-ml-workshop.pdf">John Reppy</a> have
+both discussed the applicability of CSP for the coordination of user
+interfaces - user interfaces are inherently asynchronous and thus concurrent.</p>
+
+<p>Let&#39;s see <code>listen</code> in action:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(let [el  (by-id &quot;ex1&quot;)
+      out (by-id &quot;ex1-mouse&quot;)
+      c   (listen el :mousemove)]
+  (go (while true
+        (let [e (&lt;! c)]
+          (set-html! out (str (.-offsetX e) &quot;, &quot; (.-offsetY e)))))))
+</code></pre></div>
+<p>Mouse over the grey box below:</p>
+
+<div id="ex1" class="example">
+    <div id="ex1-mouse" class="out"></div>
+</div>
+
+<p>Only in <code>go</code> blocks can we appear to read and write synchronously (via
+<span class="code">&lt;!</span> and <span class="code">&gt;!</span> respectively) to a
+channel. This allows us to fully escape callback hell in our
+coordination code.</p>
+
+<p>Note that the above example is showing the position of the mouse in
+the element instead of absolute relative to the document - let&#39;s
+fix this with our first higher order channel operation <code>map</code>,
+analogous to Clojure&#39;s <code>map</code> except this works on channels not sequences:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn map [f in]
+  (let [c (chan)]
+    (go (loop []
+          (if-let [v (&lt;! in)]
+            (do (&gt;! c (f v))
+              (recur))
+            (close! c))))
+    c))
+</code></pre></div>
+<p><code>map</code> takes a function <code>f</code> and a channel <code>in</code> and returns a new
+channel. All the magic happens once again inside the <code>go</code> block, we
+can read values out of the <code>in</code> channel as they appear, apply <code>f</code> and
+write the result to the channel we returned. This works just as well
+for mouse events or asynchronous results from I/O or an
+<code>XMLHttpRequest</code>.</p>
+
+<p>Let&#39;s use <code>map</code>:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn location [el]
+  (let [[left top] (cljs.core/map int (offset el))]
+    (fn [e]
+      {:x (+ (.-offsetX e) left)
+       :y (+ (.-offsetY e) top)})))
+
+(let [el  (by-id &quot;ex2&quot;)
+      out (by-id &quot;ex2-mouse&quot;)
+      c   (map (location el)
+            (listen el :mousemove))]
+  (go (while true
+        (let [e (&lt;! c)]
+          (set-html! out (str (:x e) &quot;, &quot; (:y e)))))))
+</code></pre></div>
+<p>Mouse over the grey box below to confirm that this works:</p>
+
+<div id="ex2" class="example">
+    <div id="ex2-mouse" class="out"></div>
+</div>
+
+<p>It&#39;s important to understand that <code>go</code> blocks paired with <code>loop/recur</code>
+allow us to create <em>local</em> event loops. Normally when writing client
+side code you are participating in a <em>global</em> event loop. As with
+global mutable variables, global event loops defy local reasoning. As
+JavaScript developers we work around the global event loop by
+coordinating through mutable locals or mutable object fields or by
+adding coordination methods to our API. With core.async all these
+ad-hoc methods disappear because we don&#39;t need them.</p>
+
+<p>To further illustrate, let&#39;s see the coordination of two different
+streams in the <em>same logical local event loop</em>.</p>
+
+<p>Say we want to handle both mouse and key events:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(let [el   (by-id &quot;ex3&quot;)
+      outm (by-id &quot;ex3-mouse&quot;)
+      outk (by-id &quot;ex3-key&quot;)
+      mc   (map (location el)
+             (listen el &quot;mousemove&quot;))
+      kc   (listen js/window &quot;keyup&quot;)]
+  (go (while true
+        (let [[v c] (alts! [mc kc])]
+          (condp = c
+            mc (set-html! outm (str (:x v) &quot;, &quot; (:y v)))
+            kc (set-html! outk (str (.-keyCode v))))))))
+</code></pre></div>
+<p>Make sure the window is focused and mouse over the following grey box
+and type at the same time:</p>
+
+<div id="ex3" class="example">
+    <div class="out">
+        <span id="ex3-mouse"></span> : <span id="ex3-key"></span>
+    </div>
+</div>
+
+<p><code>alts!</code> gives us non-deterministic choice over multiple streams. We will
+read from whichever channel has information. When reading from a
+channel <code>alts!</code> will return a tuple, the first element is the value
+read from the channel and the second element is the channel that was
+read from. This allows us to conditionally handle results from different
+channels as you can see with our use of <code>condp</code>.</p>
+
+<p>Note this is quite different from the usual JavaScript solutions where we
+tend to smear our asynchronous handling across the code base.</p>
+
+<p>Let&#39;s end with a final dramatic example, we present a port of
+<a href="http://talks.golang.org/2012/concurrency.slide#50">Rob Pike&#39;s Go code</a>
+that demonstrates parallel search with timeouts:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn fake-search [kind]
+  (fn [c query]
+    (go
+     (&lt;! (timeout (rand-int 100)))
+     (&gt;! c [kind query]))))
+
+(def web1 (fake-search :web1))
+(def web2 (fake-search :web2))
+(def image1 (fake-search :image1))
+(def image2 (fake-search :image2))
+(def video1 (fake-search :video1))
+(def video2 (fake-search :video2))
+
+(defn fastest [query &amp; replicas]
+  (let [c (chan)]
+    (doseq [replica replicas]
+      (replica c query))
+    c))
+
+(defn google [query]
+  (let [c (chan)
+        t (timeout 80)]
+    (go (&gt;! c (&lt;! (fastest query web1 web2))))
+    (go (&gt;! c (&lt;! (fastest query image1 image2))))
+    (go (&gt;! c (&lt;! (fastest query video1 video2))))
+    (go (loop [i 0 ret []]
+          (if (= i 3)
+            ret
+            (recur (inc i) (conj ret (alt! [c t] ([v] v)))))))))
+
+(let [el (by-id &quot;ex4-out&quot;)
+      c  (listen (by-id &quot;search&quot;) :click)]
+  (go (while true
+        (&lt;! c)
+        (set-html! el (pr-str (&lt;! (google &quot;clojure&quot;)))))))
+</code></pre></div>
+<p>Click the search button below multiple times:</p>
+
+<div id="ex4" class="example">
+    <button id="search">Search</button>
+    <div id="ex4-out"></div>
+</div>
+
+<p>We can run 3 pairs of requests in parallel, choosing the fastest of
+each pair. In addition we set a timeout of 80 milliseconds for the
+whole process.</p>
+
+<p>Just to drive the point home all of the examples we have covered are
+all running at once, including the original process example at the top
+of the page.</p>
+
+<p>Still so far we&#39;ve only seen what I would consider very trivial if
+impressive examples. In the next post we&#39;ll look at an advanced
+example - a non-toy autocompleter input field. We will see core.async&#39;s
+advantage over traditional object oriented approaches as well
+as purely reactive approaches.</p>
+
+<p>You can find and build these examples for yourself <a href="http://github.com/swannodette/swannodette.github.com">here</a>.</p>
+
+<script type="text/javascript" src="/assets/js/csp.js"></script>

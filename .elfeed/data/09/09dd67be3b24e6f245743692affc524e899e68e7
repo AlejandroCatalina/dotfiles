@@ -1,0 +1,17 @@
+<div class="date">10 Mar 2015</div>
+    <img src="Technical/Emacs/gnu-shaving.png" align="right" width="200"/>
+
+    <p>
+    I’ve discovered the ultimate in Yak Shaving: <b>Gnu Shaving!</b>
+    </p>
+
+    <p>
+    Since I keep <i>everything</i> as org-mode formatted text files, I tried
+    an experiment to directly convert the spreadsheet-like tables in my
+    “tax notes” into a PDF mail for my accountant.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Emacs/spreadsheet.html">Here are my tips...</a>
+    </p>
+    

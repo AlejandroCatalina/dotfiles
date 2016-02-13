@@ -1,0 +1,38 @@
+<p>
+In contrast with fetching pull requests, which either requires <a href="/merging-github-pull-requests-from-emacs.html">a minor-mode</a> or
+some <a href="/automatically-configure-magit-to-access-github-prs.html">long-named branches</a>, <i>creating</i> pull requests is as easy as a one-key deal.
+</p>
+
+<p>
+*If you’re reading this now, note that this code was written for an older Magit
+version. An up-to-date version of the code (working with latest Magit) can be
+found on this <a href="/create-github-prs-from-emacs-with-magit.html">other post</a>.*
+</p>
+
+<p>
+Because <a href="https://github.com/vermiculus/sx.el">sx.el</a> (a package which I really ought to blog about) was developed as a
+group effort, <a href="https://github.com/vermiculus">Sean</a> and I decided early on to use PRs for everything.
+Predictably, the need arose for a quick way to create them, and I promptly asked
+<a href="http://emacs.stackexchange.com/q/3900/50">Emacs.StackExchange</a> for help. The solution below is a courtesy of <a href="http://emacs.stackexchange.com/users/2355/constantine">Constantine</a>.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/visit-pull-request-url</span> <span class="p">()</span>
+  <span class="s">"Visit the current branch's PR on Github."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">browse-url</span>
+   <span class="p">(</span><span class="nb">format</span> <span class="s">"https://github.com/%s/pull/new/%s"</span>
+     <span class="p">(</span><span class="nv">replace-regexp-in-string</span>
+      <span class="s">"\\`.+github\\.com:\\(.+\\)\\.git\\'"</span> <span class="s">"\\1"</span>
+      <span class="p">(</span><span class="nv">magit-get</span> <span class="s">"remote"</span>
+                 <span class="p">(</span><span class="nv">magit-get-current-remote</span><span class="p">)</span>
+                 <span class="s">"url"</span><span class="p">))</span>
+     <span class="p">(</span><span class="nv">magit-get-current-branch</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'magit</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">define-key</span> <span class="nv">magit-mode-map</span> <span class="s">"V"</span>
+     <span class="nf">#'</span><span class="nv">endless/visit-pull-request-url</span><span class="p">))</span></code></pre></figure>
+<p>
+After hitting <kbd>V</kbd>, you just need to press the big green button at the Github
+page.
+</p>
+
+   <p><a href="http://endlessparentheses.com/easily-create-github-prs-from-magit.html?source=rss#disqus_thread">Comment on this.</a></p>

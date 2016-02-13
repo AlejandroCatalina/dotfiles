@@ -1,0 +1,60 @@
+<p>Last December, I <a href="/2014/12/10/write-only-social-media/">blogged</a> about taking
+it easy on social media over the holidays. This is a post on how it went for
+me.</p>
+
+<h2>The Good</h2>
+
+<p>For the most part, I kept true to my promise and kept away from social media.
+It took a little patience to kill my muscle memory, but with the help of a
+liberal <code>hosts</code> file, I was able to persevere.</p>
+
+<p>Here’s the hosts file snippet I ran with:</p>
+<pre class="highlight plaintext">127.0.0.1 reddit.com
+127.0.0.1 www.reddit.com
+127.0.0.1 hckrnews.com
+127.0.0.1 news.ycombinator.com
+127.0.0.1 cbc.ca
+127.0.0.1 cbcnews.ca
+127.0.0.1 winnipegfreepress.com
+127.0.0.1 linkedin.com
+127.0.0.1 www.linkedin.com
+127.0.0.1 facebook.com
+127.0.0.1 twitter.com
+</pre>
+<p>On my phone, I played around with some “blocking” programs, including Apple’s
+own content filtering, but ultimately found they either didn’t work (3rd
+party), or were too restrictive (Apple). That left me with two orthogonal
+options:</p>
+
+<ul>
+<li>Delete apps (Twitter, Facebook, Reddit)</li>
+<li>Just don’t go to those websites. (Admittedly, this took some willpower, but
+it’s hard to develop muscle memory for typing out long URLs on iOS, anyways.)</li>
+</ul>
+
+<p>When I initially set out on this endeavour I had two goals; spend more time
+with family, and get more done. I can say I succeeded on both of those counts.
+There was plenty of time to play and enjoy my family, and whenever I hit a pang
+of boredom I broke out the ole’ bucket list.</p>
+
+<p>All in all, I stayed in shape, read some (long dusty) books, hacked on side
+projects, and managed to get a ton of “winter cleaning” tasks out of the way
+(including digitizing ~200 receipts for my taxes next year).</p>
+
+<h2>The Bad</h2>
+
+<p>I’ll admit it. Some cheating happened. It wasn’t too bad on my computer, where
+uncommenting and DNS-cache clearing is a little cumbersome. No, where it bit me
+most was on the phone.</p>
+
+<p>You know how visits to the in-laws can be. Lots of people. Lots of kids/pets.
+And, worst of all, lots of stress. I took it as an acceptable loss to browse
+Reddit here or there on the can while at the in-laws&hellip;</p>
+
+<h2>In Summary</h2>
+
+<p>Would I do it again? Definitely. I still haven’t returned to Facebook, and
+gained a healthy habit of asking “is there anything that needs doing?” before
+reaching for a time-filler. I expect I’ll keep the pipe partially closed for
+the next little bit, and maybe re-engage <em>full-stop</em> when I need a period of high
+productivity.</p>

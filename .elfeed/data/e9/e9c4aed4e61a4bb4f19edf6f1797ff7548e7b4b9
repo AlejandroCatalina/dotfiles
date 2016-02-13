@@ -1,0 +1,27 @@
+<div class="date">26 Aug 2014</div>
+
+    <a href="http://opensourcebridge.org/proposals/964" style="float:right">
+    <img src="http://opensourcebridge.org/badges/2013/speak125.png" alt="I'm speaking at Open Source Bridge 2013" border="0">
+    </a>
+
+    <p>
+    After all the fun I had this summer at the Open Source Bridge giving
+    my talks on both Lisp/Clojure and Emacs, I figured that I would
+    upload them to YouTube:
+    </p>
+
+    <ul class="org-ul">
+    <li><a href="http://youtu.be/3T00X_sNg4Q">Learn you Some Lisp</a>
+    </li>
+    <li><a href="https://www.youtube.com/watch?v=B6jfrrwR10k">Introduction to Emacs</a>
+    </li>
+    <li><a href="https://www.youtube.com/watch?v=kt-wLpz-9PA">Emacs transpose-words and defadvice</a>
+    </li>
+    </ul>
+
+    <p>
+    Just noticed that the audio to my talk, <a href="http://opensourcebridge.org/sessions/964">Literate Programming</a> now has
+    the <a href="https://s3-us-west-2.amazonaws.com/osbridge/audio/2013/June+18/B202-203/06_Literate+Programming+for+the+21st+Century_Howard+Abrams.mp3">audio online</a>, however, without the Emacs demonstration of
+    <a href="http://orgmode.org">org-mode</a>, I wonder how helpful it would be.
+    </p>
+    

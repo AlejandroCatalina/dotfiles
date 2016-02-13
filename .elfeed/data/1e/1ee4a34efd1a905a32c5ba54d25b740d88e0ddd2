@@ -1,0 +1,27 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+<p>
+  Something from the category of useful things hiding in emacs&hellip; Suppose you
+  are looking for the variable that holds a certain value. How to find it?
+</p>
+<p>
+  Easy: <code>M-x apropos-value</code>
+</p>
+<p>
+  So, for example, finding all variables that hold your e-mail address:
+</p>
+<p>
+  <code>M-x apropos-value RET me@example.com RET</code>
+</p>
+<p>
+  and you'll get all the matches in the <code>*Apropos*</code>-buffer. HT: Stephen
+  Eglen. 
+</p>
+<p>
+  Also check the various other <code>M-x apropos-...</code> commands, they all help you
+  find useful information if you can remember a word. Except for&hellip; <code>M-x   apropos-zippy</code>&hellip; eh?
+</p>
+
+</div>
+</div>

@@ -1,0 +1,120 @@
+<p>Last night I expressed some frustration about the state and future of
+concurrency in JavaScript. I ended up having a little bit of back and
+forth with <a href="https://twitter.com/littlecalculist">David Herman</a> and he
+pointed out that <a href="http://wiki.ecmascript.org/doku.php?id=harmony:generators">ES6 Generators</a> can express <a href="http://golang.org/">Go</a>
+and core.async&#39;s flavor of
+<a href="http://en.wikipedia.org/wiki/Communicating_sequential_processes">CSP</a>. Now
+I had thought about this in the past but <em>I could not see how</em>. Part
+of this was that I&#39;d never seen how a CSP system works under the hood
+(now I have months of core.async development under my belt)
+and part of it was my distraction over the limitations of combining
+Generators with Promises.</p>
+
+<p><em>I&#39;d never considered combining Generators with something else</em>.</p>
+
+<p>What follows is a minimal amount of code that works in Node.js 0.11
+with the ES6 harmony command line setting. I&#39;ll explain
+each part. The insight is to combine Generators with <em>Channels</em>.</p>
+
+<p>This is our low level state machine stepper. <code>machine</code> is the
+generator and <code>step</code> is the result of calling that generator at least
+once via <code>next</code>. The result of calling <code>next</code> on a Generator is an
+object with two fields <code>value</code>, and <code>done</code>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">function go_(machine, step) {
+  while(!step.done) {
+    var arr   = step.value(),
+        state = arr[0],
+        value = arr[1];
+
+    switch (state) {
+      case &quot;park&quot;:
+        setImmediate(function() { go_(machine, step); });
+        return;
+      case &quot;continue&quot;:
+        step = machine.next(value);
+        break;
+    }
+  }
+}
+</code></pre></div>
+<p>If the generator is not done we go into a loop. The <code>value</code> should be
+a function which <em>attempts</em> to do some work and returns an array
+representing an instruction for the machine. The first value in this
+array is what the machine should do next. If this value is <code>&quot;park&quot;</code>
+then we need to queue ourselves for later execution so we can retry
+the function in <code>step.value</code>.</p>
+
+<p>If instruction is <code>&quot;continue&quot;</code> we call <code>next</code> on the machine with the value
+portion of the instruction. The yielded process can now continue with the
+result of computation to the next step.</p>
+
+<p>This is the actual <code>go</code> function users will call, it kicks things off.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">function go(machine) {
+  var gen = machine();
+  go_(gen, gen.next());
+}
+</code></pre></div>
+<p>What are channels? Channels are simply queues and the simplest way to
+represent them is an array. Here is our first channel operation
+that asynchronously puts a value onto a channel. Notice that it returns
+the required instruction needed by <code>go_</code>. If the channel is empty we
+can place a value in it, if not we park.</p>
+
+<p>It&#39;s easy to imagine the sophisticated buffering strategies supported
+by Go and core.async by using something other than arrays for channels.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">function put(chan, val) {
+  return function() {
+    if(chan.length == 0) {
+      chan.unshift(val);
+      return [&quot;continue&quot;, null];
+    } else {
+      return [&quot;park&quot;, null];
+    }
+  };
+}
+</code></pre></div>
+<p>Here is a take operation. If we&#39;re attempting to read off an empty
+channel we&#39;ll park the machine. Otherwise we pop a value off the
+channel and return a continue instruction to the machine.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">function take(chan) {
+  return function() {
+    if(chan.length == 0) {
+      return [&quot;park&quot;, null];
+    } else {
+      var val = chan.pop();
+      return [&quot;continue&quot;, val];
+    }
+  };
+}
+</code></pre></div>
+<p>It&#39;s possible to do Go&#39;s <code>select</code> or core.async&#39;s <code>alt!</code> but I leave
+that as an exercise for the reader.</p>
+
+<p>We can now write a simple example program. We run two processes in parallel. If
+you try this in Node.js 0.11 you will see they are interleaved.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">var c = [];
+
+go(function* () {
+  for(var i = 0; i &lt; 10; i++) {
+    yield put(c, i);
+    console.log(&quot;process one put&quot;, i);
+  }
+  yield put(c, null);
+});
+
+go(function* () {
+  while(true) {
+    var val = yield take(c);
+    if(val == null) {
+      break;
+    } else {
+      console.log(&quot;process two took&quot;, val);
+    }
+  }
+});
+</code></pre></div>
+<p>Don&#39;t combine Generators with Promises, combine them with Channels!</p>
+
+<p>With tools like <a href="http://github.com/google/traceur-compiler">Traceur</a>
+you can implement many of the ideas from my previous core.async blog
+posts today in vanilla JavaScript.</p>

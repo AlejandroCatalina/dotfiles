@@ -1,0 +1,44 @@
+<p>In a recent post to the emacs-devel mailing list, RMS talked straight about the
+<a href="http://lists.gnu.org/archive/html/emacs-devel/2014-02/msg00500.html">goals of the GNU project</a>:</p>
+
+<blockquote>
+  <p>Remember that the main purpose of the GNU system – including GNU Emacs – is
+freedom.  Technical progress and convenience are <em>secondary</em> goals.</p>
+</blockquote>
+
+<p>Of course, we knew that before, but this statement is remarkably clear, and
+tells us a <em>lot</em> about Emacs development: The primary goal of Emacs’ umbrella
+project is <em>not</em> to provide us with a fully functional editor with superior
+features which support our daily work.  No, the primary goal is to defend our
+freedom…</p>
+
+<p>Incidentally, ironically this statement was <em>not</em> part of a discussion about
+proprietary software.  It was made in a discussion about which <em>free</em> software
+to use for C++ completion in Emacs: Clang or GCC.</p>
+
+<p>Clang has all the necessary features.  There are already working packages for
+C++ completion based on Clang.  Nonetheless RMS strictly rejected the idea of
+using Clang in Emacs, for no other reason than Clang’s permissive BSD license,
+which has no copyleft. Again, Clang is <em>free software</em>, even by the FSF’s own
+standards.  It’s just <em>too</em> free for Emacs…</p>
+
+<p>I don’t think that this will lead us anywhere.  RMS fails to see that while his
+position maintains the ideological purity of GNU, it ultimately harms its own
+goals.  After all, software is just means to an end.  If a piece of software
+doesn’t solve our problems, users will just move on, to a different software.</p>
+
+<p>So while we wait (probably forever?) for GCC to provide what Emacs needs for C++
+completion, C++ developers will likely just move on, frustrated by the poor C++
+support Emacs offers<sup id="fnref:1"><a href="#fn:1" class="footnote">1</a></sup>, to free environments such as Eclipse, or to
+proprietary like VisualStudio or XCode.  Whether this serves the goals of the
+GNU project and the FSF, is for him to decide, but I bet that I’ll disagree with
+him.</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>Emacs doesn’t even cover all of C++ 11, four years after the initial
+  release of that standard. <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>

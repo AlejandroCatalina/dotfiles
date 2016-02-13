@@ -1,0 +1,22 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  Just a small note: I already mentioned the <a href="http://emacs-fu.blogspot.com/search?q=zenburn">zenburn color theme</a> a couple of
+  times. I have now ported the full (big) set of customizations to the emacs-24 format
+  &ndash; <a href="https://github.com/djcb/elisp/blob/master/themes/zenburn-theme.el">find it at github</a>; so if you run emacs 24 (the development version) and
+  enjoy <a href="http://slinky.imukuppi.org/zenburnpage/">zenburn</a> like me, you can give it try. Suggestions, additions are
+  welcome.
+</p>
+<p>
+  Note, there seems to be a limitation with the <code>:inherit</code>-attribute for themes
+  &ndash; in practice it means that some aspects of the theme may not work if a
+  package sets the face before the theme does. Therefore, best to load the theme
+  early from your <code>.emacs</code> or <code>init.el</code>; or alternatively visit the theme file
+  (<code>zenburn-theme.el</code> in this case) and evaluate the buffer.
+</p>
+
+
+</div>
+</div>

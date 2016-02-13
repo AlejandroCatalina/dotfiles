@@ -1,0 +1,74 @@
+<p><strong>Update</strong> <em>(October 2, 2014)</em>: This feature is now available in the
+<a href="https://github.com/lunaryorn/ansible-doc.el">ansible-doc</a> package.</p>
+
+<hr />
+
+<p>In <a href="http://www.flycheck.org">Flycheck</a> I’m using <a href="http://www.ansible.com">Ansible</a> to setup a testing environment on
+<a href="http://travis-ci.org">Travis CI</a> or on a local <a href="http://vagrantup.com">Vagrant</a> virtual machine.  I do not particularly
+like Ansible, and still much prefer Puppet, but it turned out to be twice as
+fast as Puppet, and much easier to use for occasional contributors.</p>
+
+<p>One nice feature of Ansible, though, is the <code class="highlighter-rouge">ansible-doc</code> command which provides
+offline documentation for all available Ansible modules.  With some lines of
+Emacs Lisp we can conveniently use this command to view Ansible documentation
+from within Emacs:</p>
+
+<!--more-->
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">defvar</span> <span class="nv">lunaryorn-ansible-modules</span> <span class="no">nil</span>
+  <span class="s">"Cache of all known Ansible modules."</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">lunaryorn-ansible-modules</span> <span class="p">()</span>
+  <span class="s">"Get a list of all known Ansible modules."</span>
+  <span class="p">(</span><span class="nb">unless</span> <span class="nv">lunaryorn-ansible-modules</span>
+    <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">lines</span> <span class="p">(</span><span class="nb">ignore-errors</span> <span class="p">(</span><span class="nv">process-lines</span> <span class="s">"ansible-doc"</span> <span class="s">"--list"</span><span class="p">)))</span>
+          <span class="nv">modules</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">dolist</span> <span class="p">(</span><span class="nv">line</span> <span class="nv">lines</span><span class="p">)</span>
+        <span class="p">(</span><span class="nb">push</span> <span class="p">(</span><span class="nb">car</span> <span class="p">(</span><span class="nv">split-string</span> <span class="nv">line</span> <span class="p">(</span><span class="nv">rx</span> <span class="p">(</span><span class="nv">one-or-more</span> <span class="nv">space</span><span class="p">))))</span> <span class="nv">modules</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">setq</span> <span class="nv">lunaryorn-ansible-modules</span> <span class="p">(</span><span class="nb">sort</span> <span class="nv">modules</span> <span class="nf">#'</span><span class="nb">string&lt;</span><span class="p">))))</span>
+  <span class="nv">lunaryorn-ansible-modules</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nv">defconst</span> <span class="nv">lunaryorn-ansible-doc-buffer</span> <span class="s">" *Ansible Doc*"</span>
+  <span class="s">"The Ansible Doc buffer."</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">lunaryorn-ansible-doc</span> <span class="p">(</span><span class="nv">module</span><span class="p">)</span>
+  <span class="s">"Show ansible doc for MODULE."</span>
+  <span class="p">(</span><span class="nv">interactive</span>
+   <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nv">ido-completing-read</span> <span class="s">"Ansible Module: "</span>
+                              <span class="p">(</span><span class="nv">lunaryorn-ansible-modules</span><span class="p">)</span>
+                              <span class="no">nil</span> <span class="no">nil</span> <span class="no">nil</span> <span class="no">nil</span>
+                              <span class="p">(</span><span class="nv">thing-at-point</span> <span class="ss">'symbol</span> <span class="ss">'no-properties</span><span class="p">))))</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">buffer</span> <span class="p">(</span><span class="nv">get-buffer-create</span> <span class="nv">lunaryorn-ansible-doc-buffer</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nv">with-current-buffer</span> <span class="nv">buffer</span>
+      <span class="p">(</span><span class="k">setq</span> <span class="nv">buffer-read-only</span> <span class="no">t</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">view-mode</span><span class="p">)</span>
+      <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">inhibit-read-only</span> <span class="no">t</span><span class="p">))</span>
+        <span class="p">(</span><span class="nv">erase-buffer</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">call-process</span> <span class="s">"ansible-doc"</span> <span class="no">nil</span> <span class="no">t</span> <span class="no">t</span> <span class="nv">module</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-min</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nv">display-buffer</span> <span class="nv">buffer</span><span class="p">)))</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">lunaryorn-ansible-doc</code> prompts for the name of an Ansible module, defaulting to
+the module at point, looks up the documentation with <code class="highlighter-rouge">ansible-doc</code>, and displays
+the resulting buffer.  <code class="highlighter-rouge">lunaryorn-ansible-modules</code> obtains a list of all modules
+to provide IDO-based completion in the prompt.  Since <code class="highlighter-rouge">ansible-doc --list</code> is
+quite slow, the list of modules is cached in a variable.</p>
+
+<p>Let’s bind this new command to a key:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'yaml-mode</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">define-key</span> <span class="nv">yaml-mode-map</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"C-c h a"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">lunaryorn-ansible-doc</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>Now we can conveniently lookup documentation with <kbd>C-c h a</kbd> in a YAML
+Mode buffer:</p>
+
+<figure>
+<img src="/images/ansible-doc.png" alt="Documentation of ansible apt module in Emacs buffer" />
+</figure>
+
+<p>In case you wonder, why the IDO prompt is vertical, that’s
+<a href="https://github.com/gempesaw/ido-vertical-mode.el">IDO Vertical Mode</a>.</p>

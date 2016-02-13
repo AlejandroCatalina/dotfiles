@@ -1,0 +1,39 @@
+<p><em>UPDATE: This post now contains obsolete information. Please
+read the new
+<a href="https://github.com/clojure/clojurescript/wiki/Quick-Start">ClojureScript Quick Start</a>
+instead</em></p>
+
+<p>As of ClojureScript 0.0-2505 support for Node.js has improved to the
+point where a browserless workflow is now quite productive. I now
+prefer this approach when developing libraries where dealing with the
+browser is a distraction. </p>
+
+<p>To show how fun and easy it is I&#39;ve updated my
+<a href="https://github.com/swannodette/mies-node-template">mies-node</a>
+Leiningen template. This template provides all the Node.js related
+boilerplate and includes source mapping support out of the box.</p>
+
+<p>You can try it out with the following commands:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein new mies-node hello-world
+cd hello-world
+lein npm install
+lein cljsbuild auto
+</code></pre></div>
+<p>This will start an incremental build process. You can run your
+script with:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">node run.js
+</code></pre></div>
+<p>If you would like to run your script on every change just edit your
+project.clj <code>:cljsbuild</code> <code>hello-world</code> entry to look like the
+following:</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">{</span><span class="ss">:id</span> <span class="s">&quot;hello-world&quot;</span>
+ <span class="ss">:source-paths</span> <span class="p">[</span><span class="s">&quot;src&quot;</span><span class="p">]</span>
+ <span class="ss">:notify-command</span> <span class="p">[</span><span class="s">&quot;node&quot;</span> <span class="s">&quot;run.js&quot;</span><span class="p">]</span> <span class="c1">;; &lt;&lt; ADD THIS</span>
+ <span class="ss">:compiler</span> <span class="p">{</span>
+   <span class="ss">:output-to</span> <span class="s">&quot;out/hello_world.js&quot;</span>
+   <span class="ss">:output-dir</span> <span class="s">&quot;out&quot;</span>
+   <span class="ss">:target</span> <span class="ss">:nodejs</span>
+   <span class="ss">:optimizations</span> <span class="ss">:none</span>
+   <span class="ss">:source-map</span> <span class="nv">true</span><span class="p">}}</span>
+</code></pre></div>
+<p>Have fun!</p>

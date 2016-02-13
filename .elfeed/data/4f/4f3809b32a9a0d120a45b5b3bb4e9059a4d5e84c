@@ -1,0 +1,70 @@
+<p><em>UPDATE: This post now contains obsolete information. Please
+read the new
+<a href="https://github.com/clojure/clojurescript/wiki/Quick-Start">ClojureScript Quick Start</a>
+instead</em></p>
+
+<p>When I first started programming Clojure circa 2008 startup time
+was a legitimate annoyance. Now, on modern hardware starting a bare
+Clojure REPL is in subsecond territory - not as snappy as <code>irb</code> or
+<code>python</code>, but no longer slow enough for me to care much.</p>
+
+<p>Folks who rely primarily on Leiningen however are less likely to have
+experienced the pleasant hardware transition of the past few years. No
+matter how you look at it Leiningen out of the box adds a considerable
+amount of overhead that cannot be blamed on Clojure itself. For
+ClojureScript this overhead can become somewhat unbearable due to
+the level of indirection. The following identifies three fairly
+straightforward steps to improving ClojureScript cold start compile
+times.</p>
+
+<p>First, beginning with ClojureScript 0.0-2511 you can now cache compiler
+analysis to disk, avoiding unneccessary reading and analysis. Just add
+a <code>:cache-analysis true</code> entry to your build configuration.</p>
+
+<p>This alone isn&#39;t enough to see big gains with respect to cold start
+compiles. Which brings us to a fairly obscure Leiningen feature, fast
+trampolines, as well as AOT compilation.</p>
+
+<p>If you set <code>LEIN_FAST_TRAMPOLINE=y</code> in your shell profile Lein
+will cache commands after the first run which side steps the need
+to construct an extra JVM. On my poor 2010 laptop avoiding the
+extra JVM accounts for a 2X speedup.</p>
+
+<p>I now have the following in my bash <code>.profile</code>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">LEIN_FAST_TRAMPOLINE=y
+export LEIN_FAST_TRAMPOLINE
+alias cljsbuild=&quot;lein trampoline cljsbuild $@&quot;
+</code></pre></div>
+<p>The next optimization is avoiding compiling ClojureScript itself.
+You can AOT ClojureScript locally in your project with the
+following:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein trampoline run -m clojure.main
+user=&gt; (compile &#39;cljs.closure)
+user=&gt; (compile &#39;cljs.core)
+</code></pre></div>
+<p>Notice that <code>cljs.core</code> is compiled separately. This is due to the
+circular nature of the macros file - it depends on the analyzer [1].</p>
+
+<p>This will AOT ClojureScript into <code>target/classes</code>. Just add this
+directory to your <code>:source-paths</code> in your <code>project.clj</code>. Note
+that if you upgrade ClojureScript you will want to clear
+<code>target/classes</code> and recompile.</p>
+
+<p>Your <code>cljsbuild</code> commands should now be quite a bit snappier.</p>
+
+<p>On my work machine (a 27inch iMac 3.5ghz i7) running <code>lein cljsbuild
+once</code> on a trivial project with no changes used to take around 5.5
+seconds. With the above modifications <code>cljsbuild</code> takes around 1.7
+seconds. For kicks I tried the Clojure 1.7.0 <strong>fastload</strong> branch and
+that brings <code>cljsbuild once</code> down to 1 second. That&#39;s a 5X performance
+boost - I think everyone using Lein would be quite happy for it to
+start 5X faster.</p>
+
+<p>Certainly more can and still needs to be done in the ClojureScript
+compiler itself but these steps eliminate the non-essential overheads.</p>
+
+<p>[1]: This detail was not in the original post. I noticed that nearly
+a second was still mysteriously being lost, however I was unable to
+isolate the source until I gave <a href="http://yourkit.com">YourKit</a> a go.
+<code>cljs.analyzer/load-core</code> appeared and the problem became clear, we
+were still compiling 1700 lines of Clojure on the fly.</p>

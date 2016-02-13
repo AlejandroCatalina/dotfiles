@@ -1,0 +1,28 @@
+<div id="outline-container-1" class="outline-2"><div class="outline-text-2" id="text-1"><p><a href="http://emacs-fu.blogspot.com/2009/04/elpa.html">Ages ago</a> we discussed <a href="http://tromey.com/elpa/">ELPA</a>, the emacs packaging system. It allows you to<br />
+browse through an online repository of emacs packages and install, uninstall<br />
+and upgrade them, all from within the emacs comfort zone (menu:<br />
+<code>Options/Manage Emacs Packages</code>).<br />
+</p><p>Emacs 24.1 (a <a href="http://article.gmane.org/gmane.emacs.devel/144290">pretest</a> is available) will include a version of ELPA --<br />
+<code>package.el</code>; the version included with emacs 24 supports multiple<br />
+archives. The <i>official</i> archive is the one provided by GNU, then there is<br />
+the current one for ELPA, but there's now a third one available: <a href="http://marmalade-repo.org/">Marmalade</a>.<br />
+</p><p>Marmelade ('<i>Spreadable Elisp</i>') offers a very easy way for developers to<br />
+make their packages available to emacs users, and an even easier way for<br />
+users to test out interesting packages.<br />
+</p><p>To use <i>all</i> available package repositories (GNU, ELPA and Marmalade), add<br />
+the following snippet to your <code>.emacs</code>:<br />
+</p><pre class="src src-emacs-lisp">(<span style="color: #8ac6f2; font-weight: bold;">setq</span> package-archives '((<span style="color: #95e454;">"ELPA"</span> . <span style="color: #95e454;">"http://tromey.com/elpa/"</span>) 
+                          (<span style="color: #95e454;">"gnu"</span> . <span style="color: #95e454;">"http://elpa.gnu.org/packages/"</span>)
+                          (<span style="color: #95e454;">"marmalade"</span> . <span style="color: #95e454;">"http://marmalade-repo.org/packages/"</span>))<span style="color: #ccaa8f; background-color: #332323; font-weight: bold;">)</span>
+</pre><p>This works out-of-the-box for Emacs 24; for Emacs 23, you'll need the newer<br />
+<code>package.el</code>, which you can get from the <a href="http://bzr.savannah.gnu.org/lh/emacs/trunk/annotate/head:/lisp/emacs-lisp/package.el">emacs 24 repo</a> (if necessary, remove<br />
+the old <code>package.el</code> first).<br />
+</p><div class="separator" style="clear: both; text-align: center;"><a href="http://2.bp.blogspot.com/-eP7xexj9Agw/Tsqz16Y60lI/AAAAAAAAAmo/4AYCpqLXcgg/s1600/package.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="297" width="320" src="http://2.bp.blogspot.com/-eP7xexj9Agw/Tsqz16Y60lI/AAAAAAAAAmo/4AYCpqLXcgg/s320/package.png" /></a></div><p>Currently, there are <b>870</b> packages listed in the three repositories &ndash; a lot of<br />
+toys to play with! In fact, it is already getting quite hard to find what<br />
+you're looking for; a bit more structured way (maybe using categories) would<br />
+be useful. Also, a bit more information than the one-line description would<br />
+be very useful.<br />
+</p><p>Nevertheless, it's a great addition to emacs, which will make it much easier<br />
+to play with packages &ndash; without even having to read the installation<br />
+instructions.<br />
+</p></div></div>

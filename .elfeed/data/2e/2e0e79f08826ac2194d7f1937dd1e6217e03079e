@@ -1,0 +1,119 @@
+<p>Some time ago on my old blog I showed the simply typed lambda calculus
+in core.logic with no explanation based on some
+<a href="http://stackoverflow.com/questions/3702855/typing-the-y-combinator">Prolog code</a>
+I found on StackOverflow. I&#39;d like to revisit that meager post with a
+much more detailed exposition of the ideas behind that code. I
+recommend setting up <a href="">core.logic</a> with <a href="http://clojure.org">Clojure</a>
+or $\alpha$Kanren with your favorite Scheme or Scheme-like (I like
+<a href="http://scheme.com">Petite Chez</a> and <a href="http://racket-lang.org">Racket</a>)
+so that you can follow along where relevant.</p>
+
+<p>Thanks to <a href="http://github.com/namin">Nada Amin&#39;s</a> work, core.logic now
+supports <a href="http://arxiv.org/abs/cs/0609062">Nominal Logic Programming</a>
+(Cheney &amp; Urban). Now that may sound scary or esoteric to the working
+programmer - but I&#39;d like to show in the next series of posts how fun
+Nominal Logic Programming can be.</p>
+
+<p>I first encountered Nominal Logic Programming in Will Byrd&#39;s
+excellent
+<a href="https://scholarworks.iu.edu/dspace/bitstream/handle/2022/8777/Byrd_indiana_0093A_10344.pdf">dissertation</a>
+on <a href="http://minikanren.org">miniKanren</a>. Will, being a proper computer
+scientist and expecting (reasonably) that the dissertation would be read by
+other proper computer scientists, simply references the Cheney &amp;
+Urban work. Being an undisciplined not computer scientist, I didn&#39;t
+bother to follow the reference so the section
+on $\alpha$Kanren largely went over my head at the time.</p>
+
+<p>It wasn&#39;t until after Nada Amin started work on adding $\alpha$Kanren
+capabilities to core.logic that I bothered to read the Cheney &amp; Urban
+paper. What I found was an incredibly powerful tool for informal
+reasoning about theoretical computer science. For me it made
+theoretical computer science tangible, and I hope these series of posts
+can do the same for the reader.</p>
+
+<p>I would like to show how we can take the typing rules for the simply
+typed lambda calculus and encode them directly into a program. Once
+done, we will also have a <strong>type inferencer</strong> as well as <strong>term
+inhabitation</strong>. Don&#39;t worry if you don&#39;t know what these words mean
+yet, we&#39;ll get to them. If you&#39;ve ever seen
+<a href="http://www.infoq.com/presentations/miniKanren">Dan &amp; Will do one of their presentations on miniKanren</a>
+these posts will cover similar territory but at a much slower pace.</p>
+
+<p>What follows are the typing rules for the simply typed lambda
+calculus. Don&#39;t be put off by the notation! We&#39;ll explain each typing
+rule. You&#39;ll see that the notation allows computer scientists to
+succinctly communicate ideas - a way to &quot;see&quot; the code if you will.</p>
+
+<p>Without further ado:</p>
+
+<div>
+$$\frac{x: \tau \in \Gamma}{\Gamma \vdash x: \tau}\rlap{(1)}$$
+</div>
+
+<div>
+$$\frac{\Gamma \vdash e : \tau \to \tau' \qquad \Gamma \vdash e' :
+\tau}{\Gamma \vdash e \space e' : \tau'}\rlap{(2)}$$
+</div>
+
+<div>
+$$\frac{\Gamma, x:\tau \vdash e:\tau' \qquad (x \notin
+Dom(\Gamma))}{\Gamma \vdash \lambda x.e : \tau \to \tau'}\rlap{(3)}$$
+</div>
+
+<p>$(1)$ simply states that if some var $x$ with type $\tau$ exists in the
+type context $\Gamma$, then $\Gamma$ implies that $x$ has the type
+$\tau$. Clearly then $\Gamma$ will be represented by some associative
+data structure that maps vars to their types. We can and will
+represent the type context as a list of pairs.</p>
+
+<p>$(2)$ states that if some valid expression $e$ in our language has the
+type $\tau \to \tau&#39;$ (arrow types are functions!) and some valid
+expression $e&#39;$ has the type $\tau$ then the result of the application
+of $e$ to $e&#39;$ has the type $\tau&#39;$. We could imagine writing a
+function $\mathtt{even?}$, clearly this function has type
+$\mathtt{Int} \to \mathtt{Bool}$. So if we pass $\mathtt{2}$ to
+$\mathtt{even?}$ we know we&#39;re going to get $\mathtt{True}$ or
+$\mathtt{False}$ back.</p>
+
+<p>Finally $(3)$ states that if the var $x$ (which has type $\tau$) is
+not already in $\Gamma$, that is, it is <strong>free</strong>, and we have some
+expression $e$ of type $\tau&#39;$ then the expression $\lambda x . e$ has
+the type $\tau \to \tau&#39;$. Remember $\lambda$ here just denotes a
+function which takes one argument $x$ and whose body is some
+expression $e$ in our language. You may have noticed we haven&#39;t
+talked precisely about what valid expressions are in our language,
+we&#39;ll talk about this in a later post.</p>
+
+<p>You may be scratching your head at the term <strong>free</strong>. Every working
+programmer has an intuitive notion of <strong>scope</strong>, regardless of the particular
+scoping rules a programming language may have. In many popular
+languages these days, it&#39;s understood that the arguments to a method
+or function are <strong>bound</strong> within the body or method of the
+function.</p>
+
+<p>To drive the point home a little more here is a snippet of JavaScript
+illustrating the idea:</p>
+
+<pre>
+// x is free in this function
+function() {
+  return x;
+}
+ 
+// x is bound in this function
+function(x) {
+  return x + 1;
+}
+</pre>
+
+<p>Hopefully this makes $(3)$ more clear.</p>
+
+<p>So $\lambda x . e$ is a subtle point! Not only does it communicate the
+notion of a function, it also communicates that $x$ is <strong>bound</strong> in the
+expression $e$. This is essential information which we will need to
+handle properly and we&#39;ll see how Nominal Logic Programming gives us
+the tools for doing so.</p>
+
+<p>Hopefully this post has honed your informal understanding of the
+typing rules for the simply typed lambda calculus. Stay tuned, the
+real fun is yet to come!</p>

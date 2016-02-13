@@ -1,0 +1,17 @@
+<div class="date">20 Feb 2015</div>
+
+    <p>
+    In Emacs, a <i>key sequence</i> is special key binding that uses multiple
+    keys in a series. Since they require more effort to type, a sequence
+    is chosen for functions that interrupt the normal editing flow.
+    </p>
+
+    <p>
+    Let’s explore some code associated with key sequences as well as
+    write a macro to help make these more palatable.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Emacs/lists-and-key-sequences.html">Read more...</a>
+    </p>
+    

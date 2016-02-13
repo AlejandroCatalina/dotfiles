@@ -1,0 +1,8 @@
+<div class="date">10 Apr 2015</div>
+
+    <p>
+    While I seldom leave Emacs, I do dabble on the shell from time to
+    time, and many colleagues ask about my terminal usage with <code>tmux</code>,
+    so I present my very-opinionated <a href="http://www.howardism.org/Technical/Linux/tmux.html">Getting Started Guide to TMux</a>.
+    </p>
+    

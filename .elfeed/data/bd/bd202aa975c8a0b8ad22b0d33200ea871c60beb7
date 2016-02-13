@@ -1,0 +1,20 @@
+<p>Without a doubt <a href="http://www.lighttable.com/">Light Table</a> is now one
+of the most popular
+<a href="http://github.com/clojure/clojurescript">ClojureScript</a> applications
+in the world. It&#39;s also likely one of the most complex at around
+11,000 lines of ClojureScript.</p>
+
+<p>I think Light Tablers looking to extend their shiny new environment
+might first consider reaching for JavaScript. I challenge them to give
+ClojureScript a very serious consideration before doing so.</p>
+
+<p>To encourage users of Light Table, Clojure, and ClojureScript to get
+to know their tool better, I&#39;ve put together an
+<a href="http://github.com/swannodette/hello-cljsc">interactive guide to the ClojureScript analyzer and compiler</a>.</p>
+
+<p>I think exploring a compiler should always be this simple and
+interactive.</p>
+
+<p>Enjoy.</p>
+
+<p><img style="border: 1px solid #000" src="/assets/images/lt.jpg" /></p>

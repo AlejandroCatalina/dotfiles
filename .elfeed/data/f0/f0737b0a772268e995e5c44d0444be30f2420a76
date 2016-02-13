@@ -1,0 +1,213 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>  
+  I have discussed the Wanderlust e-mail client a <a href="http://emacs-fu.blogspot.com/search/label/wanderlust">couple of times</a> already. I'm
+  still using it, so I keep on learning new tricks. Even though there has been
+  quite a bit of action in the competing <a href="http://www.gnus.org/">gnus</a> e-mail client, for my particular
+  use-case, Wanderlust is still the best option.
+</p>
+<p>
+  'My particular use-case' consists of storing my mail in Maildirs, which I fill
+  with either <a href="https://github.com/nicolas33/offlineimap">offlineimap</a> (which has fortunately found a new maintainer) or
+  <a href="http://fetchmail.berlios.de/">fetchmail</a>.
+</p>
+
+</div>
+
+<div id="outline-container-1_1" class="outline-3">
+<h3 id="sec-1_1">mu </h3>
+<div class="outline-text-3" id="text-1_1">
+
+
+<p>
+   When dealing with e-mail, one particularly important feature for me is the
+   ability to <i>search</i> my messages. In fact, it's so important for me that I
+   wrote some software to do this for me; the software is called <a href="http://www.djcbsoftware.nl/code/mu">mu</a>; it indexes
+   the messages in my Maildirs, and then allows for searching them using
+   queries, based on message contents, headers, or other message properties.
+</p>
+<p>
+   <code>mu</code> works through a command-line interface, although there is an
+   experimental GUI available as well. The command-line interface makes it
+   possible to hook <code>mu</code> up with various mail-clients, such as <code>mutt</code>, or
+   Wanderlust. Some Linux distributions ship <code>mu</code>, but since the versions they
+   ship are often a bit outdated, I recommend building it yourself from the
+   sources linked on the <code>mu</code> website. The process is fairly straightforward;
+   and there is plenty of documentation in the form of man pages.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1_2" class="outline-3">
+<h3 id="sec-1_2">mu and wanderlust </h3>
+<div class="outline-text-3" id="text-1_2">
+
+
+<p>
+   I've been combining <code>mu</code> and <code>wanderlust</code> for a while (see <b>mu and    wanderlust - the old way</b>, below), but this week <i>Sam B.</i> on the <code>mu</code> mailing
+   list showed a way to do so in a much more elegant way - using <i>virtual</i> or
+   <i>query</i> folders.
+</p>
+<p>
+   How does this work? Well, after installing <code>mu</code>, add the following to your
+   Wanderlust setup file (<code>~/.wl</code> or it's moral equivalent &ndash; see the older
+   Wanderlust posts for the details):
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">require</span> '<span class="org-constant">elmo-search</span>)
+(elmo-search-register-engine
+    'mu 'local-file
+    <span class="org-builtin">:prog</span> <span class="org-string">"/usr/local/bin/mu"</span> <span class="org-comment-delimiter">;; </span><span class="org-comment">or wherever you've installed it
+</span>    <span class="org-builtin">:args</span> '(<span class="org-string">"find"</span> pattern <span class="org-string">"--fields"</span> <span class="org-string">"l"</span>) <span class="org-builtin">:charset</span> 'utf-8)
+
+(<span class="org-keyword">setq</span> elmo-search-default-engine 'mu)
+<span class="org-comment-delimiter">;; </span><span class="org-comment">for when you type "g" in folder or summary.
+</span>(<span class="org-keyword">setq</span> wl-default-spec <span class="org-string">"["</span>)
+
+</pre>
+
+
+
+<p>
+   So, to start with the last part, whenever you type <code>g</code> in folder or summary,
+   in the mode-line you will get something like <code>Folder name (.inbox): [</code>. Now
+   simply type your <code>mu</code> search expression and press Enter, and <code>wanderlust</code>
+   opens a (temporary) folder with the search results. Brilliant!
+</p>
+<p>
+   Next, to add virtual folders for searches you do often, simply add some
+   folder specifications like the following to your <code>.folders</code> file (again,
+   check the older Wanderlust posts if you're not familiar with folders-file):
+</p>
+
+
+
+<pre class="example">VFolders {
+# message I received today
+  [date:today..now]!mu  "Today"
+
+# messages bigger than 1Mb  
+  [size:1m..100m]!mu    "Big"
+
+# signed messages i got in 2010 related to emacs
+  [date:2010..2011 flag:signed emacs]!mu "Signed-Emacs2010"
+
+# unread messages
+  [not flag:seen]!mu    "Unread"
+# or (for mu  &gt;= 0.9.4):
+# [flag:unread]! mu      "Unread"
+}
+</pre>
+
+
+
+<p>
+   After this, restart Wanderlust, and there you go! Wanderlust will display
+   your brand new virtual folders with an icon that looks like a little whale.
+</p>
+<p>
+   You can put arbitrary <code>mu</code> search expressions between the <code>[]</code>, matching
+   whatever is useful in a certain case. Check the <code>mu</code> documentation to see how
+   to do this.
+</p>
+<p>     
+   Note, the messages you get in these virtual folders are <i>links to</i> the
+   original messages. In practice, this means that changes you make to the links
+   do no affect the originals &ndash; if you delete a link you're not deleting the
+   message.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1_3" class="outline-3">
+<h3 id="sec-1_3">mu and wanderlust - the old way </h3>
+<div class="outline-text-3" id="text-1_3">
+
+
+<p>
+   This discussion would not complete without a description of the <i>old</i> way I
+   used search. This method may still be useful for integrating <code>mu</code> with other
+   clients such as <code>mutt</code>.
+</p>
+<p>
+   What I've been using for a while is a (in retrospect) rather clumsy way to
+   integrate message searches with Wanderlust: based on the results of a query,
+   I would create some special Maildir and fill it with symbolic links to the
+   matched messages, and the visit this special Maildir with Wanderlust. I'll
+   include the code here to contrast it with the more elegant solution that we
+   saw before, but also because the approach taken might be easily adapted for
+   other mail-clients.
+</p>
+
+
+
+<pre class="src src-emacs-lisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">search using mutt
+</span>(<span class="org-keyword">defvar</span> <span class="org-variable-name">mu-wl-mu-program</span>     <span class="org-string">"/usr/local/bin/mu"</span>)
+(<span class="org-keyword">defvar</span> <span class="org-variable-name">mu-wl-search-folder</span>  <span class="org-string">"search"</span>)
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">mu-wl-search</span> ()
+  <span class="org-doc">"search for messages with `</span><span class="org-doc"><span class="org-constant">mu</span></span><span class="org-doc">', and jump to the results"</span>
+   (<span class="org-keyword">let*</span> ((muexpr (read-string <span class="org-string">"Find messages matching: "</span>))
+          (sfldr  (concat elmo-maildir-folder-path <span class="org-string">"/"</span>
+                    mu-wl-search-folder))
+          (cmdline (concat mu-wl-mu-program <span class="org-string">" find "</span>
+                      <span class="org-string">"--clearlinks --format=links --linksdir='"</span> sfldr <span class="org-string">"' "</span>
+                     muexpr))    
+          (rv (shell-command cmdline)))
+    (<span class="org-keyword">cond</span>
+      ((= rv 0)  (message <span class="org-string">"Query succeeded"</span>))
+      ((= rv 2)  (message <span class="org-string">"No matches found"</span>))
+      (t (message <span class="org-string">"Error running query"</span>)))
+  (= rv 0)))
+
+(<span class="org-keyword">defun</span> <span class="org-function-name">mu-wl-search-and-goto</span> ()
+  <span class="org-doc">"search and jump to the folder with the results"</span>
+  (interactive)
+  (<span class="org-keyword">when</span> (mu-wl-search)
+    (wl-summary-goto-folder-subr
+      (concat <span class="org-string">"."</span> mu-wl-search-folder)
+      'force-update nil nil t)
+    (wl-summary-sort-by-date)))
+
+<span class="org-comment-delimiter">;; </span><span class="org-comment">search by pressing 'Q'
+</span>(define-key wl-summary-mode-map (kbd <span class="org-string">"Q"</span>) <span class="org-comment-delimiter">;; </span><span class="org-comment">=&gt; query
+</span>  '(<span class="org-keyword">lambda</span>()(interactive)(mu-wl-search-and-goto))) 
+(define-key wl-folder-mode-map (kbd <span class="org-string">"Q"</span>) <span class="org-comment-delimiter">;; </span><span class="org-comment">=&gt; query
+</span>  '(<span class="org-keyword">lambda</span>()(interactive)(mu-wl-search-and-goto))) 
+</pre>
+
+
+
+<p>   
+   After installing <code>mu</code> and putting the above in your <code>wanderlust</code> startup
+   file, you should be able to search by pressing <code>Q</code>. The <code>mu</code> documentation
+   has an example for <code>mutt</code> as well.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1_4" class="outline-3">
+<h3 id="sec-1_4">conclusion </h3>
+<div class="outline-text-3" id="text-1_4">
+
+
+<p>
+   It's straightforward to integrate advanced searching capabilities to
+   Wanderlust using <code>mu</code>, and thanks to Sam B., it's gotten a lot easier! The
+   second (old) approach may be useful as 'inspiration' for use in other e-mail
+   clients as well, if they do not provide the kind of hooks that the first
+   solution needs.
+</p>
+
+
+
+</div>
+</div>
+</div>

@@ -1,0 +1,254 @@
+<p>While none of the ideas in
+<a href="http://github.com/clojure/core.async">core.async</a> are new,
+understanding how to solve problems with
+<a href="http://en.wikipedia.org/wiki/Communicating_sequential_processes">CSP</a>
+is simply not as well documented as using plain callbacks or
+<a href="http://promises-aplus.github.io/promises-spec/">Promises</a>. My
+previous posts have mostly explored fairly sophisticated uses of
+<strong>core.async</strong>, this post instead takes the form of a very basic
+tutorial on using <strong>core.async</strong> with
+<a href="http://github.com/clojure/clojurescript">ClojureScript</a>.</p>
+
+<p>We&#39;re going to demonstrate all the steps required to build a simple
+search interface and we&#39;ll see how <strong>core.async</strong> provides some unique
+solutions to problems common to client side user interface
+programming.</p>
+
+<p>I recommend using Google Chrome so that you can get good
+<a href="http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/">source map</a>
+support. You don&#39;t need Emacs to have fun with
+Lisp. <a href="http://www.sublimetext.com/2">SublimeText 2</a> is pretty nice
+these days, I recommend installing the
+<a href="http://github.com/odyssomay/paredit">paredit</a> and
+<a href="http://github.com/odyssomay/sublime-lispindent">lispindent</a> packages
+via <a href="http://sublime.wbond.net/installation">Sublime Package Control</a>.</p>
+
+<p>If you have <a href="http://github.com/technomancy/leiningen">Leiningen</a>
+installed you can run the following at the command line in whatever
+directory you like:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein new mies async-tut1
+</code></pre></div>
+<p>This will create a template project so you don&#39;t have to worry about
+configuring <code>lein-cljsbuild</code> yourself.</p>
+
+<p>Unless otherwise noted files are relative to the project directory.</p>
+
+<p>Change the <code>:dependencies</code> in the <code>project.clj</code> file to look like the following:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">:dependencies [[org.clojure/clojure &quot;1.5.1&quot;]
+               [org.clojure/clojurescript &quot;0.0-2030&quot;]
+               [org.clojure/core.async &quot;0.1.256.0-1bf8cf-alpha&quot;]] ;; ADD
+</code></pre></div>
+<p>In the project directory run the following to start the auto compile
+process:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein cljsbuild auto async-tut1
+</code></pre></div>
+<p>First off we want to add the following markup to <code>index.html</code> before
+the first script tag which loads <code>goog/base.js</code>:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">&quot;query&quot;</span> <span class="na">type=</span><span class="s">&quot;text&quot;</span><span class="nt">&gt;&lt;/input&gt;</span>
+<span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;search&quot;</span><span class="nt">&gt;</span>Search<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;results&quot;</span><span class="nt">&gt;&lt;/p&gt;</span>
+</code></pre></div>
+<p>Open <code>index.html</code> in Chrome and make sure you see an input field and a text
+button.</p>
+
+<p>Now we want to write some code so that we can interact with the
+DOM. We want our code to be resilient to browser differences so we&#39;ll
+use Google Closure to abstract this stuff away as we might with jQuery.</p>
+
+<p>We require <code>goog.dom</code> and give it a less annoying alias.
+Change the <code>ns</code> form in <code>src/async_tut1/core.cljs</code> to the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">async-tut1.core</span>
+  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">goog.dom</span> <span class="ss">:as</span> <span class="nv">dom</span><span class="p">]))</span>
+</code></pre></div>
+<p>We want to confirm that this will work so let&#39;s change the
+<code>console.log</code> expression so it looks this instead:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="nf">.log</span> <span class="nv">js/console</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;query&quot;</span><span class="p">))</span>
+</code></pre></div>
+<p>Save the file and it should be recompiled instantly. We should be able
+refresh the browser and see that a DOM element got printed in the
+JavaScript Console (<strong>View &gt; Developer &gt; JavaScript Console</strong>). Remove
+this little test snippet after you&#39;ve confirmed it works.</p>
+
+<p>So far so good.</p>
+
+<p>Now we want a way to deal with the user clicking the mouse. Instead of
+just setting up a callback on the button directly we&#39;re going to make
+the button put the click event onto a <strong>core.async</strong> <em>channel</em>.</p>
+
+<p>Let&#39;s write a little helper called <code>listen</code> that will return a channel
+of the events for a particular element and particular event
+type. We need to require <strong>core.async</strong> macros and functions. Our
+<code>ns</code> should now look like the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">async-tut1.core</span>
+  <span class="p">(</span><span class="ss">:require-macros</span> <span class="p">[</span><span class="nv">cljs.core.async.macros</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">go</span><span class="p">]])</span>
+  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">goog.dom</span> <span class="ss">:as</span> <span class="nv">dom</span><span class="p">]</span>
+            <span class="p">[</span><span class="nv">goog.events</span> <span class="ss">:as</span> <span class="nv">events</span><span class="p">]</span>
+            <span class="p">[</span><span class="nv">cljs.core.async</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">put!</span> <span class="nv">chan</span> <span class="nv">&lt;!</span><span class="p">]]))</span>
+</code></pre></div>
+<p>Again we want to abstract away browser quirks so we use <code>goog.events</code>
+for dealing with that. We include only the <strong>core.async</strong> macros and
+functions that we intend to use.</p>
+
+<p>Now we can write our <code>listen</code> fn, it looks like this:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">listen</span> <span class="p">[</span><span class="nv">el</span> <span class="nv">type</span><span class="p">]</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">out</span> <span class="p">(</span><span class="nf">chan</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nf">events/listen</span> <span class="nv">el</span> <span class="nv">type</span>
+      <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">e</span><span class="p">]</span> <span class="p">(</span><span class="nf">put!</span> <span class="nv">out</span> <span class="nv">e</span><span class="p">)))</span>
+    <span class="nv">out</span><span class="p">))</span>
+</code></pre></div>
+<p>We want to verify our function works as advertised so we check it with
+following snippet of code at the end of the file:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">clicks</span> <span class="p">(</span><span class="nf">listen</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;search&quot;</span><span class="p">)</span> <span class="s">&quot;click&quot;</span><span class="p">)]</span>
+  <span class="p">(</span><span class="nf">go</span> <span class="p">(</span><span class="nf">while</span> <span class="nv">true</span>
+        <span class="p">(</span><span class="nf">.log</span> <span class="nv">js/console</span> <span class="p">(</span><span class="nf">&lt;!</span> <span class="nv">clicks</span><span class="p">)))))</span>
+</code></pre></div>
+<p>Note that we&#39;ve created what appears to be an infinite loop here, but
+actually it&#39;s a little state machine. If there are no events to read
+from the click channel, the go block will be suspended.</p>
+
+<p>Let&#39;s search Wikipedia. Define the basic URL we are going to hit via
+<a href="http://en.wikipedia.org/wiki/JSONP">JSONP</a>, put this right after the
+<code>ns</code> form.</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="k">def </span><span class="nv">wiki-search-url</span>
+  <span class="s">&quot;http://en.wikipedia.org/w/api.php?action=opensearch&amp;format=json&amp;search=&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Now we want to make a function that returns a channel for JSONP
+results.</p>
+
+<p>We again reach for Google Closure to avoid browser quirks. Make your
+<code>ns</code> form looking like the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">async-tut1.core</span>
+  <span class="p">(</span><span class="ss">:require-macros</span> <span class="p">[</span><span class="nv">cljs.core.async.macros</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">go</span><span class="p">]])</span>
+  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">goog.dom</span> <span class="ss">:as</span> <span class="nv">dom</span><span class="p">]</span>
+            <span class="p">[</span><span class="nv">goog.events</span> <span class="ss">:as</span> <span class="nv">events</span><span class="p">]</span>
+            <span class="p">[</span><span class="nv">cljs.core.async</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">&lt;!</span> <span class="nv">put!</span> <span class="nv">chan</span><span class="p">]])</span>
+  <span class="p">(</span><span class="ss">:import</span> <span class="p">[</span><span class="nv">goog.net</span> <span class="nv">Jsonp</span><span class="p">]</span>
+           <span class="p">[</span><span class="nv">goog</span> <span class="nv">Uri</span><span class="p">]))</span>
+</code></pre></div>
+<p>Here we use <code>:import</code> so that we can use short names for the
+Google Closure constructors.</p>
+
+<blockquote>
+<p><strong>Note:</strong> <code>:import</code> is only for this use case, you never use it with
+ClojureScript libraries</p>
+</blockquote>
+
+<p>Our JSONP helper looks like the following (put it after <code>listen</code> in
+the file):</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">jsonp</span> <span class="p">[</span><span class="nv">uri</span><span class="p">]</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">out</span> <span class="p">(</span><span class="nf">chan</span><span class="p">)</span>
+        <span class="nv">req</span> <span class="p">(</span><span class="nf">Jsonp.</span> <span class="p">(</span><span class="nf">Uri.</span> <span class="nv">uri</span><span class="p">))]</span>
+    <span class="p">(</span><span class="nf">.send</span> <span class="nv">req</span> <span class="nv">nil</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">res</span><span class="p">]</span> <span class="p">(</span><span class="nf">put!</span> <span class="nv">out</span> <span class="nv">res</span><span class="p">)))</span>
+    <span class="nv">out</span><span class="p">))</span>
+</code></pre></div>
+<p>This looks pretty straight forward, very similar to <code>listen</code>. Let&#39;s
+write a simple function for constructing a query url:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">query-url</span> <span class="p">[</span><span class="nv">q</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">str </span><span class="nv">wiki-search-url</span> <span class="nv">q</span><span class="p">))</span>
+</code></pre></div>
+<p>Again lets test this by writing a snippet of code at the bottom of the file.</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="nf">go</span> <span class="p">(</span><span class="nf">.log</span> <span class="nv">js/console</span> <span class="p">(</span><span class="nf">&lt;!</span> <span class="p">(</span><span class="nf">jsonp</span> <span class="p">(</span><span class="nf">query-url</span> <span class="s">&quot;cats&quot;</span><span class="p">)))))</span>
+</code></pre></div>
+<p>In the JavaScript Console we should see we got an array of JSON data
+back from Wikipedia. Success!</p>
+
+<p>It&#39;s time to hook everything together. Remove the test snippet and
+replace it with the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">user-query</span> <span class="p">[]</span>
+  <span class="p">(</span><span class="nf">.-value</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;query&quot;</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">init</span> <span class="p">[]</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">clicks</span> <span class="p">(</span><span class="nf">listen</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;search&quot;</span><span class="p">)</span> <span class="s">&quot;click&quot;</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nf">go</span> <span class="p">(</span><span class="nf">while</span> <span class="nv">true</span>
+          <span class="p">(</span><span class="nf">&lt;!</span> <span class="nv">clicks</span><span class="p">)</span>
+          <span class="p">(</span><span class="nf">.log</span> <span class="nv">js/console</span> <span class="p">(</span><span class="nf">&lt;!</span> <span class="p">(</span><span class="nf">jsonp</span> <span class="p">(</span><span class="nf">query-url</span> <span class="p">(</span><span class="nf">user-query</span><span class="p">)))))))))</span>
+
+<span class="p">(</span><span class="nf">init</span><span class="p">)</span>
+</code></pre></div>
+<p>Try it now, you should be able to write a query in the input field,
+click &quot;Search&quot;, and see results in the JavaScript Console.</p>
+
+<p>If you&#39;ve done any JavaScript programming this way of writing the code
+should be somewhat surprising - we don&#39;t need a callback to work with
+button clicks!</p>
+
+<p>Think a bit how this work. When the page loads, <code>init</code> will run, the
+<code>go</code> block will try to read from <code>clicks</code>, but there will be nothing
+to read so the <code>go</code> block becomes suspended. Only when you click on the
+button can it proceed at which point we&#39;ll run the query and loop
+around. The code reads exactly how it would if you didn&#39;t have to
+consider asynchrony!</p>
+
+<p>Instead of printing to the console we would like to render the results
+to the page. Let&#39;s do that now, add the following before <code>init</code>:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">render-query</span> <span class="p">[</span><span class="nv">results</span><span class="p">]</span>
+  <span class="p">(</span><span class="nf">str</span>
+    <span class="s">&quot;&lt;ul&gt;&quot;</span>
+    <span class="p">(</span><span class="nb">apply </span><span class="nv">str</span>
+      <span class="p">(</span><span class="nb">for </span><span class="p">[</span><span class="nv">result</span> <span class="nv">results</span><span class="p">]</span>
+        <span class="p">(</span><span class="nb">str </span><span class="s">&quot;&lt;li&gt;&quot;</span> <span class="nv">result</span> <span class="s">&quot;&lt;/li&gt;&quot;</span><span class="p">)))</span>
+    <span class="s">&quot;&lt;/ul&gt;&quot;</span><span class="p">))</span>
+</code></pre></div>
+<p>The usual string concatenation stuff - we use a list comprehension
+here just for fun.</p>
+
+<p>Now change <code>init</code> to look like the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">init</span> <span class="p">[]</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">clicks</span> <span class="p">(</span><span class="nf">listen</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;search&quot;</span><span class="p">)</span> <span class="s">&quot;click&quot;</span><span class="p">)</span>
+        <span class="nv">results-view</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;results&quot;</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nf">go</span> <span class="p">(</span><span class="nf">while</span> <span class="nv">true</span>
+          <span class="p">(</span><span class="nf">&lt;!</span> <span class="nv">clicks</span><span class="p">)</span>
+          <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">_</span> <span class="nv">results</span><span class="p">]</span> <span class="p">(</span><span class="nf">&lt;!</span> <span class="p">(</span><span class="nf">jsonp</span> <span class="p">(</span><span class="nf">query-url</span> <span class="p">(</span><span class="nf">user-query</span><span class="p">))))]</span>
+            <span class="p">(</span><span class="nf">set!</span> <span class="p">(</span><span class="nf">.-innerHTML</span> <span class="nv">results-view</span><span class="p">)</span> <span class="p">(</span><span class="nf">render-query</span> <span class="nv">results</span><span class="p">)))))))</span>
+</code></pre></div>
+<p>Hopefully this code at this point just makes sense. Notice how we can
+use destructuring on the JSON array of Wikipedia results.</p>
+
+<p>A beautiful succinct program! The complete listing follows:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">async-tut1.core</span>
+  <span class="p">(</span><span class="ss">:require-macros</span> <span class="p">[</span><span class="nv">cljs.core.async.macros</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">go</span><span class="p">]])</span>
+  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">goog.dom</span> <span class="ss">:as</span> <span class="nv">dom</span><span class="p">]</span>
+            <span class="p">[</span><span class="nv">goog.events</span> <span class="ss">:as</span> <span class="nv">events</span><span class="p">]</span>
+            <span class="p">[</span><span class="nv">cljs.core.async</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">&lt;!</span> <span class="nv">put!</span> <span class="nv">chan</span><span class="p">]])</span>
+  <span class="p">(</span><span class="ss">:import</span> <span class="p">[</span><span class="nv">goog.net</span> <span class="nv">Jsonp</span><span class="p">]</span>
+           <span class="p">[</span><span class="nv">goog</span> <span class="nv">Uri</span><span class="p">]))</span>
+
+<span class="p">(</span><span class="k">def </span><span class="nv">wiki-search-url</span>
+  <span class="s">&quot;http://en.wikipedia.org/w/api.php?action=opensearch&amp;format=json&amp;search=&quot;</span><span class="p">)</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">listen</span> <span class="p">[</span><span class="nv">el</span> <span class="nv">type</span><span class="p">]</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">out</span> <span class="p">(</span><span class="nf">chan</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nf">events/listen</span> <span class="nv">el</span> <span class="nv">type</span>
+      <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">e</span><span class="p">]</span> <span class="p">(</span><span class="nf">put!</span> <span class="nv">out</span> <span class="nv">e</span><span class="p">)))</span>
+    <span class="nv">out</span><span class="p">))</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">jsonp</span> <span class="p">[</span><span class="nv">uri</span><span class="p">]</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">out</span> <span class="p">(</span><span class="nf">chan</span><span class="p">)</span>
+        <span class="nv">req</span> <span class="p">(</span><span class="nf">Jsonp.</span> <span class="p">(</span><span class="nf">Uri.</span> <span class="nv">uri</span><span class="p">))]</span>
+    <span class="p">(</span><span class="nf">.send</span> <span class="nv">req</span> <span class="nv">nil</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">res</span><span class="p">]</span> <span class="p">(</span><span class="nf">put!</span> <span class="nv">out</span> <span class="nv">res</span><span class="p">)))</span>
+    <span class="nv">out</span><span class="p">))</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">query-url</span> <span class="p">[</span><span class="nv">q</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">str </span><span class="nv">wiki-search-url</span> <span class="nv">q</span><span class="p">))</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">user-query</span> <span class="p">[]</span>
+  <span class="p">(</span><span class="nf">.-value</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;query&quot;</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">render-query</span> <span class="p">[</span><span class="nv">results</span><span class="p">]</span>
+  <span class="p">(</span><span class="nf">str</span>
+    <span class="s">&quot;&lt;ul&gt;&quot;</span>
+    <span class="p">(</span><span class="nb">apply </span><span class="nv">str</span>
+      <span class="p">(</span><span class="nb">for </span><span class="p">[</span><span class="nv">result</span> <span class="nv">results</span><span class="p">]</span>
+        <span class="p">(</span><span class="nb">str </span><span class="s">&quot;&lt;li&gt;&quot;</span> <span class="nv">result</span> <span class="s">&quot;&lt;/li&gt;&quot;</span><span class="p">)))</span>
+    <span class="s">&quot;&lt;/ul&gt;&quot;</span><span class="p">))</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">init</span> <span class="p">[]</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">clicks</span> <span class="p">(</span><span class="nf">listen</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;search&quot;</span><span class="p">)</span> <span class="s">&quot;click&quot;</span><span class="p">)</span>
+        <span class="nv">results-view</span> <span class="p">(</span><span class="nf">dom/getElement</span> <span class="s">&quot;results&quot;</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nf">go</span> <span class="p">(</span><span class="nf">while</span> <span class="nv">true</span>
+          <span class="p">(</span><span class="nf">&lt;!</span> <span class="nv">clicks</span><span class="p">)</span>
+          <span class="p">(</span><span class="k">let </span><span class="p">[[</span><span class="nv">_</span> <span class="nv">results</span><span class="p">]</span> <span class="p">(</span><span class="nf">&lt;!</span> <span class="p">(</span><span class="nf">jsonp</span> <span class="p">(</span><span class="nf">query-url</span> <span class="p">(</span><span class="nf">user-query</span><span class="p">))))]</span>
+            <span class="p">(</span><span class="nf">set!</span> <span class="p">(</span><span class="nf">.-innerHTML</span> <span class="nv">results-view</span><span class="p">)</span> <span class="p">(</span><span class="nf">render-query</span> <span class="nv">results</span><span class="p">)))))))</span>
+
+<span class="p">(</span><span class="nf">init</span><span class="p">)</span>
+</code></pre></div>

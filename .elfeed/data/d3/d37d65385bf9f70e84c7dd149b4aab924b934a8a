@@ -1,0 +1,29 @@
+<p>When something fancy and new rears its head in tech, people tend to rant and
+rave about all of the new benefits you&rsquo;ll see. I&rsquo;m guilty of this myself. When
+designing systems, however, we&rsquo;re not concerned solely with the <em>benefits</em> of a
+given approach, but its <em>drawbacks</em>, too. &ldquo;Tradeoffs&rdquo; are not merely positives,
+but negatives, too. Being aware of what you gain <strong>and</strong> what you lose is
+critically important for making reasonable, informed decisions.</p>
+
+<p>And so we come to Docker: tremendous gains in productivity, repeatibility, what
+have you. <em>So, what&rsquo;s the catch?</em></p>
+
+<p>Where I find Docker lacking personally, is in how it inhibits
+<em>maintainability</em>&ndash;the ease by which a system is monitored, serviced, deployed,
+and updated. Now don&rsquo;t get me wrong, there are plenty of tools vying for
+attention in this space, it&rsquo;s just that they&rsquo;re all too complicated (right now). <em>Extra
+containers. Dynamic, distributed discovery.  Wild-west micro-tools. All
+ultimately leading to systems that are harder to understand, more difficult to
+change, and liable to break without warning.</em></p>
+
+<p>Coming back around to tradeoffs: it&rsquo;s not that the people building these
+groundbreaking tools are wrong&ndash;far from it. Rather, these tools trade
+<em>stability</em> for <em>innovation</em>. In my case, I&rsquo;m working in the touchier realm of
+financial transactions. This domain holds robustness and resilience in a high regard, and as
+such I will have to carefully consider if new Docker deployment techniques are
+<em>worth the risk</em></p>
+
+<p>That&rsquo;s the point of this micro-rant, really: consider your risks/expectations,
+and how they align with the tradeoffs of technologies under consideration. In
+the specific case of Docker, be aware of both benefits <em>and drawbacks</em> when it
+comes to your deployment environments.</p>

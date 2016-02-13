@@ -1,0 +1,164 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+<p>
+  Buffer-switching is one of those things I do all the time in Emacs. And it
+  should be quick and efficient, or it will break my 'flow'. There are many
+  ways to customize the buffer switching experience, and we already discussed
+  quite a few of those here: using <a href="http://emacs-fu.blogspot.com/2008/12/cycling-through-your-buffers-with-ctrl.html">Ctrl-Tab</a>, <a href="#APPT-Mordor-Scrum-2011-08-30-Tue-11-15-11-30-1w-http-emacs-fu.blogspot.com-2009-02-switching-buffers.html">iswitchb/ido</a>, <a href="http://emacs-fu.blogspot.com/2010/02/dealing-with-many-buffers-ibuffer.html">ibuffer</a>, the <a href="http://emacs-fu.blogspot.com/2010/07/navigating-through-files-and-buffers.html">lusty explorer</a> and others.
+</p>
+<p>
+  Some of those packages - <code>ido</code> and <code>lusty-explorer</code> - do not solely focus on
+  buffer-switching - they also let you open files using the same user
+  interface. But why stop at files and buffers - wouldn't it be nice if we
+  could quickly find just about <i>anything</i> quickly?
+</p>
+<p>
+  Indeed that would be nice - and there's a way to do just that - using the
+  aptly named <a href="http://www.emacswiki.org/emacs/Anything">anything</a> package. I was always a bit put off by this package due
+  to the screenshots (see link), but once I got over that, I've become a very
+  happy user.
+</p>
+<p>
+  Anyhow, what can <code>anything</code> find? I mentioned buffers and files, but it can
+  also find bookmarks, recently used files, <i>any</i> file on your system (using
+  <code>locate</code>), man-pages, info-pages, emacs-function/variables,
+  <code>FIXME</code>-comments, <code>org</code>-headlines, bbdb-contacts, google-suggests&hellip; and a
+  million other things. It can probably find your car keys, too.
+</p>
+<p>
+  Installation is pretty straightforward, using the git-repository:
+</p>
+
+
+
+<pre class="src src-sh">git clone git://repo.or.cz/anything-config.git
+</pre>
+
+
+<p>   
+   Then, go into the just-cloned directory and execute <code>make</code>. After that, add
+   to your <code>.emacs</code> (or <code>~/.emacs.d/init.el</code>):
+</p>
+
+
+
+<pre class="src src-emacs-lisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">path-to-anything is the path which has the 'anything' we just cloned</span>
+(add-to-list 'load-path <span class="org-string">"path-to-anything"</span>)
+(<span class="org-keyword">require</span> '<span class="org-constant">anything-config</span>)
+</pre>
+
+
+<p>
+   This will add a menu with various <code>anything</code>-commands, and a bunch of
+   key-bindings, starting with F5. Play around a bit with it, it's nice. The
+   results are shown in a little temporary buffer, and pressing <code>Tab</code> will let
+   you do (search-type dependent) actions on the matches - for example
+   <code>ediff</code> two buffers.
+</p>
+<p>
+   Of course, the <i>real</i> fun starts when we super-charge some of the normal
+   emacs functions with anything-based ones. Let's look at buffer
+   switching. Let's create an <code>anything</code>-based version, and assign it to <code>C-x    b</code>, the good-old <code>switch-to-buffer</code>.
+</p>
+<p>
+   The thing to consider is that while anything can find just about
+   <i>anything</i>, you (well, I) usually only want to search for a certain set of
+   things; when I want to switch to another buffer, I <i>don't</i> want to match
+   man-pages. Luckily, <code>anything</code> allows for making nifty function which use
+   certain subsets of the search sources. So for buffer switching, I have:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(global-set-key (kbd <span class="org-string">"C-x b"</span>)
+  (<span class="org-keyword">lambda</span>() (interactive)
+    (anything
+     <span class="org-builtin">:prompt</span> <span class="org-string">"Switch to: "</span>
+     <span class="org-builtin">:candidate-number-limit</span> 10                 <span class="org-comment-delimiter">;; </span><span class="org-comment">up to 10 of each </span>
+     <span class="org-builtin">:sources</span>
+     '( anything-c-source-buffers               <span class="org-comment-delimiter">;; </span><span class="org-comment">buffers </span>
+        anything-c-source-recentf               <span class="org-comment-delimiter">;; </span><span class="org-comment">recent files </span>
+        anything-c-source-bookmarks             <span class="org-comment-delimiter">;; </span><span class="org-comment">bookmarks</span>
+        anything-c-source-files-in-current-dir+ <span class="org-comment-delimiter">;; </span><span class="org-comment">current dir</span>
+        anything-c-source-locate))))            <span class="org-comment-delimiter">;; </span><span class="org-comment">use 'locate'</span>
+</pre>
+
+
+<p>
+   This will search in buffers, then in my recent-files, then in my bookmarks,
+   the files in the current directory, and finally check with the <code>locate</code>
+   tool. That last one is pretty neat, and finally gives me something back for
+   the countless times I've wondered why the hard disk is grinding &ndash; indeed,
+   it was <code>locate</code>, updating its database.
+</p>
+<p>
+   Then, I've defined another binding for searching general documentation on
+   my system; I've put it under <code>C-c I</code>. This looks look something like the
+   following:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(global-set-key (kbd <span class="org-string">"C-c I"</span>)  <span class="org-comment-delimiter">;; </span><span class="org-comment">i -&gt; info</span>
+  (<span class="org-keyword">lambda</span> () (interactive)
+    (anything
+      <span class="org-builtin">:prompt</span> <span class="org-string">"Info about: "</span>
+      <span class="org-builtin">:candidate-number-limit</span> 3
+      <span class="org-builtin">:sources</span>
+      '( anything-c-source-info-libc             <span class="org-comment-delimiter">;; </span><span class="org-comment">glibc docs</span>
+         anything-c-source-man-pages             <span class="org-comment-delimiter">;; </span><span class="org-comment">man pages</span>
+         anything-c-source-info-emacs))))        <span class="org-comment-delimiter">;; </span><span class="org-comment">emacs </span>
+</pre>
+
+
+<p>
+   These are sources I query quite regularly; there are many more to be
+   found - for most packages with info-pages there's a corresponding
+   <code>anything-c-source-info-...</code>; there's a list in <a href="http://www.emacswiki.org/emacs/anything-config.el">anything-config.el</a>.
+</p>
+<p>
+   Now, those are my <i>general</i> documentation sources; in specific modes, I
+   have specialized information sources; for example, for <code>elisp-mode</code>:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">add-hook</span> 'emacs-lisp-mode-hook
+  (<span class="org-keyword">lambda</span>()
+  <span class="org-comment-delimiter">;; </span><span class="org-comment">other stuff...</span>
+  <span class="org-comment-delimiter">;; </span><span class="org-comment">...</span>
+  <span class="org-comment-delimiter">;; </span><span class="org-comment">put useful info under C-c i</span>
+    (local-set-key (kbd <span class="org-string">"C-c i"</span>)
+      (<span class="org-keyword">lambda</span>() (interactive)
+        (anything
+          <span class="org-builtin">:prompt</span> <span class="org-string">"Info about: "</span>
+          <span class="org-builtin">:candidate-number-limit</span> 5
+          <span class="org-builtin">:sources</span>
+          '( anything-c-source-emacs-functions
+             anything-c-source-emacs-variables
+             anything-c-source-info-elisp
+             anything-c-source-emacs-commands
+             anything-c-source-emacs-source-defun
+             anything-c-source-emacs-lisp-expectations
+             anything-c-source-emacs-lisp-toplevels
+             anything-c-source-emacs-functions-with-abbrevs
+             anything-c-source-info-emacs))))
+</pre>
+
+
+<p>   
+   This post just scratches the surface of what is possible &ndash; so go and
+   experiment :) One interesting thing is to add your own sources; I played a
+   bit with that already, 
+</p>
+<p>
+   There are <i>many</i> things in <code>anything</code> I did not cover yet. First, there are
+   many more sources to search - and it's pretty easy to write your own &ndash; see
+   the <a href="http://www.emacswiki.org/emacs/Anything">EmacsWiki-page</a>.
+</p>
+
+
+
+</div>
+</div>

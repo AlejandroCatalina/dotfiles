@@ -1,0 +1,92 @@
+
+
+
+<p>The tried and true way of doing network requests is sending an
+asynchronous one with a callback to be used upon completion or
+failure.  That’s why we have <tt class="docutils literal"><span class="pre">url-retrieve</span></tt> and
+<tt class="docutils literal"><span class="pre">url-retrieve-synchronously</span></tt> instead of <tt class="docutils literal"><span class="pre">url-retrieve</span></tt> and
+<tt class="docutils literal"><span class="pre">url-retrieve-asynchronously</span></tt>.  It’s fairly obvious how the
+asynchronous variant is implemented<a class="footnote-reference" href="#id2" id="id1">[1]</a>, the synchronous one less so.</p>
+<pre class="code elisp literal-block">
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">url-retrieve-synchronously</span> <span class="p">(</span><span class="nv">url</span> <span class="kp">&amp;optional</span> <span class="nv">silent</span> <span class="nv">inhibit-cookies</span><span class="p">)</span>
+  <span class="s">"Retrieve URL synchronously.
+Return the buffer containing the data, or nil if there are no data
+associated with it (the case for dired, info, or mailto URLs that need
+no further processing).  URL is either a string or a parsed URL."</span>
+  <span class="p">(</span><span class="nv">url-do-setup</span><span class="p">)</span>
+
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">retrieval-done</span> <span class="no">nil</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">asynch-buffer</span> <span class="no">nil</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">setq</span> <span class="nv">asynch-buffer</span>
+          <span class="p">(</span><span class="nv">url-retrieve</span> <span class="nv">url</span> <span class="p">(</span><span class="nb">lambda</span> <span class="p">(</span><span class="kp">&amp;rest</span> <span class="nv">ignored</span><span class="p">)</span>
+                              <span class="p">(</span><span class="nv">url-debug</span> <span class="ss">'retrieval</span> <span class="s">"Synchronous fetching done (%S)"</span> <span class="p">(</span><span class="nf">current-buffer</span><span class="p">))</span>
+                              <span class="p">(</span><span class="k">setq</span> <span class="nv">retrieval-done</span> <span class="no">t</span>
+                                    <span class="nv">asynch-buffer</span> <span class="p">(</span><span class="nf">current-buffer</span><span class="p">)))</span>
+                        <span class="no">nil</span> <span class="nv">silent</span> <span class="nv">inhibit-cookies</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nf">null</span> <span class="nv">asynch-buffer</span><span class="p">)</span>
+        <span class="c1">;; We do not need to do anything, it was a mailto or something</span>
+        <span class="c1">;; similar that takes processing completely outside of the URL</span>
+        <span class="c1">;; package.</span>
+        <span class="no">nil</span>
+      <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">proc</span> <span class="p">(</span><span class="nf">get-buffer-process</span> <span class="nv">asynch-buffer</span><span class="p">)))</span>
+        <span class="c1">;; If the access method was synchronous, `retrieval-done' should</span>
+        <span class="c1">;; hopefully already be set to t.  If it is nil, and `proc' is also</span>
+        <span class="c1">;; nil, it implies that the async process is not running in</span>
+        <span class="c1">;; asynch-buffer.  This happens e.g. for FTP files.  In such a case</span>
+        <span class="c1">;; url-file.el should probably set something like a `url-process'</span>
+        <span class="c1">;; buffer-local variable so we can find the exact process that we</span>
+        <span class="c1">;; should be waiting for.  In the mean time, we'll just wait for any</span>
+        <span class="c1">;; process output.</span>
+        <span class="p">(</span><span class="k">while</span> <span class="p">(</span><span class="nv">not</span> <span class="nv">retrieval-done</span><span class="p">)</span>
+          <span class="p">(</span><span class="nv">url-debug</span> <span class="ss">'retrieval</span>
+                     <span class="s">"Spinning in url-retrieve-synchronously: %S (%S)"</span>
+                     <span class="nv">retrieval-done</span> <span class="nv">asynch-buffer</span><span class="p">)</span>
+          <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nf">buffer-local-value</span> <span class="ss">'url-redirect-buffer</span> <span class="nv">asynch-buffer</span><span class="p">)</span>
+              <span class="p">(</span><span class="k">setq</span> <span class="nv">proc</span> <span class="p">(</span><span class="nf">get-buffer-process</span>
+                          <span class="p">(</span><span class="k">setq</span> <span class="nv">asynch-buffer</span>
+                                <span class="p">(</span><span class="nf">buffer-local-value</span> <span class="ss">'url-redirect-buffer</span>
+                                                    <span class="nv">asynch-buffer</span><span class="p">))))</span>
+            <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="k">and</span> <span class="nv">proc</span> <span class="p">(</span><span class="nf">memq</span> <span class="p">(</span><span class="nf">process-status</span> <span class="nv">proc</span><span class="p">)</span>
+                                <span class="o">'</span><span class="p">(</span><span class="nv">closed</span> <span class="nv">exit</span> <span class="nf">signal</span> <span class="nv">failed</span><span class="p">))</span>
+                     <span class="c1">;; Make sure another process hasn't been started.</span>
+                     <span class="p">(</span><span class="nf">eq</span> <span class="nv">proc</span> <span class="p">(</span><span class="k">or</span> <span class="p">(</span><span class="nf">get-buffer-process</span> <span class="nv">asynch-buffer</span><span class="p">)</span> <span class="nv">proc</span><span class="p">)))</span>
+                <span class="c1">;; FIXME: It's not clear whether url-retrieve's callback is</span>
+                <span class="c1">;; guaranteed to be called or not.  It seems that url-http</span>
+                <span class="c1">;; decides sometimes consciously not to call it, so it's not</span>
+                <span class="c1">;; clear that it's a bug, but even then we need to decide how</span>
+                <span class="c1">;; url-http can then warn us that the download has completed.</span>
+                <span class="c1">;; In the mean time, we use this here workaround.</span>
+                <span class="c1">;; XXX: The callback must always be called.  Any</span>
+                <span class="c1">;; exception is a bug that should be fixed, not worked</span>
+                <span class="c1">;; around.</span>
+                <span class="p">(</span><span class="k">progn</span> <span class="c1">;; Call delete-process so we run any sentinel now.</span>
+                  <span class="p">(</span><span class="nf">delete-process</span> <span class="nv">proc</span><span class="p">)</span>
+                  <span class="p">(</span><span class="k">setq</span> <span class="nv">retrieval-done</span> <span class="no">t</span><span class="p">)))</span>
+            <span class="c1">;; We used to use `sit-for' here, but in some cases it wouldn't</span>
+            <span class="c1">;; work because apparently pending keyboard input would always</span>
+            <span class="c1">;; interrupt it before it got a chance to handle process input.</span>
+            <span class="c1">;; `sleep-for' was tried but it lead to other forms of</span>
+            <span class="c1">;; hanging.  --Stef</span>
+            <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="k">or</span> <span class="p">(</span><span class="nb">with-local-quit</span>
+                          <span class="p">(</span><span class="nf">accept-process-output</span> <span class="nv">proc</span><span class="p">))</span>
+                        <span class="p">(</span><span class="nf">null</span> <span class="nv">proc</span><span class="p">))</span>
+              <span class="c1">;; accept-process-output returned nil, maybe because the process</span>
+              <span class="c1">;; exited (and may have been replaced with another).  If we got</span>
+              <span class="c1">;; a quit, just stop.</span>
+              <span class="p">(</span><span class="nb">when</span> <span class="nv">quit-flag</span>
+                <span class="p">(</span><span class="nf">delete-process</span> <span class="nv">proc</span><span class="p">))</span>
+              <span class="p">(</span><span class="k">setq</span> <span class="nv">proc</span> <span class="p">(</span><span class="k">and</span> <span class="p">(</span><span class="nv">not</span> <span class="nv">quit-flag</span><span class="p">)</span>
+                              <span class="p">(</span><span class="nf">get-buffer-process</span> <span class="nv">asynch-buffer</span><span class="p">)))))))</span>
+      <span class="nv">asynch-buffer</span><span class="p">)))</span>
+</pre>
+<p>If you still had doubts whether using the asynchronous interface is
+worth it, <a class="reference external" href="http://git.savannah.gnu.org/cgit/emacs.git/tree/lisp/url/url.el?id=7a7164ea3eb7b3b7d2f7cfaec4ef73a90e14f735#n224">there</a>’s your answer.</p>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Emacs has asynchronous “network processes” which unlike your
+usual asynchronous processes are not really processes, but
+rather a combination of <tt class="docutils literal">select(2)</tt> and <tt class="docutils literal">connect(2)</tt> with
+the semantics of an Emacs process.</td></tr>
+</tbody>
+</table>

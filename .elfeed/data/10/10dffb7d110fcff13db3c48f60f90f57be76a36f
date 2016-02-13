@@ -1,0 +1,31 @@
+<p>
+When writing prose, I find auto-completion to be more of a distraction
+then an aid. However, my field of research involves much
+repetition of some annoyingly long words, such as <i>“thermalization”</i> or
+<i>“distinguishability”</i>.
+</p>
+
+<p>
+Instead of completely disabling auto-complete, I've found it useful to dial it
+down a notch, while still letting it trigger on these monstrosities.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="k">setq</span> <span class="nv">ac-auto-start</span> <span class="mi">3</span><span class="p">)</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">company-minimum-prefix-length</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/config-prose-completion</span> <span class="p">()</span>
+  <span class="s">"Make auto-complete less agressive in this buffer."</span>
+  <span class="p">(</span><span class="nv">setq-local</span> <span class="nv">company-minimum-prefix-length</span> <span class="mi">6</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">setq-local</span> <span class="nv">ac-auto-start</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'text-mode-hook</span>
+  <span class="nf">#'</span><span class="nv">endless/config-prose-completion</span><span class="p">)</span></code></pre></figure>
+<p>
+This will offer completions based on previously typed text, but only when I
+stumble while typing a long word.
+</p>
+
+<p>
+Do you use any kind of tab completion for writing prose? It seems
+<code>company-mode</code> has an Ispell back-end, has anyone ever tried that?</p>
+
+   <p><a href="http://endlessparentheses.com/tab-completion-for-prose.html?source=rss#disqus_thread">Comment on this.</a></p>

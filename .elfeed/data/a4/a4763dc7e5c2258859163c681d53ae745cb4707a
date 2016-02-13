@@ -1,0 +1,11 @@
+<p>Don&#8217;t want to wait for the MELPA packages to be automatically rebuilt?
+Want to try out some package recipe before submitting it upstream? You can
+totally do this!</p>
+
+<p>Just clone the
+<a href="https://github.com/milkypostman/melpa">MELPA github repo</a>, open a
+recipe from it in Emacs and press <code>C-c C-c</code> (bound to the command
+<code>package-build-current-recipe</code>). Once the package is built you&#8217;ll be
+prompted to install it.</p>
+
+<p>Pretty neat, right?</p>

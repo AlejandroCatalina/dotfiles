@@ -1,0 +1,83 @@
+<p>In the current release of Flycheck, the executable used by a syntax checker is
+hard-coded.  The <code class="highlighter-rouge">python-pylint</code> syntax checker will always use the first
+<code class="highlighter-rouge">pylint</code> executable in <code class="highlighter-rouge">exec-path</code>.</p>
+
+<p>The only way to effectively change the executable was to create symbolic links
+in a directory in front of <code class="highlighter-rouge">exec-path</code>, which is somewhat inconvenient, if you
+wanted to change the executable frequently, or use a different executable in
+different buffer.</p>
+
+<p>Since <a href="https://github.com/flycheck/flycheck/commit/cb5de77314a3cbee938a23a83b4c8a4516384388">cb5de77</a> (<a href="https://github.com/flycheck/flycheck/pull/272">#272</a>) Flycheck now provides means to change the
+executable used by a syntax checker.</p>
+
+<h1 id="changing-executables-interactively">Changing executables interactively</h1>
+
+<p>To use a different executable in the current buffer, press <kbd>C-c ! e</kbd>
+(<code class="highlighter-rouge">flycheck-set-checker-executable</code>).  The command prompts for a syntax checker
+and an executable file, and uses the selected executable for the selected syntax
+checker in the current buffer.</p>
+
+<p>For instance, to use <code class="highlighter-rouge">pylint3</code> as executable for <code class="highlighter-rouge">python-pylint</code>, type <kbd>C-c
+! e python-pylint RET pylint3</kbd>.  To reset the executable to the default,
+type <kbd>C-u C-c ! e</kbd>, that is <code class="highlighter-rouge">flycheck-set-checker-executable</code> with
+prefix argument.</p>
+
+<p>The command then prompts for a syntax checker only, and resets the executable of
+the selected syntax checker to the default value given in the syntax checker
+definition.</p>
+
+<h1 id="executable-variables">Executable variables</h1>
+
+<p>The workhorse behind this command are “executable variables”: Each syntax
+checker now has a associated variable called <code class="highlighter-rouge">flycheck-CHECKER-exectuable</code>,
+where <code class="highlighter-rouge">CHECKER</code> is the name of the syntax checker.  For instance, the associated
+variable of the <code class="highlighter-rouge">python-pylint</code> syntax checker is
+<code class="highlighter-rouge">flycheck-python-pylint-executable</code>.  These variables are buffer-local and
+customizable with <code class="highlighter-rouge">M-x customize-group RET flycheck-executables</code>.</p>
+
+<p>The value of such a variable is either <code class="highlighter-rouge">nil</code>, to use the default executable from
+the definition of the syntax checker, or a string with the name or the path to
+an executable.  For instance, the following code is equivalent to the
+interactive command from the last section:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="k">setq</span> <span class="nv">flycheck-python-pylint-executable</span> <span class="s">"pylint3"</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>If the variable is not <code class="highlighter-rouge">nil</code>, its value is used as executable when running the
+syntax checker.  If the value is not an absolute path to an executable, it is
+search in <code class="highlighter-rouge">exec-path</code> using <code class="highlighter-rouge">executable-find</code>.</p>
+
+<h1 id="applications">Applications</h1>
+
+<ul>
+  <li>As a Ruby developer, you can now use different Ruby versions to test buffers.
+For instance, you can use Ruby 2 to check buffers from your Rails project, but
+Ruby 1.8 for your new Homebrew Formula.</li>
+  <li>
+    <p>As a Python developer, you can now use Pylint from your virtualenv.  If you
+use the built-in Python mode, you probably already set
+<code class="highlighter-rouge">python-shell-virtualenv-path</code> via directory local variables.  In this case,
+you can easily automate this with the following Emacs Lisp code:</p>
+
+    <p>```cl
+  (defun flycheck-python-set-executables ()
+    (let ((exec-path (python-shell-calculate-exec-path)))
+      (setq flycheck-python-pylint-executable (executable-find “pylint”)
+            flycheck-python-flake8-executable (executable-find “flake8”)))
+    ;; Force Flycheck mode on
+    (flycheck-mode))</p>
+
+    <p>(defun flycheck-python-setup ()
+    (add-hook ‘hack-local-variables-hook #’flycheck-python-set-executables
+              nil ‘local))</p>
+
+    <p>(add-hook ‘python-mode-hook #’flycheck-python-setup)
+  ```</p>
+  </li>
+</ul>
+
+<p>There are probably countless other applications for this new feature I have not
+though of.  If you have done something cool with it, please let me know.</p>
+
+<p>Have fun with Flycheck!</p>

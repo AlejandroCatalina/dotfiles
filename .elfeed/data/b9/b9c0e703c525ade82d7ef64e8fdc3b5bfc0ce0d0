@@ -1,0 +1,12 @@
+<div class="date">9 Feb 2014</div>
+
+    <p>
+    Using functional programming techniques and the standard functions
+    from Underscore to generate random numbers that favor particular
+    numbers. Useful for picking colors.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Functional/clustered-random-numbers.html">Read more...</a>
+    </p>
+    

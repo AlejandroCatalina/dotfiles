@@ -1,0 +1,222 @@
+<p><em>Disclaimer: I am an employee of Cognitect and I worked on the
+ <a href="http://github.com/cognitect/transit-js">transit-js</a> implementation. The
+ opinions found herein are my own and do not necessarily reflect the
+ recommendations or views of Cognitect.</em></p>
+
+<p>By now you may have heard of something called
+<a href="http://blog.cognitect.com/blog/2014/7/22/transit">Transit</a>, a new format for
+conveying values between heterogenous systems. Transit seemed to generate a lot
+of interest, but given many of the comments on the announcement
+post and elsewhere like <a href="https://news.ycombinator.com/item?id=8069346">Hacker
+News</a>, it seems that
+people may be unclear about the value proposition.</p>
+
+<p>Admittedly this state of affairs is not entirely the fault of the audience. I&#39;ve
+had the pleasure of using software designed under the guidance of <a href="http://www.infoq.com/presentations/Simple-Made-Easy">Rich
+Hickey</a> for seven years
+now. Often his design decisions cover nuanced territory with far more dimensions
+than can be communicated in a short introduction. I&#39;ll try here to illuminate
+some properties of Transit that I think might easily be overlooked. We&#39;ll make
+some of these points concrete via an example in <a href="http://nodejs.org">Node.js</a>
+(<a href="http://github.com/cognitect/transit-ruby">Ruby</a>,
+<a href="http://github.com/cognitect/transit-ruby">Python</a>,
+<a href="http://github.com/cognitect/transit-ruby">Java</a>, and
+<a href="http://github.com/cognitect/transit-ruby">Clojure</a> work just as well). We&#39;ll
+communicate with client-side JavaScript, but you can use whatever compile-to-JavaScript
+language you prefer.</p>
+
+<p>But before we do any of that, let&#39;s first address something that appeared with
+surprising frequency following the announcement - <em>&quot;Why not use existing data format X
+instead?&quot;</em>. This kept getting asked even though the third sentence of the
+announcement post read:</p>
+
+<blockquote>
+<p><em>JSON currently dominates similar use cases</em>, but it has a limited set of types,
+no extensibility, and is verbose. Actual applications of JSON are rife with ad
+hoc and context-dependent workarounds for these limitations, yielding coupled
+and fragile programs.</p>
+</blockquote>
+
+<p>Yet people continued to enumerate existing formats which do not actually compete
+in the same design space as JSON. If you only use a binary data format to convey
+values in your heterogenous system, you are unlikely to be the target consumer of
+Transit. However, if some components of your system marshal JSON and you would
+prefer something comparable in performance to JSON when communicating with those
+components, then Transit is well worth thinking long and hard about.</p>
+
+<p>As to to why transit-js doesn&#39;t yet use the binary <a href="http://msgpack.org">msgpack</a>
+encoding, benchmarking has shown that existing binary formats don&#39;t yet compete
+with JSON in many JavaScript environments (see footnote (1) at the end of the
+post). Currently transit-js compares quite favorably to plain old JSON (see
+footnote (2)).</p>
+
+<p>Let&#39;s consider a typical API result, for example the <a href="https://dev.twitter.com/docs/api/1.1/get/search/tweets">JSON response from
+Twitter&#39;s search api</a>:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="p">{</span>
+  <span class="s2">&quot;statuses&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;coordinates&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="s2">&quot;favorited&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;truncated&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;created_at&quot;</span><span class="o">:</span> <span class="s2">&quot;Mon Sep 24 03:35:21 +0000 2012&quot;</span><span class="p">,</span> <span class="c1">// SAD PANDA</span>
+      <span class="s2">&quot;id_str&quot;</span><span class="o">:</span> <span class="s2">&quot;250075927172759552&quot;</span><span class="p">,</span>
+      <span class="p">...</span>
+      <span class="s2">&quot;in_reply_to_user_id&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="s2">&quot;place&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="s2">&quot;user&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;profile_sidebar_fill_color&quot;</span><span class="o">:</span> <span class="s2">&quot;DDEEF6&quot;</span><span class="p">,</span> <span class="c1">// BOO</span>
+        <span class="s2">&quot;profile_sidebar_border_color&quot;</span><span class="o">:</span> <span class="s2">&quot;C0DEED&quot;</span><span class="p">,</span> <span class="c1">// HOO</span>
+         <span class="p">....</span>
+         <span class="s2">&quot;profile_image_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://a0.twimg.com/...&quot;</span><span class="p">,</span> <span class="c1">// :( :( :(</span>
+         <span class="s2">&quot;created_at&quot;</span><span class="o">:</span> <span class="s2">&quot;Mon Apr 26 06:01:55 +0000 2010&quot;</span><span class="p">,</span> <span class="c1">// ARGH!</span>
+         <span class="p">...</span>
+         <span class="s2">&quot;profile_link_color&quot;</span><span class="o">:</span> <span class="s2">&quot;0084B4&quot;</span><span class="p">,</span> <span class="c1">// RAGE!</span>
+         <span class="p">...</span>
+      <span class="p">},</span>
+      <span class="p">...</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Obviously we can represent strings and some numbers just fine with JSON - but
+fields like <code>created_at</code>, <code>profile_image_url</code>, <code>profile_sidebar_fill_color</code>,
+<code>profile_link_color</code>, etc. have lost their meaning. It&#39;s likely that this JSON
+response was generated with <code>URI</code> and <code>DateTime</code> and <code>Color</code> instances in hand,
+but on the wire they simply become strings. The receiver now must know which
+parts of this response represents which values.</p>
+
+<p>Contrast this to a transit-js value before encoding where <code>t</code> is the <code>transit</code>
+library, <code>URI</code> is the constructor from the
+<a href="http://medialize.github.io/URI.js/">URIjs</a> library, <code>moment</code> is
+<a href="http://momentjs.com">moment.js</a>, and <code>color</code> is
+<a href="https://github.com/One-com/one-color">onecolor</a>:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">t</span><span class="p">.</span><span class="nx">map</span><span class="p">([</span>
+  <span class="s2">&quot;statuses&quot;</span><span class="p">,</span> <span class="p">[</span>
+    <span class="nx">t</span><span class="p">.</span><span class="nx">map</span><span class="p">([</span>
+      <span class="s2">&quot;coordinates&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="s2">&quot;favorited&quot;</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;truncated&quot;</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;created_at&quot;</span><span class="p">,</span> <span class="nx">moment</span><span class="p">(</span><span class="s2">&quot;Mon Sep 24 03:35:21 +0000 2012&quot;</span><span class="p">),</span> <span class="c1">// YAY!</span>
+      <span class="s2">&quot;id_str&quot;</span><span class="p">,</span> <span class="s2">&quot;250075927172759552&quot;</span><span class="p">,</span>
+      <span class="p">...</span>
+      <span class="s2">&quot;in_reply_to_user_id&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="s2">&quot;place&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="nx">t</span><span class="p">.</span><span class="nx">map</span><span class="p">([</span>
+        <span class="s2">&quot;profile_sidebar_fill_color&quot;</span><span class="p">,</span> <span class="nx">color</span><span class="p">(</span><span class="s2">&quot;DDEEF6&quot;</span><span class="p">),</span> <span class="c1">// YIPPEE!</span>
+        <span class="s2">&quot;profile_sidebar_border_color&quot;</span><span class="p">,</span> <span class="nx">color</span><span class="p">(</span><span class="s2">&quot;C0DEED&quot;</span><span class="p">),</span> <span class="c1">// WOOT!</span>
+        <span class="p">...</span>
+        <span class="s2">&quot;profile_image_url&quot;</span><span class="p">,</span> <span class="nx">URI</span><span class="p">(</span><span class="s2">&quot;http://a0.twimg.com/...&quot;</span><span class="p">),</span> <span class="c1">// HURRAH!</span>
+        <span class="s2">&quot;created_at&quot;</span><span class="p">,</span> <span class="nx">moment</span><span class="p">(</span><span class="s2">&quot;Mon Apr 26 06:01:55 +0000 2010&quot;</span><span class="p">),</span> <span class="c1">// WIN!</span>
+        <span class="p">...</span>
+        <span class="s2">&quot;profile_link_color&quot;</span><span class="p">,</span> <span class="nx">color</span><span class="p">(</span><span class="s2">&quot;0084B4&quot;</span><span class="p">),</span> <span class="c1">// HALLELUJAH!</span>
+      <span class="p">]),</span>
+      <span class="p">...</span>
+    <span class="p">]),</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">])</span>
+</code></pre></div>
+<p>When this value is written out, Transit does not discard the important semantic
+information needed to interpret this data upon arrival at the client. If we&#39;re
+using JavaScript on the front and back end, it&#39;s simple to <a href="http://github.com/swannodette/transit-js-example/blob/master/shared/handlers.js">share
+handlers</a>
+so that we get the same types in both places - <a href="http://nerds.airbnb.com/isomorphic-javascript-future-web-apps/">&quot;isomorphic&quot;
+JavaScript</a>
+people.</p>
+
+<p>Or, if you&#39;re writing Java, it&#39;s nice to know your <a href="http://www.joda.org/joda-time/">Joda Time
+instances</a> become Moment instances on
+the front end and so forth.</p>
+
+<p>Now let&#39;s contrast using JSON versus using transit-js on the front end. Notice
+below that in the case of transit-js the types are always the ones you expect: no need to
+remember which date format or what color library was agreed upon. Just start
+programming!</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">g</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">j</span>   <span class="o">=</span> <span class="nx">g</span><span class="p">.</span><span class="nx">jQuery</span><span class="p">,</span>
+        <span class="nx">h</span>   <span class="o">=</span> <span class="nx">g</span><span class="p">.</span><span class="nx">transitHandlers</span><span class="p">,</span>
+        <span class="nx">rdr</span> <span class="o">=</span> <span class="nx">g</span><span class="p">.</span><span class="nx">transit</span><span class="p">.</span><span class="nx">reader</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">handlers</span><span class="o">:</span> <span class="nx">h</span><span class="p">.</span><span class="nx">readHandlers</span><span class="p">});</span>
+
+    <span class="c1">// Reading transit, values are already the types your team expects</span>
+    <span class="c1">// just start programming</span>
+
+    <span class="kd">function</span> <span class="nx">parseTransitStatus</span><span class="p">(</span><span class="nx">status</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="nx">status</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nx">weekLater</span><span class="o">:</span> <span class="nx">status</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;created_at&quot;</span><span class="p">).</span><span class="nx">add</span><span class="p">(</span><span class="s2">&quot;days&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+            <span class="nx">color</span><span class="o">:</span> <span class="nx">user</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;profile_sidebar_fill_color&quot;</span><span class="p">).</span><span class="nx">cmyk</span><span class="p">(),</span>
+            <span class="nx">url</span><span class="o">:</span> <span class="nx">user</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;profile_image_url&quot;</span><span class="p">).</span><span class="nx">path</span><span class="p">()</span>
+        <span class="p">};</span>
+    <span class="p">};</span>
+
+    <span class="nx">j</span><span class="p">.</span><span class="nx">ajax</span><span class="p">({</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;transit&quot;</span><span class="p">,</span>
+        <span class="nx">complete</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">rdr</span><span class="p">.</span><span class="nx">read</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">responseText</span><span class="p">),</span>
+                <span class="nx">xs</span>   <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;statuses&quot;</span><span class="p">).</span><span class="nx">map</span><span class="p">(</span><span class="nx">parseTransitStatus</span><span class="p">);</span>
+            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">xs</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+
+    <span class="c1">// Reading JSON, you always need to remember exactly what to hydrate</span>
+    <span class="c1">// to which types your team has agreed upon</span>
+
+    <span class="kd">function</span> <span class="nx">parseJSONStatus</span><span class="p">(</span><span class="nx">status</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="nx">status</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">];</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nx">weekLater</span><span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="nx">status</span><span class="p">[</span><span class="s2">&quot;created_at&quot;</span><span class="p">]).</span><span class="nx">add</span><span class="p">(</span><span class="s2">&quot;days&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="c1">// OOPS!!!</span>
+            <span class="nx">color</span><span class="o">:</span> <span class="nx">user</span><span class="p">[</span><span class="s2">&quot;profile_sidebar_fill_color&quot;</span><span class="p">],</span> <span class="c1">// BLAST!</span>
+            <span class="nx">url</span><span class="o">:</span> <span class="nx">URI</span><span class="p">(</span><span class="nx">user</span><span class="p">[</span><span class="s2">&quot;profile_image_url&quot;</span><span class="p">]).</span><span class="nx">path</span><span class="p">()</span> 
+        <span class="p">};</span>
+    <span class="p">}</span>
+
+    <span class="nx">j</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">xs</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="s2">&quot;statuses&quot;</span><span class="p">].</span><span class="nx">map</span><span class="p">(</span><span class="nx">parseJSONStatus</span><span class="p">);</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">xs</span><span class="p">);</span>
+    <span class="p">});</span>
+
+<span class="p">})(</span><span class="k">this</span><span class="p">);</span>
+</code></pre></div>
+<p>With fast ES6-like maps and sets and user extensibility baked
+in, you can transport values that best describe your application without chaining
+yourself to the representational boundaries imposed by JSON.</p>
+
+<p>But at what cost?</p>
+
+<p><img style="border: 1px solid #ccc" src="/assets/images/transit_net.png" /></p>
+
+<p>The transit-js version of the original Twitter payload is smaller and does not
+take measurably longer to transmit to the client.</p>
+
+<p>Here&#39;s a Chrome DevTools JavaScript profile to determine where our program is
+spending its time. Note how far down the profile transit-js appears:</p>
+
+<p><img style="border: 1px solid #ccc" src="/assets/images/profile.png" /></p>
+
+<p>What about Firefox?</p>
+
+<p><img style="border: 1px solid #ccc" src="/assets/images/ff_profile.png" /></p>
+
+<p>If we dig in a bit more and check out the flame graph, we&#39;ll see something like
+this:</p>
+
+<p><img style="border: 1px solid #ccc" src="/assets/images/flame.png" /></p>
+
+<p><code>V.j</code> is the call into transit-js. Note the self time. This means transit-js is
+unlikely to be the bottleneck; rather, the bottleneck will be whatever
+particular type you wish to hydrate with.</p>
+
+<p>You can profile under Opera, Safari, and Internet Explorer: the results
+will be much the same.</p>
+
+<p>You can find the <a href="http://github.com/swannodette/transit-js-example">entire
+example</a> shown here on GitHub.</p>
+
+<p>If you&#39;d like to play around with transit-js without installing Node.js, I
+recommend taking a look at the <a href="http://cognitect.github.io/transit-tour">tour</a>.</p>
+
+<p>(1) <a href="http://jsperf.com/msgpack-js-vs-json/20">msgpack vs. JSON benchmarks</a>.</p>
+
+<p>(2) <a href="http://jsperf.com/json-vs-transit/2">transit-js vs. JSON</a>.</p>

@@ -1,0 +1,67 @@
+<p>
+This year I made it my resolution to learn clojure. After reading through the
+unexpectedly engaging romance that is <a href="http://braveclojure.com">Clojure for the Brave and True</a>, it was
+time to boldly venture through the dungeons of <a href="http://www.4clojure.com/">4clojure</a>. Sword in hand, I
+install <code>4clojure.el</code> and start hacking, but I felt the interface could use some
+improvements.
+</p>
+
+<p>
+For starters, it's annoying that you need two commands to check the answer and
+move to next question. Sacha has <a href="http://sachachua.com/blog/2014/05/playing-around-clojure-cider-4clojure/">a nice suggestion</a> on this matter, a single
+command which checks the answer and moves to the next question. Nonetheless, I
+needed more. 
+</p>
+
+<p>
+Having to manually erase the <code>__</code> fields to type my answer is absurd. Not to
+mention some answers are cumbersome to type inline. With the following command,
+you type your code at the end of the buffer; a lone archer lining up a shot to
+slay the problems above.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/4clojure-check-and-proceed</span> <span class="p">()</span>
+  <span class="s">"Check the answer and show the next question if it worked."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">unless</span>
+      <span class="p">(</span><span class="nv">save-excursion</span>
+        <span class="c1">;; Find last sexp (the answer).</span>
+        <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">))</span>
+        <span class="p">(</span><span class="nv">forward-sexp</span> <span class="mi">-1</span><span class="p">)</span>
+        <span class="c1">;; Check the answer.</span>
+        <span class="p">(</span><span class="nv">cl-letf</span> <span class="p">((</span><span class="nv">answer</span>
+                   <span class="p">(</span><span class="nv">buffer-substring</span> <span class="p">(</span><span class="nv">point</span><span class="p">)</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">)))</span>
+                  <span class="c1">;; Preserve buffer contents, in case you failed.</span>
+                  <span class="p">((</span><span class="nv">buffer-string</span><span class="p">)))</span>
+          <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-min</span><span class="p">))</span>
+          <span class="p">(</span><span class="nv">while</span> <span class="p">(</span><span class="nv">search-forward</span> <span class="s">"__"</span> <span class="no">nil</span> <span class="no">t</span><span class="p">)</span>
+            <span class="p">(</span><span class="nv">replace-match</span> <span class="nv">answer</span><span class="p">))</span>
+          <span class="p">(</span><span class="nv">string-match</span> <span class="s">"failed."</span> <span class="p">(</span><span class="nv">4clojure-check-answers</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nv">4clojure-next-question</span><span class="p">)))</span></code></pre></figure>
+
+<p>
+The second encounter is simple in comparison. Just sharpen the blade, polish the
+shield, and we're ready for battle.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">defadvice</span> <span class="nv">4clojure/start-new-problem</span>
+    <span class="p">(</span><span class="nv">after</span> <span class="nv">endless/4clojure/start-new-problem-advice</span> <span class="p">()</span> <span class="nv">activate</span><span class="p">)</span>
+  <span class="c1">;; Prettify the 4clojure buffer.</span>
+  <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-min</span><span class="p">))</span>
+  <span class="p">(</span><span class="nv">forward-line</span> <span class="mi">2</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">3</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">fill-paragraph</span><span class="p">)</span>
+  <span class="c1">;; Position point for the answer</span>
+  <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">))</span>
+  <span class="p">(</span><span class="nv">insert</span> <span class="s">"\n\n\n"</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">-1</span><span class="p">)</span>
+  <span class="c1">;; Define our key.</span>
+  <span class="p">(</span><span class="nv">local-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"M-j"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">endless/4clojure-check-and-proceed</span><span class="p">))</span></code></pre></figure>
+<p>
+These two snippets have me cleaving effortlessly through the initial questions
+and I'm eager for the final challenges. 
+</p>
+
+<p>
+Both of these websites were recommended to me by <a href="https://twitter.com/mwfogleman/status/549916676343750656">Michael Fogleman</a>. Do you know
+any other good clojure resources?</p>
+
+   <p><a href="http://endlessparentheses.com/be-a-4clojure-hero-with-emacs.html?source=rss#disqus_thread">Comment on this.</a></p>

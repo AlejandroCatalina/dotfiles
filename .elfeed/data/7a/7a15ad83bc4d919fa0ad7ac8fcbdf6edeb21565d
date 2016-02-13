@@ -1,0 +1,44 @@
+<p>
+Isearch is one of Emacs’ most useful (and probably most used) features. Getting
+in the habit of quickly hitting <kbd>C-s</kbd> followed by 2&#x2013;4 letters will forever
+change the way you navigate buffers, and adding it to your repertoire is a
+tremendous productivity improvement. What, then, could we possibly improve on
+such a phenomenal command?
+</p>
+
+<p>
+One of the search actions I find myself doing a lot is to search forward for
+other occurrences of the symbol at point. You can do that in Isearch by typing
+<kbd>C-w</kbd> a few times (which copies the next word at point into the prompt) until
+you’ve got the entire symbol, and then you type <kbd>M-s _</kbd> to toggle symbol-search.
+</p>
+
+<p>
+However, this is a lot of keys, and it only works if the cursor is at the start
+of the symbol. Fortunately, it’s very easy to improve this because the action we
+want is already implemented as the <a href="http://doc.endlessparentheses.com/Fun/isearch-forward-symbol-at-point"><code>isearch-forward-symbol-at-point</code></a> command.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/isearch-symbol-with-prefix</span> <span class="p">(</span><span class="nv">p</span><span class="p">)</span>
+  <span class="s">"Like isearch, unless prefix argument is provided.
+With a prefix argument P, isearch for the symbol at point."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">current-prefix-arg</span> <span class="no">nil</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">call-interactively</span>
+     <span class="p">(</span><span class="k">if</span> <span class="nv">p</span> <span class="nf">#'</span><span class="nv">isearch-forward-symbol-at-point</span>
+       <span class="nf">#'</span><span class="nv">isearch-forward</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="nv">[remap</span> <span class="nv">isearch-forward]</span>
+                <span class="nf">#'</span><span class="nv">endless/isearch-symbol-with-prefix</span><span class="p">)</span></code></pre></figure>
+<p>
+The result here is that <kbd>C-s</kbd> starts Isearch as usual, but if I type <kbd>C-u C-s</kbd>
+instead it’s going to search for other occurrences of the symbol at point&#x2014;a
+huge improvement over the 6+ keys of our previous option.
+</p>
+
+<p>
+Normally, calling Isearch with a prefix would start it in regexp-mode. That’s
+not something I’ve ever used, but you should be aware of it before you override
+it.
+</p>
+
+   <p><a href="http://endlessparentheses.com/quickly-search-for-occurrences-of-the-symbol-at-point.html?source=rss#disqus_thread">Comment on this.</a></p>

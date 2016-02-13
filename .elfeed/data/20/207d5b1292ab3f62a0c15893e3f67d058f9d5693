@@ -1,0 +1,137 @@
+<p>By now you may have heard some buzz about
+<a href="http://webpack.github.io">webpack</a>, a tool for managing web
+application assets. webpack can manage images and stylesheets, but
+only the facilities for managing JavaScript sources and more
+specifically the facilities for <em>code-splitting</em> are of interest to us
+in this post. We&#39;ll briefly look at webpack&#39;s support for splitting
+and compare it to a little known feature of the
+<a href="https://developers.google.com/closure/compiler/">Google Closure Compiler</a>:
+Google Closure Modules.</p>
+
+<p>webpack describes its support for code-splitting
+<a href="https://github.com/webpack/docs/wiki/code-splitting">here</a>. It&#39;s
+clear without reading the entire page that the unit of modularity that
+webpack operates on is a code module that was written by an actual
+human being. Splitting happens on explicit code module dependencies
+expressed in the source itself. webpack presents various knobs to
+control how chunking of the split occurs because modules written by
+humans are actually a terrible unit of modularity when it comes to
+optimizing the production artifact. I&#39;ve already talked about this
+from a different angle
+<a href="http://swannodette.github.io/2015/01/06/the-false-promise-of-javascript-microlibs/">elsewhere</a>.</p>
+
+<p>Google Closure Modules maintains the simple Closure Compiler
+philosophy: don&#39;t let a human do anything a computer can do for
+you. Code splits are not defined in the source code and the modules
+you end up with may have nothing to do with the modules you actually
+wrote. This is a good thing. Closure Compiler may freely <em>move code
+between the modules</em> you wrote to get optimized modules that you would
+have never written by hand that contain precisely what is needed.</p>
+
+<h2>Code Motion</h2>
+
+<p>Google searching for <strong>code motion</strong> will probably lead you to the
+Wikipedia article on
+<a href="http://en.wikipedia.org/wiki/Loop-invariant_code_motion">Loop-invariant code motion</a>. The
+idea is simple, by moving code without changing the semantics of the
+program you can get an optimal result. In our case it isn&#39;t faster
+loops but <em>smaller</em> modules (and faster page loads).</p>
+
+<p><a href="https://github.com/clojure/clojurescript">ClojureScript</a> now has full
+support for Google Closure Modules. Let&#39;s see how it works out in
+practice. </p>
+
+<p>Imagine we have the following namespace in ClojureScript
+that we want load on some page of our application:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">hello-world.foo</span>
+  <span class="p">(</span><span class="ss">:require-macros</span> <span class="p">[</span><span class="nv">cljs.core.async.macros</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">go</span><span class="p">]])</span>
+  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">cljs.core.async</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">timeout</span> <span class="nv">chan</span> <span class="nv">&gt;!</span> <span class="nv">&lt;!</span><span class="p">]]))</span>
+
+<span class="p">(</span><span class="nf">enable-console-print!</span><span class="p">)</span>
+
+<span class="p">(</span><span class="k">def </span><span class="nv">c</span> <span class="p">(</span><span class="nf">chan</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">go</span>
+  <span class="p">(</span><span class="nf">&lt;!</span> <span class="p">(</span><span class="nf">timeout</span> <span class="mi">1000</span><span class="p">))</span>
+  <span class="p">(</span><span class="nb">println </span><span class="s">&quot;Hello world!&quot;</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">go</span>
+  <span class="p">(</span><span class="nf">&lt;!</span> <span class="nv">c</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">println </span><span class="s">&quot;Goodbye!&quot;</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">go</span>
+  <span class="p">(</span><span class="nf">&gt;!</span> <span class="nv">c</span> <span class="ss">:knock</span><span class="p">))</span>
+</code></pre></div>
+<p>This namespace has a dependency on
+<a href="https://github.com/clojure/core.async">core.async</a>, a large-ish
+ClojureScript library (~2000 lines).</p>
+
+<p>Now lets imagine another namespace that we would like to load:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">hello-world.bar</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nf">enable-console-print!</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">println </span><span class="s">&quot;Hello world from module bar!&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>We&#39;d like to split our application into three pieces, the shared bit, the
+bit for <code>hello-world.foo</code> and the bit for <code>hello-world.bar</code>. So in
+our <code>project.clj</code> file we would define a <code>:modules</code> entry like so:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">{</span>
+  <span class="nv">...</span>
+  <span class="ss">:modules</span> <span class="p">{</span><span class="ss">:foo</span> <span class="p">{</span><span class="ss">:output-to</span> <span class="s">&quot;out/foo.js&quot;</span>
+                  <span class="ss">:entries</span> <span class="o">#</span><span class="p">{</span><span class="nv">hello-world.foo</span><span class="p">}}</span>
+            <span class="ss">:bar</span> <span class="p">{</span><span class="ss">:output-to</span> <span class="s">&quot;out/bar.js&quot;</span>
+                  <span class="ss">:entries</span> <span class="o">#</span><span class="p">{</span><span class="nv">hello-world.bar</span><span class="p">}}}</span>
+<span class="p">}</span>           
+</code></pre></div>
+<p>Notice that we don&#39;t need to specify the shared module. The ClojureScript
+compiler will automatically move any namespace not explicitly placed
+into a module into the shared module.</p>
+
+<p>This sounds like a disaster but Google Closure Compiler will employ <em>cross
+module code motion</em> to ensure these modules only get the code they
+need. In fact we would hope that anything from core.async that wasn&#39;t
+dead code eliminated got <em>moved</em> into <code>hello-world.foo</code>.</p>
+
+<p>Running Closure advanced compilation with pretty-printing and human
+readable names shows this is in fact the case.</p>
+
+<p>This is the entire file <code>bar.js</code> which <em>does not</em> depend on core.async:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">$cljs$core$enable_console_print_BANG_$$</span><span class="p">();</span>
+<span class="nx">$cljs$core$println$$</span><span class="p">.</span><span class="nx">$cljs$core$IFn$_invoke$arity$variadic$</span><span class="p">(</span>
+    <span class="nx">$cljs$core$array_seq$$</span><span class="p">([</span><span class="s2">&quot;Hello world from module bar!&quot;</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div>
+<p>And this is a snippet of <code>foo.js</code> which <em>does</em> depend on core.async:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">$cljs$core$async$impl$ioc_helpers$t23998$$</span> <span class="p">...</span>
+<span class="kd">function</span> <span class="nx">$cljs$core$async$impl$protocols$active_QMARK_$$</span><span class="p">(</span><span class="nx">$h$$128$$</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">$h$$128$$</span> <span class="o">?</span> <span class="p">...)</span> <span class="p">{</span>
+        <span class="k">return</span><span class="o">!</span><span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="p">...</span>    
+<span class="p">}</span>
+<span class="p">...</span>    
+</code></pre></div>
+<p>As predicted core.async got moved into <code>foo.js</code>!</p>
+
+<p>The final gzipped sizes of the modules for the example above:</p>
+
+<ul>
+<li>cljs_base.js, 22K</li>
+<li>foo.js, 3K</li>
+<li>bar.js, 0.04K</li>
+</ul>
+
+<p>For large ClojureScript applications I think it&#39;s an understatement to
+say that this is a &quot;game changer&quot;.</p>
+
+<p>I&#39;d like to thank <a href="https://twitter.com/thheller">Thomas Heller</a> for
+his work incorporating Google Closure Modules into his
+<a href="https://github.com/thheller/shadow-build">shadow-build</a> project. He
+provided a lot of inspiration and rationale that convinced me to land
+this functionality into ClojureScript itself.</p>
+
+<p>For more details on actual usage checkout the
+<a href="https://github.com/clojure/clojurescript/wiki/Compiler-Options#modules">ClojureScript wiki</a>.</p>
+
+<p>Happy hacking!</p>

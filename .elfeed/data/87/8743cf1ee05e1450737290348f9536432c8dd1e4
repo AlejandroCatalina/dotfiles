@@ -1,0 +1,42 @@
+<p>In
+<a href="http://swannodette.github.io/2013/12/17/the-future-of-javascript-mvcs/">my previous post</a>
+I claimed it was trivial to implement undo in
+<a href="http://github.com/swannodette/om">Om</a>. You can see it in action
+<a href="http://swannodette.github.io/todomvc/labs/architecture-examples/om-undo/index.html">here</a>.</p>
+
+<p>I added the following 13 lines of code:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(def app-history (atom [@app-state]))
+
+(add-watch app-state :history
+  (fn [_ _ _ n]
+    (when-not (= (last @app-history) n)
+      (swap! app-history conj n))
+    (set! (.-innerHTML (.getElementById js/document &quot;message&quot;))
+      (let [c (count @app-history)]
+        (str c &quot; Saved &quot; (pluralize c &quot;State&quot;))))))
+
+(aset js/window &quot;undo&quot;
+  (fn [e]
+    (when (&gt; (count @app-history) 1)
+      (swap! app-history pop)
+      (reset! app-state (last @app-history)))))
+</code></pre></div>
+<p>Again in Om we always have access to the entire app state so we just
+need to save it on every serious change in app state. Then undo is
+simply loading a previous snapshot. Because of immutable data
+structures <a href="http://facebook.github.io/react/">React</a> can re-render
+just as quickly going back in time as it does going forward in
+time. While it may appear that storing the app state like this would
+consume a lot of memory, it doesn&#39;t because ClojureScript data
+structures work via structural sharing.</p>
+
+<p>Much more powerful undo/redo capability can be easily added with a
+little more effort. It&#39;s worth considering
+<a href="http://discuss.emberjs.com/t/undo-manager-implementation/1603">how much work it</a>
+would take to accomplish the same thing in
+<a href="">a traditional JavaScript MVC</a>.</p>
+
+<p>Full source
+<a href="http://github.com/swannodette/todomvc/blob/gh-pages/labs/architecture-examples/om-undo/src/todomvc/app.cljs">here</a>.</p>
+
+<p>Happy New Years!</p>

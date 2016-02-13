@@ -1,0 +1,599 @@
+<style>
+  .hidden {
+    display: none;
+  }
+
+  #post ul,
+  #post li {
+    list-style: none;
+  }
+  #post li {
+    list-indent: -10px;
+  }
+
+  #ac-ex0 {
+    margin: 20px 0;
+    height: 75px;
+    background-color: #efefef;
+    padding: 10px;
+  }
+
+  .ac-container .combo-box {
+    position: relative;
+  }
+
+  #autocomplete-menu {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 25px;
+    z-index: 999;
+  }
+
+  #ac-ex0 input {
+    width: 460px;
+    padding: 5px;
+    font-size: 15px;
+    font-family: inconsolata;
+    height: 30px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+  }
+
+  #ac-ex0 label {
+    font-family: inconsolata;
+    width: 100px;
+    display: inline-block;
+    text-align: right;
+  }
+
+  #ac-ex0 .section {
+    margin-bottom: 10px;
+  }
+
+  #ac-ex0 ul {
+    list-style: none;
+    background-color: white;
+    margin: 0;
+    font-family: inconsolata;
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-shadow: 0px 4px 4px rgb(220,220,220);
+    user-select: none
+    -webkit-user-select: none;
+    -moz-user-select: none;
+  }
+
+  #ac-ex0 li {
+    cursor: pointer;
+    list-style: none;
+    padding: 3px 0 3px 8px;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+  }
+
+  #ac-ex0 li.highlighted {
+    background-color: #ccccff;
+  }
+</style>
+
+<p>core.async and systems like it have an unmatched level of power when
+it comes to programming user interfaces. I&#39;ve spent about a week using
+core.async to build the long promised autocompleter in about two
+hundred lines of ClojureScript.</p>
+
+<p>This post is a doozy so I&#39;ve
+decided to present it in the format of <em>comparative literate
+code</em>. I&#39;ll be documenting every part of the autocompleter and showing
+how analagous cases are handled in the
+<a href="http://github.com/jquery/jquery-ui/blob/9e00e00f3b54770faa0291d6ee6fc1dcbad028cb/ui/jquery.ui.autocomplete.js">jQuery UI autocompleter</a>. Don&#39;t
+read this post as trash talking the jQuery UI autocompleter, rather a
+frame of reference to understand more easily what
+<a href="http://en.wikipedia.org/wiki/Communicating_sequential_processes">CSP</a>
+might offer UI programmers over more traditional patterns as well as
+reactive ones. We will also
+apply this method of comparison and critique to Twitter&#39;s more
+featureful and more complicated
+<a href="http://twitter.github.io/typeahead.js/">typeahead.js</a>. If you
+haven&#39;t read the
+<a href="http://swannodette.github.io/2013/07/12/communicating-sequential-processes/">original post</a>
+on CSP or the
+<a href="http://swannodette.github.io/2013/07/31/extracting-processes/">second post</a>
+on the selection menu component, please do so before proceeding.</p>
+
+<p>First, the autocompleter in action. Make sure to try all
+the following cases:</p>
+
+<ul>
+<li>&mdash; Control characters should not trigger menu</li>
+<li>&mdash; Platform command chords should not trigger menu</li>
+<li>&mdash; Close menu on tab out of field</li>
+<li>&mdash; Close menu on outside click</li>
+<li>&mdash; Tab when user is selecting item should prevent default</li>
+<li>&mdash; Keyboard based selection</li>
+<li>&mdash; Mouse based selection</li>
+<li>&mdash; No selection when mouse down on one item and mouse up on
+different item</li>
+</ul>
+
+<p>The autocompleter should work fine on Internet Explorer 8 or greater
+and we&#39;ll see how cleanly we can handle browser quirks.</p>
+
+<div id="ac-ex0">
+    <div class="ac-container">
+        <div class="section">
+            <label>Query:</label>
+            <span class="combo-box">
+                <input id="autocomplete" type="text"/>
+                <ul id="autocomplete-menu" class="hidden"></ul>
+            </span>
+        </div>
+        <div class="section">
+            <label>Some field:</label>
+            <input type="text" />
+        </div>
+    </div>
+</div>
+
+<h2>The Program</h2>
+
+<p>In contrast to many toy reactive autocompleters you&#39;ll find around the
+web what follows is an autocompleter much closer to the type of
+component you would actually consider integrating. This is also
+another reason to compare with the jQuery UI autocompleter; it
+actually handles a lot of edge cases the various FRP toys do not. Of
+course this is not a problem with
+<a href="http://en.wikipedia.org/wiki/Functional_reactive_programming">FRP</a>,
+just the examples you find online. In fact, I would love to see an
+alternative version of this autocompleter using an FRP library or
+<a href="http://elm-lang.org/">language</a> that demonstrates not only the level
+of functionality but the same deep separation of concerns.</p>
+
+<h3>Namespace definition</h3>
+
+<p>First we declare our namespace. We import the core.async functions and
+macros. We also import the components from the previous blog post; no
+need to write that code again. We also import some utility DOM helpers
+(which are just wrappers around Google Closure&#39;s battle tested cross
+browser DOM library) and some reactive conveniences. We import
+<code>goog.userAgent</code> and some other <code>goog</code> related namespaces to help us
+deal with Internet Explorer quirks.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(ns blog.autocomplete.core
+  (:require-macros
+    [cljs.core.async.macros :refer [go]]
+  (:require
+    [goog.userAgent :as ua]
+    [goog.events :as events]
+    [goog.events.EventType]
+    [clojure.string :as string]
+    [cljs.core.async :refer [&gt;! &lt;! alts! chan sliding-buffer put!]]
+    [blog.responsive.core :as resp]
+    [blog.utils.dom :as dom]
+    [blog.utils.helpers :as h]
+    [blog.utils.reactive :as r]))
+</code></pre></div>
+<h3>Declarations</h3>
+
+<p>We setup the url that will serve the data that will populate our menu:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(def base-url
+  &quot;http://en.wikipedia.org/w/api.php?action=opensearch&amp;format=json&amp;search=&quot;)
+</code></pre></div>
+<h3>Protocols</h3>
+
+<p>The autocompleter requires some new interface representations - we
+need hideable components, we need to be able to set text fields,
+and we need to update the contents of list components.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defprotocol IHideable
+  (-hide! [view])
+  (-show! [view]))
+
+(defprotocol ITextField
+  (-set-text! [field txt])
+  (-text [field]))
+
+(defprotocol IUIList
+  (-set-items! [list items]))
+</code></pre></div>
+<h3>Menu subprocess</h3>
+
+<p>In this implementation we&#39;re going to do something a bit novel as far
+as common JavaScript practice. In the jQuery UI, the menu used by the
+autocompleter is constructed once and stored in a field of the
+autocompleter like so:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">this.menu = $( &quot;&lt;ul&gt;&quot; )
+    .addClass( &quot;ui-autocomplete ui-front&quot; )
+    .appendTo( this._appendTo() )
+    .menu({
+        // disable ARIA support, the live region takes care of that
+        role: null
+    })
+    .hide()
+    .menu( &quot;instance&quot; );
+</code></pre></div>
+<p>You can see the source in context
+<a href="http://github.com/jquery/jquery-ui/blob/9e00e00f3b54770faa0291d6ee6fc1dcbad028cb/ui/jquery.ui.autocomplete.js#L192">here</a>.</p>
+
+<p>In our implementation we will not hold onto a selectable menu instance, instead
+we will create a menu selection process on the fly as needed.</p>
+
+<p>Not only will we construct the menu selection subprocess on <em>demand</em>,
+we can <em>pause</em> the autocompleter until the subprocess
+completes. This eliminates coordination between components
+and superfluous state tracking. It also means we can share
+streams of events avoiding redundancy and duplication of logic. <a href="http://github.com/jquery/jquery-ui/blob/9e00e00f3b54770faa0291d6ee6fc1dcbad028cb/ui/jquery.ui.autocomplete.js#L202-L307">Lines
+202 to 307 in the jQuery autocompleter</a>
+is all component coordination and event handling redundancy that we would like to
+avoid.</p>
+
+<p>Our menu subprocess looks like this:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn menu-proc [select cancel menu data]
+  (let [ctrl (chan)
+        sel  (-&gt;&gt; (resp/selector
+                    (resp/highlighter select menu ctrl)
+                    menu data)
+               (r/filter vector?)
+               (r/map second))]
+    (go (let [[v sc] (alts! [cancel sel])]
+          (do (&gt;! ctrl :exit)
+            (if (or (= sc cancel)
+                    (= v ::resp/none))
+              ::cancel
+              v))))))
+</code></pre></div>
+<p><code>menu-proc</code> takes some channels and some UI components. The <code>select</code>
+channel provides the events that affect the menu component. The
+<code>cancel</code> channel allows us to abort the selection process should the
+user start typing again, tab out or click elsewhere in the
+window. It&#39;s important to notice the lack of anything specific to HTML
+representation at this point (more on this later). We also construct a channel <code>ctrl</code> so
+that we can tell the menu subprocess to quit and thus get garbage
+collected.</p>
+
+<p>We then construct the highlighter/selection process much as we did in
+the previous post and store the resulting channel in a local binding
+<code>sel</code>. If you haven&#39;t seen much Clojure before <code>-&gt;&gt;</code> is just a
+threading macro so we don&#39;t have to write our code &quot;inside out&quot; - sugar.</p>
+
+<p>As soon as we receive something from <code>cancel</code> or <code>sel</code> we quit the
+subprocess and either return <code>::cancel</code> or the user selection respectively.</p>
+
+<p>Once more, in this model we only create the menu selection process
+when we need it. In many traditional MVC designs you&#39;ll see complex
+graphs of objects that get allocated at initialization only to sit
+around in memory spending most of their time doing nothing.</p>
+
+<p>In this design we&#39;re alluding to a system that only constructs the
+processes when they are needed and which are destroyed when they have
+completed their work. Sounds like a good idea right?</p>
+
+<h2>Core autocompleter</h2>
+
+<p>This is our main autocompleter process. The 39 lines of code below represent
+the entirety of the process utterly devoid of clutter about DOM
+events or manipulation. This is in stark contrast to jQuery UI or
+typeahead.js where the heart of the component is smeared across hundreds
+and hundreds of line of code.</p>
+
+<p><code>autocompleter*</code> takes in a variety of values in a ClojureScript
+hash-map which we destructure. <code>focus</code> is a channel of input field
+focus events. <code>query</code> is the stream of text changes made to the input
+field with values &quot;highlighted&quot; at throttled intervals. <code>select</code> is
+the channel of events needed by the menu, but we also use this to know
+when to start the menu selection subprocess. <code>cancel</code> is channel of
+events that should cancel the selection process and hide the selection
+menu. <code>menu</code> is the abstract menu UI component.</p>
+
+<p>We split <code>query</code> into the highlighted events and the raw
+events. We&#39;ll forward <code>raw</code> to the selection process when we create
+it.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn autocompleter* [{:keys [focus query select cancel menu] :as opts}]
+  (let [out (chan)
+        [query raw] (r/split r/throttle-msg? query)]
+</code></pre></div>
+<p>We enter our go loop. We track two pieces of state, <code>items</code> which is the
+last JavaScript array of completions we fetched (it could be local or
+remote it doesn&#39;t matter), and <code>focused</code> - whether the input field
+is in focus.</p>
+
+<p>We non-deterministically select over all these channels:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">    (go (loop [items nil focused false]
+          (let [[v sc] (alts! [raw cancel focus query select])]
+</code></pre></div>
+<p>In the first case we have a focus event, we simply track that bit of state.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">            (cond
+              (= sc focus)
+              (recur items true)
+</code></pre></div>
+<p>In the second case we have a cancellation event, we simply hide the
+menu component and kill any pending throttled query.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">              (= sc cancel)
+              (do (-hide! menu)
+                (&gt;! (:query-ctrl opts) (h/now))
+                (recur items (not= v :blur)))
+</code></pre></div>
+<p>In the third case we need to get some completions. We call
+<code>completions</code> with the query supplied by the user. We handle
+possible cancellation. If we actually get a result and no cancellation
+event we show the menu component and update its contents.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">              (and focused (= sc query))
+              (let [[v c] (alts! [cancel ((:completions opts) (second v))])]
+                (if (or (= c cancel) (zero? (count v)))
+                  (do (-hide! menu)
+                    (recur nil (not= v :blur)))
+                  (do
+                    (-show! menu)
+                    (-set-items! menu v)
+                    (recur v focused))))
+</code></pre></div>
+<p>The fourth case is the most interesting. <em>We hand off control to the menu
+process</em>. We pass along the <code>select</code> channel making sure to put the
+event we read back at the front with <code>r/concat</code>. We also pass along the <code>cancel</code>
+channel, note we use <code>r/fan-in</code> to mix in <code>raw</code>, which is a channel of the
+changes to the input field because we want to cancel menu selection if the
+user starts typing again.</p>
+
+<p><code>autocompleter*</code> will be <em>paused</em> until the menu selection subprocess
+completes. Because we can hand off control, coordination logic between
+<code>autocompleter*</code> and <code>menu-proc</code> becomes unnecessary.</p>
+
+<p>It&#39;s worth taking a breath to consider how flexible this is. Because
+channels do not require explicit subscription we can simply pass them
+along as values, pause our execution allowing some other process to
+read from the channel until they are done at which point we can pick
+up where we left off. This is very different from the approach taken by
+<a href="http://msdn.microsoft.com/en-us/data/gg577609.aspx">Reactive Extensions</a> and similar systems like <a href="http://api.dartlang.org/docs/releases/latest/dart_async/Stream.html">Dart&#39;s Stream</a>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">              (and items (= sc select))
+              (let [_ (reset! (:selection-state opts) true)
+                    _ (&gt;! (:query-ctrl opts) (h/now))
+                    choice (&lt;! ((:menu-proc opts) (r/concat [v] select)
+                                 (r/fan-in [raw cancel]) menu items))]
+                (reset! (:selection-state opts) false)
+                (-hide! menu)
+                (if (= choice ::cancel)
+                  (recur nil (not= v :blur))
+                  (do (-set-text! (:input opts) choice)
+                    (&gt;! out choice)
+                    (recur nil focused))))
+</code></pre></div>
+<p>There&#39;s a little bit of complication above around <code>:selection-state</code>, 
+this is to support tab for selection, we&#39;ll explain this later. We
+need to cancel any pending throttle event via <code>:query-ctrl</code> as
+otherwise the menu might appear after a selection is made if the user is
+a particularly fast typist.</p>
+
+<p>In the last case, we just loop around. Since we don&#39;t actually handle
+<code>raw</code> this means the events on the <code>raw</code> channel will just be dropped;
+this is what we want, otherwise <code>raw</code> will have events that need
+reading when we call the menu subprocess (causing it to exit
+immediately).</p>
+
+<p>Finally, <code>autocompleter*</code> just returns its output channel</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">              :else
+              (recur items focused)))))
+    out))
+</code></pre></div>
+<blockquote>
+<h3>Code Comprehension</h3>
+
+<p>We&#39;ve seen hardly anything so far related to HTML - we&#39;ve
+only been examining an abstract autocompleter process. 
+This may seem like over engineering, but reading through
+the source of the <a href="http://github.com/jquery/jquery-ui/blob/9e00e00f3b54770faa0291d6ee6fc1dcbad028cb/ui/jquery.ui.autocomplete.js">jQuery autocompleter</a> or through
+<a href="http://github.com/twitter/typeahead.js/blob/8c493d55f012bb8e9ee4ebfffaa569e465b53813/src/typeahead_view.js">typeahead.js</a>
+it becomes apparent that the difficulty in
+understanding their implementations is due precisely to the lack of separation
+of concerns. We have to digest so many different concerns at once!
+How exhausting.</p>
+</blockquote>
+
+<p>Now that we defined a fairly sensible autocompleter for any interface
+representation, let&#39;s actually implement a concrete representation.</p>
+
+<h3>HTML based implementation</h3>
+
+<p>First we need a way to detect bad browsers:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn less-than-ie9? []
+  (and ua/IE (not (ua/isVersion 9))))
+</code></pre></div>
+<p>We write a concrete implementation of <code>ITextField</code> for HTML text inputs.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(extend-type js/HTMLInputElement
+  ITextField
+  (-set-text! [field text]
+    (set! (.-value field) text))
+  (-text [field]
+    (.-value field)))
+</code></pre></div>
+<p>We want HTML <code>ul</code> tags to act as hideable list components. So we add
+concrete implementations of <code>IHideable</code> and <code>IUIList</code>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(extend-type js/HTMLUListElement
+  IHideable
+  (-hide! [list]
+    (dom/add-class! list &quot;hidden&quot;))
+  (-show! [list]
+    (dom/remove-class! list &quot;hidden&quot;))
+
+  IUIList
+  (-set-items! [list items]
+    (-&gt;&gt; (for [item items] (str &quot;&lt;li&gt;&quot; item &quot;&lt;/li&gt;&quot;))
+      (apply str)
+      (dom/set-html! list))))
+</code></pre></div>
+<p>That concludes all the interface presentation code - short and
+sweet. Event handling is only a little bit more involved.</p>
+
+<h3>HTML Event Wrangling</h3>
+
+<p>We need a way to detect mouse down and up events on items in the menu,
+this is because we cannot prevent input field blur events if we don&#39;t prevent
+default on mouse down.</p>
+
+<p><code>menu-item-event</code> accomplishes this for us. Notice that for bad
+browsers we need to refocus the input field, because we can&#39;t even
+prevent blur events at mouse down.</p>
+
+<p>(A puzzle for the concurrency minded: why do I need a sliding buffer backed
+channel?)</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn menu-item-event [menu input type]
+  (-&gt;&gt; (r/listen menu type
+         (fn [e]
+           (when (dom/in? e menu)
+             (.preventDefault e))
+           (when (and (= type :mousedown)
+                      (less-than-ie9?))
+             (.focus input)))
+         (chan (sliding-buffer 1)))
+    (r/map
+      (fn [e]
+        (let [li (dom/parent (.-target e) &quot;li&quot;)]
+          (h/index-of (dom/by-tag-name menu &quot;li&quot;) li))))))
+</code></pre></div>
+<p>For the HTML based menu, we fan in three different channels of
+events. <code>menu-item-event</code> will be used to help construct one of them.</p>
+
+<p>First we need the channel of key events that manipulate the menu. If
+the user is in the middle of menu selection we need to override the
+behavior of the tab key. We are able to detect this via
+<code>allow-tab?</code> which is an atom, a tiny bit of necessary mutable
+state. This is the <code>:selection-state</code> option in <code>autocompleter*</code> that we
+banged on earlier.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn html-menu-events [input menu allow-tab?]
+  (r/fan-in
+    [;; keyboard menu controls, tab special handling
+     (-&gt;&gt; (r/listen input :keydown
+            (fn [e]
+              (when (and @allow-tab?
+                         (= (.-keyCode e) resp/TAB))
+                (.preventDefault e))))
+       (r/map resp/key-event-&gt;keycode)
+       (r/filter
+         (fn [kc]
+           (and (resp/KEYS kc)
+                (or (not= kc resp/TAB)
+                    @allow-tab?))))
+       (r/map resp/key-&gt;keyword))
+</code></pre></div>
+<p>We need to detect user hover over items in the menu to track
+potential selections.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">     ;; hover events, index of hovered child
+     (r/hover-child menu &quot;li&quot;)
+</code></pre></div>
+<p>In order to trigger selection we need both a mouse down event and a
+mouse up event - we use <code>r/cyclic-barrier</code> in conjunction with
+<code>menu-item-event</code> to make sure that we have both before we proceed. We
+only want to handle cases where the item the user mouse downed on
+matches the one that the user mouse upped on.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">     ;; need to handle menu clicks
+     (-&gt;&gt; (r/cyclic-barrier
+            [(menu-item-event menu input :mousedown)
+             (menu-item-event menu input :mouseup)])
+       (r/filter (fn [[d u]] (= d u)))
+       (r/always :select))]))
+</code></pre></div>
+<p>Then we need to listen to key events from the input field. We only
+care when the text of the input field actually changes. We filter out the
+various cases we don&#39;t care about. We use <code>r/split</code> to generate two
+channels, a channel of the things we might query and another channel
+of blank input events to cancel the menu selection process.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn relevant-keys [kc]
+  (or (= kc 8)
+      (and (&gt; kc 46)
+           (not (#{91 92 93} kc)))))
+
+(defn html-input-events [input]
+  (-&gt;&gt; (r/listen input :keydown)
+    (r/remove (fn [e] (.-platformModifierKey e)))
+    (r/map resp/key-event-&gt;keycode)
+    (r/filter relevant-keys)
+    (r/map #(-text input))
+    (r/split #(not (string/blank? %)))))
+</code></pre></div>
+<p>Now we need to handle bad browsers that complicate blur detection:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn ie-blur [input menu selection-state]
+  (let [out (chan)]
+    (events/listen input goog.events.EventType.KEYDOWN
+      (fn [e]
+        (when (and (= (.-keyCode e) resp/TAB) (not @selection-state))
+          (put! out (h/now)))))
+    (events/listen js/document.body goog.events.EventType.MOUSEDOWN
+      (fn [e]
+        (when-not (some #(dom/in? e %) [menu input])
+          (put! out (h/now)))))
+    out))
+</code></pre></div>
+<blockquote>
+<h3>Quarantining Quirks</h3>
+
+<p>Because neither of the JavaScript autocompleters we&#39;ve
+considered have disciplined separation of concerns, browser quirk
+logic is fully interleaved into the process logic - see
+<a href="http://github.com/jquery/jquery-ui/blob/9e00e00f3b54770faa0291d6ee6fc1dcbad028cb/ui/jquery.ui.autocomplete.js#L127">here</a>
+and
+<a href="http://github.com/twitter/typeahead.js/blob/8c493d55f012bb8e9ee4ebfffaa569e465b53813/src/typeahead_view.js#L216">here</a>.
+In our implementation process coordination is untainted by
+browser specific insanity; browser quirks need
+only appear in the place where it matters, event handling and DOM
+manipulation! This aids code comprehension as well as
+code maintenance. This is real readability, not the purely surface appearance
+notion of readability that&#39;s usually bandied about these days.</p>
+</blockquote>
+
+<p>We can now write the HTML autocompleter construction function.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn html-autocompleter [input menu completions throttle]
+  (let [selection-state (atom false)
+        query-ctrl (chan)
+        [filtered removed] (html-input-events input)]
+    (when (less-than-ie9?)
+      (events/listen menu goog.events.EventType.SELECTSTART
+        (fn [e] false)))
+    (-set-text! input &quot;&quot;)
+    (autocompleter*
+      {:focus (r/always :focus (r/listen input :focus))
+       :query (r/throttle* (r/distinct filtered) throttle (chan) query-ctrl)
+       :query-ctrl query-ctrl
+       :select (html-menu-events input menu selection-state)
+       :cancel (r/fan-in
+                 [removed
+                  (r/always :blur
+                    (if-not (less-than-ie9?)
+                      (r/listen input :blur)
+                      (ie-blur input menu selection-state)))])
+       :input input
+       :menu menu
+       :menu-proc menu-proc
+       :completions completions
+       :selection-state selection-state})))
+</code></pre></div>
+<h3>Running it</h3>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn wikipedia-search [query]
+  (go (nth (&lt;! (r/jsonp (str base-url query))) 1)))
+
+(let [ac (html-autocompleter
+           (dom/by-id &quot;autocomplete&quot;)
+           (dom/by-id &quot;autocomplete-menu&quot;)
+           wikipedia-search 750)]
+  (go (while true (&lt;! ac))))
+</code></pre></div>
+<h2>Conclusion</h2>
+
+<p>We&#39;ve examined a small and manageable amount of code. The core is not
+polluted by concrete implementation concerns and thus improving
+readability. DOM and browser specific quirks are quarantined into the
+parts of the code where they make sense. There are no monolithic
+objects, no contorted class hierarchies, no elaborate mixins, just
+some functions, some data, and some processes.</p>
+
+<p>Even if you don&#39;t intend to use ClojureScript, hopefully you&#39;ve noticed some
+patterns that you can leverage to make your own code more robust,
+easier to read, easier to extend, and easier to maintain.</p>
+
+<p>Who knew UI programming could be so <em>simple</em>?</p>
+
+<p>You can see all code for this post
+<a href="http://github.com/swannodette/swannodette.github.com/blob/master/code/blog/src/blog/autocomplete/core.cljs">here</a>.</p>
+
+<script type="text/javascript" src="/assets/js/ac.js"></script>

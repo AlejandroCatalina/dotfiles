@@ -1,0 +1,82 @@
+<p>The following code demonstrates how to script the ClojureScript
+compiler with the Nashorn JavaScript engine that ships with Java 8.</p>
+
+<p>Create a file called <code>build.js</code> with the following contents:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// Use the Java interop clojure.lang.RT namespace to get at </span>
+<span class="c1">// Clojure vars</span>
+<span class="kd">var</span> <span class="nx">ArrayList</span> <span class="o">=</span> <span class="nx">java</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">ArrayList</span><span class="p">,</span>
+    <span class="nx">RT</span> <span class="o">=</span> <span class="nb">Packages</span><span class="p">.</span><span class="nx">clojure</span><span class="p">.</span><span class="nx">lang</span><span class="p">.</span><span class="nx">RT</span><span class="p">,</span>
+    <span class="nx">seq</span> <span class="o">=</span> <span class="nx">RT</span><span class="p">.</span><span class="kd">var</span><span class="p">(</span><span class="s2">&quot;clojure.core&quot;</span><span class="p">,</span> <span class="s2">&quot;seq&quot;</span><span class="p">);</span>
+
+<span class="c1">// ================================================================================</span>
+<span class="c1">// Bootstrap</span>
+
+<span class="c1">// Nashorn JavaScript arrays don&#39;t satisfy java.util.List</span>
+<span class="c1">// convert them into ArrayLists which do</span>
+<span class="kd">var</span> <span class="nx">arrayToArrayList</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">arr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ArrayList</span><span class="p">();</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">arr</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">ret</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">ret</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="c1">// Given a Clojure namespace and name get the var</span>
+<span class="c1">// and return a JavaScript function which can invoke it</span>
+<span class="c1">// in the usual JavaScript way</span>
+<span class="kd">var</span> <span class="nx">varToFn</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ns</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// if only given one argument assume the namespace</span>
+    <span class="c1">// is clojure.core</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">name</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">name</span> <span class="o">=</span> <span class="nx">ns</span><span class="p">;</span>
+        <span class="nx">ns</span> <span class="o">=</span> <span class="s2">&quot;clojure.core&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kd">var</span> <span class="nx">v</span> <span class="o">=</span> <span class="nx">RT</span><span class="p">.</span><span class="kd">var</span><span class="p">(</span><span class="nx">ns</span><span class="p">,</span> <span class="nx">name</span><span class="p">);</span>
+    <span class="k">return</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">arrayToArrayList</span><span class="p">(</span><span class="nx">arguments</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nx">v</span><span class="p">.</span><span class="nx">applyTo</span><span class="p">(</span><span class="nx">seq</span><span class="p">.</span><span class="nx">invoke</span><span class="p">(</span><span class="nx">args</span><span class="p">));</span>
+    <span class="p">};</span>
+<span class="p">};</span>
+
+<span class="kd">var</span> <span class="nx">hashMap</span> <span class="o">=</span> <span class="nx">varToFn</span><span class="p">(</span><span class="s2">&quot;hash-map&quot;</span><span class="p">),</span>
+    <span class="nx">keyword</span> <span class="o">=</span> <span class="nx">varToFn</span><span class="p">(</span><span class="s2">&quot;keyword&quot;</span><span class="p">);</span>
+
+<span class="c1">// Helper to convert JavaScript objects into Clojure</span>
+<span class="c1">// hash maps</span>
+<span class="kd">var</span> <span class="nx">objectToMap</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">arr</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ArrayList</span><span class="p">();</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">arr</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">keyword</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/([a-z])([A-Z])/g</span><span class="p">,</span> <span class="s1">&#39;$1-$2&#39;</span><span class="p">).</span><span class="nx">toLowerCase</span><span class="p">()));</span>
+        <span class="nx">arr</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">obj</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">hashMap</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">arr</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="c1">// =============================================================================</span>
+<span class="c1">// Fun Starts Here</span>
+
+<span class="kd">var</span> <span class="nx">symbol</span> <span class="o">=</span> <span class="nx">varToFn</span><span class="p">(</span><span class="s2">&quot;symbol&quot;</span><span class="p">),</span>
+    <span class="nx">require</span> <span class="o">=</span> <span class="nx">varToFn</span><span class="p">(</span><span class="s2">&quot;require&quot;</span><span class="p">);</span>
+
+<span class="c1">// Load cljs.closure</span>
+<span class="nx">require</span><span class="p">(</span><span class="nx">symbol</span><span class="p">(</span><span class="s2">&quot;cljs.closure&quot;</span><span class="p">));</span>
+
+<span class="c1">// The actual build fn</span>
+<span class="kd">var</span> <span class="nx">build_</span> <span class="o">=</span> <span class="nx">varToFn</span><span class="p">(</span><span class="s2">&quot;cljs.closure&quot;</span><span class="p">,</span> <span class="s2">&quot;build&quot;</span><span class="p">);</span>
+
+<span class="c1">// Define a build function that can take an JavaScript object</span>
+<span class="c1">// with camelCase keys</span>
+<span class="kd">function</span> <span class="nx">build</span><span class="p">(</span><span class="nx">src</span><span class="p">,</span> <span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">build_</span><span class="p">(</span><span class="nx">src</span><span class="p">,</span> <span class="nx">objectToMap</span><span class="p">(</span><span class="nx">obj</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="c1">// Build!</span>
+<span class="nx">build</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">outputTo</span><span class="o">:</span> <span class="s2">&quot;out/main.js&quot;</span><span class="p">});</span>
+</code></pre></div>
+<p>You can use this script in place of the <code>build.clj</code> script described
+in the new
+<a href="https://github.com/clojure/clojurescript/wiki/Quick-Start">ClojureScript Quick Start</a>
+by running the following instead:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">jjs -J-Djava.class.path=cljs.jar build.js
+</code></pre></div>
+<p>Fun stuff.</p>

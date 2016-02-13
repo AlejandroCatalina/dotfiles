@@ -1,0 +1,12 @@
+<div class="date">6 Sep 2014</div>
+
+    <p>
+    The Emacs Shell, or EShell, is a unique and quite powerful shell
+    that allows you to write your supporting functions in Lisp. This
+    article <a href="http://www.howardism.org/Technical/Emacs/eshell.html">beyond my original introduction</a> to explore it deeper.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Emacs/eshell-fun.html">Read more...</a>
+    </p>
+    

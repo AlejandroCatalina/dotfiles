@@ -1,0 +1,32 @@
+<div class="outline-text-2" id="text-1">
+
+<p>  
+  We've already discussed editing root-owned files here a few times; it's one
+  of those tasks where in a reflex I still open a terminal and use <code>vi</code> to do
+  the job&hellip; the only way to overcome that seems to be to make it <i>really</i>
+  easy to do the same from within my running emacs:
+</p>
+
+
+
+<pre class="src src-elisp">  (<span style="color: #bc8383; font-weight: bold;">defun</span> <span style="color: #8fb28f; font-weight: bold;">djcb-find-file-as-root</span> ()
+  <span style="color: #8fb28f; font-style: italic;">"Like `ido-find-file, but automatically edit the file with</span>
+<span style="color: #8fb28f; font-style: italic;">root-privileges (using tramp/sudo), if the file is not writable by</span>
+<span style="color: #8fb28f; font-style: italic;">user."</span>
+  (interactive)
+  (<span style="color: #bc8383; font-weight: bold;">let</span> ((file (ido-read-file-name <span style="color: #6ca0a3;">"Edit as root: "</span>)))
+    (<span style="color: #bc8383; font-weight: bold;">unless</span> (file-writable-p file)
+      (<span style="color: #bc8383; font-weight: bold;">setq</span> file (concat <span style="color: #6ca0a3;">"/sudo:root@localhost:"</span> file)))
+    (find-file file)))
+<span style="color: #9fc59f;">;; </span><span style="color: #7f9f7f; font-style: italic;">or some other keybinding...</span>
+(global-set-key (kbd <span style="color: #6ca0a3;">"C-x F"</span>) 'djcb-find-file-as-root)
+</pre>
+
+
+<p>  
+  We could take it one step further still – overload the normal
+  <code>(ido-)find-file</code> with a version that checks the permissions first, and if
+  needed, use the above function to open it. But maybe that is <i>too</i> easy; we
+  should be careful with root-owned files after all.
+</p></div>
+

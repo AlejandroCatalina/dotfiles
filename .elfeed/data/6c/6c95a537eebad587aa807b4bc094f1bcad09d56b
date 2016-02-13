@@ -1,0 +1,61 @@
+<p>
+Why we don't have a <code>comment/uncomment-line</code> function is beyond me. While we fix
+that, might as well make it as complete as possible.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/comment-line</span> <span class="p">(</span><span class="nv">n</span><span class="p">)</span>
+  <span class="s">"Comment or uncomment current line and leave point after it.
+With positive prefix, apply to N lines including current one.
+With negative prefix, apply to -N lines above."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"p"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">range</span> <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nv">line-beginning-position</span><span class="p">)</span>
+                     <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">line-end-position</span> <span class="nv">n</span><span class="p">)))))</span>
+    <span class="p">(</span><span class="nv">comment-or-uncomment-region</span>
+     <span class="p">(</span><span class="nb">apply</span> <span class="nf">#'</span><span class="nb">min</span> <span class="nv">range</span><span class="p">)</span>
+     <span class="p">(</span><span class="nb">apply</span> <span class="nf">#'</span><span class="nb">max</span> <span class="nv">range</span><span class="p">)))</span>
+  <span class="p">(</span><span class="nv">forward-line</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">back-to-indentation</span><span class="p">))</span></code></pre></figure>
+<p>
+Short and sweet, isn't it? In analogy to <kbd>M-;</kbd>. I find <kbd>C-;</kbd> to be a great
+binding for it. This way I can quickly comment 3 lines by hitting <kbd>C-3 C-;</kbd>.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"C-;"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">endless/comment-line</span><span class="p">)</span></code></pre></figure>
+<p>
+Also, because it moves forward after commenting, you can conveniently do things
+like comment every other line by repeatedly doing <kbd>C-; C-n</kbd>.
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;2015-02-01 Sun&gt;</span></span></h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The previous version didn't quite work for negative prefix arguments, so I've
+updated the above snippet to fix that.
+</p>
+
+<p>
+Also, quite a few people requested (or proposed) a version which acts on region
+if active. I already use <kbd>M-;</kbd> for that (and I also its other modes of
+operation), but I can see why people would want that so I've added it below.
+It's similar to <a href="https://github.com/kaushalmodi/.emacs.d/blob/13bc1313e786ce1f1ab41d5aaff3dc39dfc57852/setup-files/setup-editing.el#L110-117">the one suggested by Kaushal Modi</a>. 
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/comment-line-or-region</span> <span class="p">(</span><span class="nv">n</span><span class="p">)</span>
+  <span class="s">"Comment or uncomment current line and leave point after it.
+With positive prefix, apply to N lines including current one.
+With negative prefix, apply to -N lines above.
+If region is active, apply to active region instead."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"p"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">use-region-p</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">comment-or-uncomment-region</span>
+       <span class="p">(</span><span class="nv">region-beginning</span><span class="p">)</span> <span class="p">(</span><span class="nv">region-end</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">range</span>
+           <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nv">line-beginning-position</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">line-end-position</span> <span class="nv">n</span><span class="p">)))))</span>
+      <span class="p">(</span><span class="nv">comment-or-uncomment-region</span>
+       <span class="p">(</span><span class="nb">apply</span> <span class="nf">#'</span><span class="nb">min</span> <span class="nv">range</span><span class="p">)</span>
+       <span class="p">(</span><span class="nb">apply</span> <span class="nf">#'</span><span class="nb">max</span> <span class="nv">range</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nv">forward-line</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">back-to-indentation</span><span class="p">)))</span></code></pre></figure>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/implementing-comment-line.html?source=rss#disqus_thread">Comment on this.</a></p>

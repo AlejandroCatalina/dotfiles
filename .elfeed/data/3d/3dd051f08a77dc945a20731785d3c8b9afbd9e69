@@ -1,0 +1,14 @@
+<div class="date">10 Aug 2015</div>
+
+    <p>
+    For your own projects, you can commit to Git anytime, but one of
+    the advantages of committing frequently is sharing code...either to
+    your team mates or even to yourself. Best approach, however, is to
+    commit a single bug or feature at a time, but use Gerrit to make
+    sure that single commit is perfect.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Git/how-often.html">Read more...</a>
+    </p>
+    

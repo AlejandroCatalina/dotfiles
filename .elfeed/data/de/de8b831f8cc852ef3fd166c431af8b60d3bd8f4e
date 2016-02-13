@@ -1,0 +1,198 @@
+<p>In the past I used to keep my Emacs configuration completely in a single
+<code class="highlighter-rouge">init.el</code> file.  For a long time this worked quite well, but of late my
+configuration became increasingly messy: Package configuration was mixed with
+utility functions, key bindings, and even larger code for entirely new features.
+Needless to say that my init file was in dire need of a very thorough cleanup.</p>
+
+<p>I had heard a lot of good things about John Wiegley’s <a href="https://github.com/jwiegley/use-package/">use-package</a> macro, and
+in the days after Christmas I decided to sit down and try to refactor my Emacs
+configuration with <code class="highlighter-rouge">use-package</code>.  The result was very pleasant, and much better
+than I had dared to hope.</p>
+
+<!--more-->
+
+<h1 id="the-basics">The basics</h1>
+
+<p>The idea of <code class="highlighter-rouge">use-package</code> is to wrap all initialisation and configuration of a
+package in a top-level form.  A typical use in my configuration looks like this:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">use-package</span> <span class="nv">whitespace</span>
+  <span class="ss">:bind</span> <span class="p">((</span><span class="s">"C-c T w"</span> <span class="o">.</span> <span class="nv">whitespace-mode</span><span class="p">))</span>
+  <span class="ss">:init</span>
+  <span class="p">(</span><span class="nb">dolist</span> <span class="p">(</span><span class="nv">hook</span> <span class="o">'</span><span class="p">(</span><span class="nv">prog-mode-hook</span> <span class="nv">text-mode-hooki</span>
+                  <span class="nv">conf-mode-hook</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">add-hook</span> <span class="nv">hook</span> <span class="nf">#'</span><span class="nv">whitespace-mode</span><span class="p">))</span>
+  <span class="ss">:config</span> <span class="p">(</span><span class="k">setq</span> <span class="nv">whitespace-line-column</span> <span class="no">nil</span><span class="p">)</span>
+  <span class="ss">:diminish</span> <span class="nv">whitespace-mode</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>This form binds Whitespace Mode to <kbd>C-c T w</kbd> globally, enables it
+automatically for certain modes, and configures it.  <code class="highlighter-rouge">:bind</code> and <code class="highlighter-rouge">:init</code> are
+evaluated immediately, whereas <code class="highlighter-rouge">:config</code> is deferred until after the package is
+loaded, similar to <code class="highlighter-rouge">with-eval-after-load</code><sup id="fnref:2"><a href="#fn:2" class="footnote">1</a></sup>.  <code class="highlighter-rouge">:diminish</code> is just a shortcut
+for the <a href="https://github.com/emacsmirror/diminish">diminish</a> utility which removes minor modes from the mode line.</p>
+
+<p>Now compare this to the same code <em>without</em> <code class="highlighter-rouge">use-package</code>, as it would appear in
+my init file before:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"C-c T w"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">whitespace-mode</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">dolist</span> <span class="p">(</span><span class="nv">hook</span> <span class="o">'</span><span class="p">(</span><span class="nv">prog-mode-hook</span> <span class="nv">text-mode-hook</span>
+                <span class="nv">conf-mode-hook</span><span class="p">))</span>
+  <span class="p">(</span><span class="nv">add-hook</span> <span class="nv">hook</span> <span class="nf">#'</span><span class="nv">whitespace-mode</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nv">with-eval-after-load</span> <span class="ss">'whitespace</span>
+  <span class="p">(</span><span class="k">setq</span> <span class="nv">whitespace-line-column</span> <span class="no">nil</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">diminish</span> <span class="ss">'whitespace-mode</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>Clearly the <code class="highlighter-rouge">use-package</code> variant is more concise and organised, and much easier
+to understand.  It keeps everything related to a package in a single top-level
+form, which puts all of the scattered package initialisation and configuration
+code together.  This alone made my init file much easier to understand, but the
+real power of <code class="highlighter-rouge">use-package</code> does not end here—in fact, I have not show you any
+of the really cool stuff yet!</p>
+
+<h1 id="automatic-package-installation">Automatic package installation</h1>
+
+<p>These days most of the cool Emacs Lisp isn’t built-in like <code class="highlighter-rouge">whitespace-mode</code> but
+comes from <a href="https://melpa.org">MELPA</a>.  I have almost 100 3rd party packages in my Emacs.  I’d be
+a huge pain to track and install these manually whenever I remove the package
+directory or move to a new machine, but with <code class="highlighter-rouge">use-package</code> I don’t have to<sup id="fnref:1"><a href="#fn:1" class="footnote">2</a></sup>.
+<code class="highlighter-rouge">use-package</code> can automatically install missing packages:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">use-package</span> <span class="nv">imenu-anywhere</span>
+  <span class="ss">:ensure</span> <span class="no">t</span>
+  <span class="ss">:bind</span> <span class="p">((</span><span class="s">"C-c i"</span> <span class="o">.</span> <span class="nv">imenu-anywhere</span><span class="p">)))</span>
+</code></pre>
+</div>
+
+<p>This feature is so convenient that I mostly stopped to install new packages via
+<kbd>M-x list-packages</kbd>.  Now I add a <code class="highlighter-rouge">use-package</code> form for any new
+package to my init file right away, with some basic initialisation and
+configuration—usually from the Github README of the package—and an <code class="highlighter-rouge">:ensure</code>
+keyword, and type <kbd>C-M-x</kbd> to evaluate the form to install and setup the
+package in one go.</p>
+
+<p>I still need to bootstrap <code class="highlighter-rouge">use-package</code> explicitly at the beginning of my init
+file, though.  This is not that pretty, but the obvious chicken-egg problem
+can’t be avoided otherwise:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">require</span> <span class="ss">'package</span><span class="p">)</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">package-enable-at-startup</span> <span class="no">nil</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">add-to-list</span> <span class="ss">'package-archives</span>
+             <span class="o">'</span><span class="p">(</span><span class="s">"melpa"</span> <span class="o">.</span> <span class="s">"https://melpa.org/packages/"</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nv">package-initialize</span><span class="p">)</span>
+
+<span class="c1">;; Bootstrap `use-package'</span>
+<span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">package-installed-p</span> <span class="ss">'use-package</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">package-refresh-contents</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">package-install</span> <span class="ss">'use-package</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<h1 id="local-packages">“Local” packages</h1>
+
+<p>While I try to use packages as much as possible, and also release most of my
+custom code as packages to <a href="https://melpa.org">MELPA</a>, I still have some code in my configuration
+that is too small or too specific to my own workflow and my personal preferences
+to be released independently.</p>
+
+<p><code class="highlighter-rouge">use-package</code> makes it easy to maintain this code.  I can keep it in separate
+libraries, pretending that they are proper packages installed with the package
+manager, and use <code class="highlighter-rouge">use-package</code> as usual to load my custom code.  For example, I
+have a <code class="highlighter-rouge">lunaryorn-simple</code> library which contains many small helper functions for
+editing.  It sits in the <code class="highlighter-rouge">lisp/</code> subdirectory of my Emacs directory and is never
+installed with the package manager, but <code class="highlighter-rouge">use-package</code> lets me configure as if it
+were:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">use-package</span> <span class="nv">lunaryorn-simple</span>
+  <span class="ss">:load-path</span> <span class="s">"lisp/"</span>
+  <span class="ss">:bind</span> <span class="p">((</span><span class="nv">[remap</span> <span class="nv">kill-whole-line]</span>        <span class="o">.</span> <span class="nv">lunaryorn-smart-kill-whole-line</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">[remap</span> <span class="nv">move-beginning-of-line]</span> <span class="o">.</span> <span class="nv">lunaryorn-back-to-indentation-or-beginning-of-line</span><span class="p">)</span>
+         <span class="err">…</span>
+         <span class="p">(</span><span class="s">"C-c u d"</span>                      <span class="o">.</span> <span class="nv">lunaryorn-insert-current-date</span><span class="p">)))</span>
+</code></pre>
+</div>
+
+<p>The only special thing is <code class="highlighter-rouge">:load-path</code>, which adds the containing directory to
+Emacs’ <code class="highlighter-rouge">load-path</code> so that it can find my personal library.  But I don’t need to
+care for autoloads and lazy loading: <code class="highlighter-rouge">use-package</code> automatically adds autoloads
+for all commands bound to keys in <code class="highlighter-rouge">:bind</code>.  My library is loaded lazily when I
+invoke any of these commands, just like a regular package installed via the
+package manager.</p>
+
+<p>With this feature I can keep my init file (almost) free of any code.  It only
+contains package configuration now.  My custom code is neatly tucked away in
+separate libraries that look just like regular Emacs packages.  This does not
+only make my configuration easier to understand, it has also fundamentally
+changed my package development workflow.</p>
+
+<p>Most of my packages are born out of small customisation and personal functions
+that grow as I extend them, until they are large and stable enough to be
+released as separate packages.  Previously, making a package out of these was
+painful: I had to manually extract all the required code form my init file and
+fix various compiler warnings and errors, naturally making many mistakes on the
+way.</p>
+
+<p>Now I start with a separate library right away, which is a proper package on its
+own.  All code goes through <a href="http://flycheck.org">Flycheck</a> to make sure that there are no errors
+or warnings.  Once the package is suitable for an independent release, there’s
+no special work left: It’s all already there, and all that I still need to do is
+to move the file to a dedicated repository, add a README, and push it to MELPA.
+I think you can expect quite some new packages from me over the next time!</p>
+
+<h1 id="idle-initialisation">Idle initialisation</h1>
+
+<p><code class="highlighter-rouge">use-package</code> also helps me to keep my Emacs startup fast with “idle
+initialisation”, which initialises packages after Emacs was started and has been
+idle for some time.  I use this feature mainly for global modes that are slow to
+load and enable.</p>
+
+<p><a href="http://company-mode.github.io/">Company</a> for instance is a powerful completion package, but it also large and
+takes time to load and enable.  On the other hand, completion is not so
+important for me that I need it immediately, so I delay its initialisation:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">use-package</span> <span class="nv">company</span>
+  <span class="ss">:ensure</span> <span class="no">t</span>
+  <span class="ss">:defer</span> <span class="no">t</span>
+  <span class="ss">:idle</span> <span class="p">(</span><span class="nv">global-company-mode</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>With this configuration <code class="highlighter-rouge">global-company-mode</code> is delayed until Emacs has been
+idle.  As a result, Emacs starts faster: Packages of less importance do not
+contribute to startup time anymore.  They are initialised later, when Emacs
+doesn’t have to do anything else anyway.</p>
+
+<h1 id="final-words">Final words</h1>
+
+<p><code class="highlighter-rouge">use-package</code> is really a great tool to manage and maintain your init file,
+which helps to keep even large configurations concise and clean and avoids the
+dreaded Emacs bankruptcy.  Take a look at the <a href="https://github.com/jwiegley/use-package/">Github Page</a> and
+read its README, which shows even more cool features than this post.</p>
+
+<p>I’d like to thank John Wiegley for this great package, and for all his other
+work on Emacs!</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:2">
+      <p>Strictly speaking, <code class="highlighter-rouge">:config</code> is only deferred in some cases, i.e. with
+  <code class="highlighter-rouge">:defer t</code>, or when using <code class="highlighter-rouge">:bind</code>, <code class="highlighter-rouge">:commands</code> or a similar keyword—the
+  <a href="https://github.com/jwiegley/use-package/">documentation</a> has the details.  But in almost all cases you
+  want <code class="highlighter-rouge">:config</code> to be deferred, so for simplicity let’s assume that
+  <code class="highlighter-rouge">:config</code> is always deferred. <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:1">
+      <p>Actually, I never managed my packages manually.  Before <code class="highlighter-rouge">use-package</code> I
+  kept a list of packages at the beginning of my init file, together with
+  some custom code to install all missing packages automatically.  This did
+  not work too well, though: Frequently I forgot to update the list when I
+  installed a new package and ended up with load-time errors. <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>

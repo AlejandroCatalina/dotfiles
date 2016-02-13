@@ -1,0 +1,18 @@
+<p>As you probably know, there&rsquo;s always lots of new and exciting developments in
+Clojure-land. One, more recent technique that has me really excited has been
+<a href="https://www.youtube.com/watch?v=N5HyVUPuU0E">Simulation Testing</a>.  I&rsquo;ve used
+<a href="https://github.com/Datomic/simulant">Simulant</a> to implement simulation tests
+on a few projects this last year with great success, and I&rsquo;m really curious to
+hear about if/how others are using the technique.</p>
+
+<p>To that end, I&rsquo;ve put together a survey on sim-testing–<em>The State of Simulation
+Testing</em>–that I hope can become an annual fixture both inside and outside of the
+Clojure community. Once the ballots have closed on February 20th, I&rsquo;ll tally
+and report upon the results on this blog.</p>
+
+<p>If you&rsquo;ve considered, implemented or even out-right rejected simulation
+testing, I&rsquo;d love to hear more from you:</p>
+
+<p><a class="btn btn-large btn-info" href="http://bit.ly/state-of-sim-testing-2015">Take the Survey!</a></p>
+
+<p>Thanks for your time!</p>

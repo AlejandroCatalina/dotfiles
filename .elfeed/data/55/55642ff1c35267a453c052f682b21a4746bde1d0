@@ -1,0 +1,135 @@
+<style>
+  .ex {
+    background-color: #efefef;
+    padding: 20px 0px;
+    text-align: center;
+  }
+  .ex button {
+    margin-top: 15px;
+    background-color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-family: Inconsolata;
+    font-size: 18px;
+    border: 1px solid #666;
+    border-radius: 1px solid #ccc;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+  }
+  .ex button:active {
+    background-color: #ccccff;
+  }
+  .ex .time {
+    padding-top: 30px;
+    height: 50px;
+    font-size: 32px;
+    font-family: Inconsolata;
+  }
+</style>
+
+<p><a href="http://promises-aplus.github.io/promises-spec/">Promises</a> are all the
+rage in the JavaScript world even though they don&#39;t actually eliminate
+callback hell and their design emphasizes coarse grained asychronous
+operations leaving much to be desired for the vast universe of
+possible interactive applications (<em>cough</em>, user interfaces).</p>
+
+<p>Here is a simple benchmark using one of the fastest promise
+implementations, <a href="http://github.com/cujojs/when">when.js</a>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">function goWhen() {
+  var first = when.defer(), last = first.promise;
+
+  for(var i = 0; i &lt; 100000; i++) {
+    last = last.then(function(val) {
+      return val + 1;
+    });
+  }
+
+  var s = new Date();
+  first.resolve(0);
+  last.then(function(val) {
+    var el = document.getElementById(&quot;when-time&quot;)
+    el.innerHTML = val + &quot; elapsed ms: &quot; + (new Date()-s);
+  });
+}
+</code></pre></div>
+<div id="ex0" class="ex">
+  <button onclick="goWhen()">Go!</button>
+  <div id="when-time" class="time"></div>
+</div>
+
+<p>The same conceptual thing in core.async:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn ^:export go-cljs []
+  (let [first (chan)
+        last (loop [i 0 last first]
+               (if (&lt; i 100000)
+                 (let [next (chan)]
+                   (take! last (fn [v] (put! next (inc v))))
+                   (recur (inc i) next))
+                 last))]
+    (go (let [s  (js/Date.)
+              el (.getElementById js/document &quot;cljs-time&quot;)]
+          (&gt;! first 0)
+          (set! (.-innerHTML el)
+            (str (&lt;! last) &quot; elapsed ms: &quot; (- (js/Date.) s)))))))
+</code></pre></div>
+<div id="ex1" class="ex">
+  <button onclick="blog.promises.core.go_cljs()">Go!</button>
+  <div id="cljs-time" class="time"></div>
+</div>
+
+<p>As you can see core.async is competitive. However it has the advantage
+in that we can create channels and do many asynchronous operations
+over them instead of wastefully instantiating promises again and
+again. We can also combine channels with go blocks freeing us from
+callback hell.</p>
+
+<p>The above performance is the result of several improvements we&#39;ve
+landed in core.async this week, and what follows are some other
+highlights.</p>
+
+<p><em>On a 1.7ghz MacBook Air running Chrome Canary we can push one million
+events down a channel in around 1 second</em>.</p>
+
+<p>The following code pushes an event down a 100,000 channel long daisy
+chain in less than 200ms in Chrome Canary. For comparison this takes
+about 60-80ms in <a href="http://golang.org">Go</a> on my machine and of course
+I can&#39;t run Go in my web browser.</p>
+
+<p>In Node.js just calling <code>setImmediate</code> 100,000 times takes 360ms. The
+following code takes <em>~420ms</em> under Node.js. That&#39;s an incredibly
+small amount of overhead.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn f [left right]
+  (go (&gt;! left (inc (&lt;! right)))))
+
+(let [leftmost (chan)
+      rightmost (loop [n 100000 left leftmost]
+                  (if-not (pos? n)
+                    left
+                    (let [right (chan)]
+                      (f left right)
+                      (recur (dec n) right))))]
+  (go
+    (let [s (js/Date.)]
+      (&gt;! rightmost 1)
+      (.log js/console (&lt;! leftmost) &quot; elapsed ms: &quot;
+        (- (js/Date.) s)))))
+</code></pre></div>
+<p>I&#39;m sure core.async performance will continue to improve but these
+examples demonstrate that core.async can likely handle even the most
+demanding complex event driven applications while providing
+one of the highest level of abstractions offered by any language
+targeting JavaScript today.</p>
+
+<script>
+    window.define = function(factory) {
+        try{ delete window.define; } catch(e){ window.define = void 0; } // IE
+        window.when = factory();
+    };
+    window.define.amd = {};
+</script>
+
+<script src="/assets/js/when.js"></script>
+
+<script src="/assets/js/when_ex.js"></script>
+
+<script src="/assets/js/promises.js"></script>

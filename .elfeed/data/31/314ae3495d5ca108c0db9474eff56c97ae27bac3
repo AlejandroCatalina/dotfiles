@@ -1,0 +1,38 @@
+<p><strong>Update</strong>: This post was written nearly a year ago. A lot of things
+can change in a year. People start using React and third party
+JavaScript packaging stories for ClojureScript can appear out of
+nowhere. This post describes a quick hack when you are in a bind but I
+would not use it in production setting. Use a
+<a href="http://cljsjs.github.io">CLJSJS</a> package instead.</p>
+
+<p>While ClojureScript&#39;s strategy of generating and leveraging code
+optimized for the <a href="http://developers.google.com/closure/compiler/">Google Closure Compiler</a> has turned out to be fantastic
+for managing production code size, sometimes you find yourself needing a
+great JavaScript library that simply does not play well with advanced
+compilation. Integrating these libraries is problematic because of the
+<a href="http://developers.google.com/closure/compiler/docs/api-tutorial3">externs file requirement</a>. For
+example this is true for
+<a href="http://facebook.github.io/react/">React</a>. Fortunately someone has
+taken the time to write the externs file for React, but most of the
+time you won&#39;t be so lucky.</p>
+
+<p>For some JavaScript libraries there is an acceptable workaround - you
+can use the JavaScript library itself as an externs file! This would
+normally spew many warnings from Closure Compiler, but recent
+versions of ClojureScript expose knobs to control how Closure
+reports warnings.</p>
+
+<p>For example imagine that an externs file did not exist for
+React. The following <a href="http://github.com/emezeske/lein-cljsbuild">lein-cljsbuild</a> build specification is enough to
+produce a proper advanced compiled production file:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">{</span><span class="ss">:id</span> <span class="s">&quot;release&quot;</span>
+ <span class="ss">:source-paths</span> <span class="p">[</span><span class="s">&quot;src&quot;</span><span class="p">]</span>
+ <span class="ss">:compiler</span> <span class="p">{</span>
+   <span class="ss">:output-to</span> <span class="s">&quot;main.js&quot;</span>
+   <span class="ss">:optimizations</span> <span class="ss">:advanced</span>
+   <span class="ss">:preamble</span> <span class="p">[</span><span class="s">&quot;react/react.min.js&quot;</span><span class="p">]</span>
+   <span class="ss">:externs</span> <span class="p">[</span><span class="s">&quot;react/react.js&quot;</span><span class="p">]</span>
+   <span class="ss">:closure-warnings</span> <span class="p">{</span><span class="ss">:externs-validation</span> <span class="ss">:off</span>
+                      <span class="ss">:non-standard-jsdoc</span> <span class="ss">:off</span><span class="p">}}}</span>
+</code></pre></div>
+<p>That&#39;s it!</p>

@@ -1,0 +1,146 @@
+<h2>Instance Level Interface (Typeclass) Extension</h2>
+
+<p>Once again continuing
+<a href="http://swannodette.github.io/2015/01/10/faster-validation-through-immutability/">previous lines of thought</a>
+let&#39;s consider validations beyond <code>:pre</code> and <code>:post</code> conditions. This
+time we&#39;ll see how ClojureScript&#39;s <code>specify</code> construct allows us to
+trivially build a form of lazy contracts similar to those described by
+<a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.180">Findler et al.</a>.
+Note: the following approach can be duplicated with <code>deftype</code> or
+<code>reify</code> on Clojure JVM, but <code>specify</code> is more succinct.</p>
+
+<p>Lazy contracts are useful because they allow us to lazily validate a large
+data structure. All the previous examples with <code>:pre</code> and <code>:post</code>
+validated eagerly which is quite impractical when dealing with large amounts
+of data.</p>
+
+<p>For some time now ClojureScript has supported extension of individual
+values to protocols via <code>specify</code>. Again protocols are analogous to
+Java interfaces, Go interfaces, Haskell typeclasses, and Objective-C
+protocols. Clojure has had protocols since 1.2.0 and they are commonly
+leveraged via <code>extend-type</code> and <code>extend-protocol</code>. However <code>specify</code>
+is only currently available in ClojureScript as the semantics of
+JavaScript and the performance of modern JavaScript engines permit
+practical efficient implementation.</p>
+
+<p>Imagine that we want to ensure that a vector contains only
+even numbers. Fortunately there are only two ways to get an updated vector
+in Clojure, <code>conj</code> and <code>assoc</code>. So given an existing vector we simply
+need to <code>specify</code> new implementations of the <code>ICollection</code> and
+<code>IVector</code> protocols. The only other protocols we care about are those
+involved in iteration - for simplicity&#39;s sake we&#39;re only going to
+bother with <code>ISeqable</code>, however for completeness you should implement
+<code>IReduce</code> and <code>IKVReduce</code>. They are trivial to do and involve the same
+simple delegation approach.</p>
+
+<h2>Lazy Contracts</h2>
+
+<p>We will provide a function called <code>add-contract*</code> that takes 3
+arguments: a vector, a Var and a map of source location information
+that informs us where the contract was asserted. This is important for
+debugging as this allows us to prune our search - the contract
+violation had to occur <em>before</em> the contract. In a mutable context
+this wouldn&#39;t be very useful but because of immutability we can laser
+in on the origin of the issue.</p>
+
+<p>As to why we take a Var for the second argument, the Var holds useful
+reflection information if we want to print verbose error messages. We
+can also just deref the function from the Var to get the validating
+function. A first attempt at <code>add-contract*</code> might look like the
+following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">lazy-contracts.core</span><span class="p">)</span>  
+
+<span class="p">(</span><span class="nf">enable-console-print!</span><span class="p">)</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">add-contract*</span>
+  <span class="p">([</span><span class="nv">v</span> <span class="nv">cvar</span> <span class="nv">src-info</span><span class="p">]</span> <span class="p">(</span><span class="nf">add-contract*</span> <span class="nv">v</span> <span class="nv">cvar</span> <span class="o">@</span><span class="nv">cvar</span> <span class="nv">src-info</span><span class="p">))</span>
+  <span class="p">([</span><span class="nv">v</span> <span class="nv">cvar</span> <span class="nv">f</span> <span class="nv">src-info</span><span class="p">]</span>
+   <span class="p">(</span><span class="nf">specify</span> <span class="nv">v</span>
+     <span class="nv">ISeqable</span>
+     <span class="p">(</span><span class="nf">-seq</span> <span class="p">[</span><span class="nv">_</span><span class="p">]</span>
+       <span class="p">(</span><span class="nb">map </span><span class="o">#</span><span class="p">(</span><span class="k">do </span><span class="p">(</span><span class="nb">assert </span><span class="p">(</span><span class="nf">f</span> <span class="nv">%</span><span class="p">))</span> <span class="nv">%</span><span class="p">)</span> <span class="nv">v</span><span class="p">))</span>
+     <span class="nv">ICollection</span>
+     <span class="p">(</span><span class="nf">-conj</span> <span class="p">[</span><span class="nv">_</span> <span class="nv">x</span><span class="p">]</span>
+       <span class="p">(</span><span class="nb">assert </span><span class="p">(</span><span class="nf">f</span> <span class="nv">x</span><span class="p">))</span>
+       <span class="p">(</span><span class="nf">add-contract*</span> <span class="p">(</span><span class="nf">-conj</span> <span class="nv">v</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">cvar</span> <span class="nv">f</span> <span class="nv">src-info</span><span class="p">))</span>
+     <span class="nv">IVector</span>
+     <span class="p">(</span><span class="nf">-assoc-n</span> <span class="p">[</span><span class="nv">_</span> <span class="nv">i</span> <span class="nv">x</span><span class="p">]</span>
+       <span class="p">(</span><span class="nb">assert </span><span class="p">(</span><span class="nf">f</span> <span class="nv">x</span><span class="p">))</span>
+       <span class="p">(</span><span class="nf">add-contract*</span> <span class="p">(</span><span class="nf">-assoc-n</span> <span class="nv">v</span> <span class="nv">i</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">cvar</span> <span class="nv">f</span> <span class="nv">src-info</span><span class="p">)))))</span>
+</code></pre></div>
+<p>This won&#39;t be very fun to use since the assertion doesn&#39;t
+print an informative string. Let&#39;s fix that by adding
+<code>contract-fail-str</code>:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">contract-fail-str</span> <span class="p">[</span><span class="nv">x</span> <span class="p">{</span><span class="ss">:keys</span> <span class="p">[</span><span class="kd">ns </span><span class="nv">name</span><span class="p">]}</span> <span class="nv">src-info</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">str </span><span class="nv">x</span> <span class="s">&quot; fails vector contract &quot;</span> <span class="p">(</span><span class="nb">symbol </span><span class="p">(</span><span class="nb">str </span><span class="nv">ns</span><span class="p">)</span> <span class="p">(</span><span class="nb">str </span><span class="nv">name</span><span class="p">))</span>
+         <span class="s">&quot; specified at &quot;</span> <span class="p">(</span><span class="ss">:file</span> <span class="nv">src-info</span><span class="p">)</span> <span class="s">&quot;:&quot;</span> <span class="p">(</span><span class="ss">:line</span> <span class="nv">src-info</span><span class="p">)))</span>
+</code></pre></div>
+<p>Now let&#39;s rewrite <code>add-contract*</code>:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">add-contract*</span>
+  <span class="p">([</span><span class="nv">v</span> <span class="nv">cvar</span> <span class="nv">src-info</span><span class="p">]</span> <span class="p">(</span><span class="nf">add-contract*</span> <span class="nv">v</span> <span class="nv">cvar</span> <span class="o">@</span><span class="nv">cvar</span> <span class="nv">src-info</span><span class="p">))</span>
+  <span class="p">([</span><span class="nv">v</span> <span class="nv">cvar</span> <span class="nv">f</span> <span class="nv">src-info</span><span class="p">]</span>
+   <span class="p">(</span><span class="nf">specify</span> <span class="nv">v</span>
+     <span class="nv">ISeqable</span>
+     <span class="p">(</span><span class="nf">-seq</span> <span class="p">[</span><span class="nv">_</span><span class="p">]</span>
+       <span class="p">(</span><span class="nf">letfn</span> <span class="p">[(</span><span class="nf">check</span> <span class="p">[</span><span class="nv">x</span><span class="p">]</span>
+                 <span class="p">(</span><span class="nb">assert </span><span class="p">(</span><span class="nf">f</span> <span class="nv">x</span><span class="p">)</span> 
+                   <span class="p">(</span><span class="nf">contract-fail-str</span> <span class="nv">x</span> <span class="p">(</span><span class="nb">meta </span><span class="nv">cvar</span><span class="p">)</span> <span class="nv">src-info</span><span class="p">))</span>
+                 <span class="nv">x</span><span class="p">)]</span>
+         <span class="p">(</span><span class="nb">map </span><span class="nv">check</span> <span class="nv">v</span><span class="p">)))</span>
+     <span class="nv">ICollection</span>
+     <span class="p">(</span><span class="nf">-conj</span> <span class="p">[</span><span class="nv">_</span> <span class="nv">x</span><span class="p">]</span>
+       <span class="p">(</span><span class="nb">assert </span><span class="p">(</span><span class="nf">f</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nf">contract-fail-str</span> <span class="nv">x</span> <span class="p">(</span><span class="nb">meta </span><span class="nv">cvar</span><span class="p">)</span> <span class="nv">src-info</span><span class="p">))</span>
+       <span class="p">(</span><span class="nf">add-contract*</span> <span class="p">(</span><span class="nf">-conj</span> <span class="nv">v</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">cvar</span> <span class="nv">f</span> <span class="nv">src-info</span><span class="p">))</span>
+     <span class="nv">IVector</span>
+     <span class="p">(</span><span class="nf">-assoc-n</span> <span class="p">[</span><span class="nv">_</span> <span class="nv">i</span> <span class="nv">x</span><span class="p">]</span>
+       <span class="p">(</span><span class="nb">assert </span><span class="p">(</span><span class="nf">f</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nf">contract-fail-str</span> <span class="nv">x</span> <span class="p">(</span><span class="nb">meta </span><span class="nv">cvar</span><span class="p">)</span> <span class="nv">src-info</span><span class="p">))</span>
+       <span class="p">(</span><span class="nf">add-contract*</span> <span class="p">(</span><span class="nf">-assoc-n</span> <span class="nv">v</span> <span class="nv">i</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">cvar</span> <span class="nv">f</span> <span class="nv">src-info</span><span class="p">)))))</span>
+</code></pre></div>
+<p>Much nicer!</p>
+
+<p>Now the only problem is providing source location
+information. Fortunately this trivial through a little macro sugar:</p>
+
+<p>In a <code>lazy-contract.core</code> macro file we write the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">blog.contracts.core</span><span class="p">)</span>
+
+<span class="p">(</span><span class="kd">defmacro </span><span class="nv">add-contract</span> <span class="p">[</span><span class="nv">v</span> <span class="nv">cvar</span><span class="p">]</span>
+  <span class="o">`</span><span class="p">(</span><span class="nf">blog.contracts.core/add-contract*</span>
+     <span class="o">~</span><span class="nv">v</span> <span class="o">~</span><span class="nv">cvar</span> <span class="o">~</span><span class="p">(</span><span class="nb">select-keys </span><span class="p">(</span><span class="nb">meta </span><span class="o">&amp;</span><span class="nv">form</span><span class="p">)</span> <span class="p">[</span><span class="ss">:file</span> <span class="ss">:line</span><span class="p">])))</span>
+</code></pre></div>
+<p>That&#39;s it!</p>
+
+<p>Now we can start a REPL and try to create a contract constrained
+vector:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">To quit, type: :cljs/quit
+ClojureScript Node.js REPL server listening on 54977
+ClojureScript:cljs.user&gt; (require &#39;[blog.contracts.core :as c :include-macros true])
+ClojureScript:cljs.user&gt; (c/add-contract [2 4 6] #&#39;even?)
+[2 4 6]
+</code></pre></div>
+<p>This works fine. But if we try this we&#39;ll get a sensible error:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">ClojureScript:cljs.user&gt; (conj (c/add-contract [2 4 6] #&#39;even?) 7)
+Error: Assert failed: 7 fails vector contract cljs.core/even? ...
+</code></pre></div>
+<p>Voila!</p>
+
+<p>We&#39;ll also get a sensible error even in simple cases like this:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">ClojureScript:cljs.user&gt; (c/add-contract [1 2 3] #&#39;even?)
+Error: Assert failed: 1 fails vector contract cljs.core/even?
+</code></pre></div>
+<p>This is because printing needs to traverse the vector!</p>
+
+<p>Again if a program with a lazy contract fails the error will always
+tell you precisely where the contract was asserted.</p>
+
+<h2>Conclusion</h2>
+
+<p>Of the course the above could benefit from generalization but we
+already have a powerful lazy contract system without bothering
+with wrappers or having to dig into the implementation of any of
+the core data structures.</p>
+
+<p>With very little effort ClojureScript programs can leverage
+powerful forms of runtime validation with precise provenance.</p>
+
+<p>Happy hacking!</p>

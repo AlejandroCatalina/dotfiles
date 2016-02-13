@@ -1,0 +1,27 @@
+<p>
+I’ve never been too pleased with the default behaviour of <kbd>Backspace</kbd> during
+<code>isearch</code>. If the last key you hit was <kbd>C-s</kbd>, then it does the same as <kbd>C-r</kbd>
+(albeit with less repetition), and if your match failed several characters ago,
+you need to hit it that many times to get back on track. Fortunately, <a href="http://emacs.stackexchange.com/users/118/asmeurer">asmeurer</a>
+took the time to <a href="http://emacs.stackexchange.com/q/10359/50">phrase this problem</a> I barely realised I had.
+</p>
+
+<p>
+In response, <a href="http://emacs.stackexchange.com/users/105/drew">Drew</a> provides a command to:
+</p>
+<ol class="org-ol">
+<li>delete the entire portion of <code>isearch</code> string that doesn’t match,
+</li>
+<li>if everything matches, fallback on deleting last char instead of moving backwards.
+</li>
+</ol>
+
+<p>
+Finally, John Mastro has <a href="https://gist.github.com/johnmastro/508fb22a2b4e1ce754e0">yet another improvement</a> for the command, which is the
+one I’m using now. I’ll let you follow <a href="https://gist.github.com/johnmastro/508fb22a2b4e1ce754e0">the link</a> for the code, and just give you
+the keybind you need for it to work.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-key</span> <span class="nv">isearch-mode-map</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"&lt;backspace&gt;"</span><span class="p">)</span> 
+  <span class="nf">#'</span><span class="nv">isearch-delete-something</span><span class="p">)</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/better-backspace-during-isearch.html?source=rss#disqus_thread">Comment on this.</a></p>

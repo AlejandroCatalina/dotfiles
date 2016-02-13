@@ -1,0 +1,119 @@
+<p>
+Commenting is a very frequent piece of a programmer’s workflow, and it’s
+important to make it seamless and simple. For the more statemental languages,
+that’s as easy as writing a <a href="/implementing-comment-line.html">custom <code>comment-line</code> command</a>. However, when
+you’re writing in Lisp languages, that just won’t do. Trying to comment out
+lines in a sexp-oriented structure, feels a lot like trying to hit a nail with a
+heavy screwdriver&#x2014;it sometimes gets the job done, but it mostly just leads to
+frustration.
+</p>
+
+<p>
+That said, a <code>comment-sexp</code> command is considerably more complicated to write.
+Not because commenting sexps is hard, but because it is quite difficult to
+identify sexps when <i>removing</i> comments. Still, I’m nothing if not stubborn. So
+after much hair pulling and teeth gritting, I have finally found a version I’m
+happy with.
+</p>
+
+
+<div class="figure">
+<p><a href="/images/comment-or-uncomment-sexp.gif"><img src="/images/comment-or-uncomment-sexp.gif" alt="comment-or-uncomment-sexp.gif" /></a>
+</p>
+</div>
+
+<p>
+The gif above speaks for itself, so I’ll just give you the code and let you play
+with it.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">uncomment-sexp</span> <span class="p">(</span><span class="k">&amp;optional</span> <span class="nv">n</span><span class="p">)</span>
+  <span class="s">"Uncomment a sexp around point."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">initial-point</span> <span class="p">(</span><span class="nv">point-marker</span><span class="p">))</span>
+         <span class="p">(</span><span class="nv">inhibit-field-text-motion</span> <span class="no">t</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">p</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">end</span> <span class="p">(</span><span class="nv">save-excursion</span>
+                <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nb">elt</span> <span class="p">(</span><span class="nv">syntax-ppss</span><span class="p">)</span> <span class="mi">4</span><span class="p">)</span>
+                  <span class="p">(</span><span class="nv">re-search-backward</span> <span class="nv">comment-start-skip</span>
+                                      <span class="p">(</span><span class="nv">line-beginning-position</span><span class="p">)</span>
+                                      <span class="no">t</span><span class="p">))</span>
+                <span class="p">(</span><span class="k">setq</span> <span class="nv">p</span> <span class="p">(</span><span class="nv">point-marker</span><span class="p">))</span>
+                <span class="p">(</span><span class="nv">comment-forward</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">))</span>
+                <span class="p">(</span><span class="nv">point-marker</span><span class="p">)))</span>
+         <span class="p">(</span><span class="nv">beg</span> <span class="p">(</span><span class="nv">save-excursion</span>
+                <span class="p">(</span><span class="nv">forward-line</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="p">(</span><span class="nv">while</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nb">not</span> <span class="p">(</span><span class="nv">bobp</span><span class="p">))</span>
+                            <span class="p">(</span><span class="nb">=</span> <span class="nv">end</span> <span class="p">(</span><span class="nv">save-excursion</span>
+                                     <span class="p">(</span><span class="nv">comment-forward</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">))</span>
+                                     <span class="p">(</span><span class="nv">point</span><span class="p">))))</span>
+                  <span class="p">(</span><span class="nv">forward-line</span> <span class="mi">-1</span><span class="p">))</span>
+                <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">line-end-position</span><span class="p">))</span>
+                <span class="p">(</span><span class="nv">re-search-backward</span> <span class="nv">comment-start-skip</span>
+                                    <span class="p">(</span><span class="nv">line-beginning-position</span><span class="p">)</span>
+                                    <span class="no">t</span><span class="p">)</span>
+                <span class="p">(</span><span class="nb">ignore-errors</span>
+                  <span class="p">(</span><span class="nv">while</span> <span class="p">(</span><span class="nv">looking-at-p</span> <span class="nv">comment-start-skip</span><span class="p">)</span>
+                    <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">-1</span><span class="p">)))</span>
+                <span class="p">(</span><span class="nv">point-marker</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nb">=</span> <span class="nv">beg</span> <span class="nv">end</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">uncomment-region</span> <span class="nv">beg</span> <span class="nv">end</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">goto-char</span> <span class="nv">p</span><span class="p">)</span>
+      <span class="c1">;; Indentify the "top-level" sexp inside the comment.</span>
+      <span class="p">(</span><span class="nv">while</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nb">ignore-errors</span> <span class="p">(</span><span class="nv">backward-up-list</span><span class="p">)</span> <span class="no">t</span><span class="p">)</span>
+                  <span class="p">(</span><span class="nb">&gt;=</span> <span class="p">(</span><span class="nv">point</span><span class="p">)</span> <span class="nv">beg</span><span class="p">))</span>
+        <span class="p">(</span><span class="nv">skip-chars-backward</span> <span class="p">(</span><span class="nv">rx</span> <span class="p">(</span><span class="nv">syntax</span> <span class="nv">expression-prefix</span><span class="p">)))</span>
+        <span class="p">(</span><span class="k">setq</span> <span class="nv">p</span> <span class="p">(</span><span class="nv">point-marker</span><span class="p">)))</span>
+      <span class="c1">;; Re-comment everything before it. </span>
+      <span class="p">(</span><span class="nb">ignore-errors</span>
+        <span class="p">(</span><span class="nv">comment-region</span> <span class="nv">beg</span> <span class="nv">p</span><span class="p">))</span>
+      <span class="c1">;; And everything after it.</span>
+      <span class="p">(</span><span class="nv">goto-char</span> <span class="nv">p</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">forward-sexp</span> <span class="p">(</span><span class="nb">or</span> <span class="nv">n</span> <span class="mi">1</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">skip-chars-forward</span> <span class="s">"\r\n[:blank:]"</span><span class="p">)</span>
+      <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">&lt;</span> <span class="p">(</span><span class="nv">point</span><span class="p">)</span> <span class="nv">end</span><span class="p">)</span>
+          <span class="p">(</span><span class="nb">ignore-errors</span>
+            <span class="p">(</span><span class="nv">comment-region</span> <span class="p">(</span><span class="nv">point</span><span class="p">)</span> <span class="nv">end</span><span class="p">))</span>
+        <span class="c1">;; If this is a closing delimiter, pull it up.</span>
+        <span class="p">(</span><span class="nv">goto-char</span> <span class="nv">end</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">skip-chars-forward</span> <span class="s">"\r\n[:blank:]"</span><span class="p">)</span>
+        <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nb">eq</span> <span class="mi">5</span> <span class="p">(</span><span class="nb">car</span> <span class="p">(</span><span class="nv">syntax-after</span> <span class="p">(</span><span class="nv">point</span><span class="p">))))</span>
+          <span class="p">(</span><span class="nv">delete-indentation</span><span class="p">))))</span>
+    <span class="c1">;; Without a prefix, it's more useful to leave point where</span>
+    <span class="c1">;; it was.</span>
+    <span class="p">(</span><span class="nb">unless</span> <span class="nv">n</span>
+      <span class="p">(</span><span class="nv">goto-char</span> <span class="nv">initial-point</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">comment-sexp--raw</span> <span class="p">()</span>
+  <span class="s">"Comment the sexp at point or ahead of point."</span>
+  <span class="p">(</span><span class="nv">pcase</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">bounds-of-thing-at-point</span> <span class="ss">'sexp</span><span class="p">)</span>
+             <span class="p">(</span><span class="nv">save-excursion</span>
+               <span class="p">(</span><span class="nv">skip-chars-forward</span> <span class="s">"\r\n[:blank:]"</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">bounds-of-thing-at-point</span> <span class="ss">'sexp</span><span class="p">)))</span>
+    <span class="p">(</span><span class="o">`</span><span class="p">(</span><span class="o">,</span><span class="nv">l</span> <span class="o">.</span> <span class="o">,</span><span class="nv">r</span><span class="p">)</span>
+     <span class="p">(</span><span class="nv">goto-char</span> <span class="nv">r</span><span class="p">)</span>
+     <span class="p">(</span><span class="nv">skip-chars-forward</span> <span class="s">"\r\n[:blank:]"</span><span class="p">)</span>
+     <span class="p">(</span><span class="nv">save-excursion</span>
+       <span class="p">(</span><span class="nv">comment-region</span> <span class="nv">l</span> <span class="nv">r</span><span class="p">))</span>
+     <span class="p">(</span><span class="nv">skip-chars-forward</span> <span class="s">"\r\n[:blank:]"</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">comment-or-uncomment-sexp</span> <span class="p">(</span><span class="k">&amp;optional</span> <span class="nv">n</span><span class="p">)</span>
+  <span class="s">"Comment the sexp at point and move past it.
+If already inside (or before) a comment, uncomment instead.
+With a prefix argument N, (un)comment that many sexps."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nb">elt</span> <span class="p">(</span><span class="nv">syntax-ppss</span><span class="p">)</span> <span class="mi">4</span><span class="p">)</span>
+          <span class="p">(</span><span class="nb">&lt;</span> <span class="p">(</span><span class="nv">save-excursion</span>
+               <span class="p">(</span><span class="nv">skip-chars-forward</span> <span class="s">"\r\n[:blank:]"</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">point</span><span class="p">))</span>
+             <span class="p">(</span><span class="nv">save-excursion</span>
+               <span class="p">(</span><span class="nv">comment-forward</span> <span class="mi">1</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">point</span><span class="p">))))</span>
+      <span class="p">(</span><span class="nv">uncomment-sexp</span> <span class="nv">n</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">dotimes</span> <span class="p">(</span><span class="nv">_</span> <span class="p">(</span><span class="nb">or</span> <span class="nv">n</span> <span class="mi">1</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">comment-sexp--raw</span><span class="p">))))</span></code></pre></figure>
+<p>
+And, of course, don’t forget to bind it.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"C-M-;"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">comment-or-uncomment-sexp</span><span class="p">)</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/a-comment-or-uncomment-sexp-command.html?source=rss#disqus_thread">Comment on this.</a></p>

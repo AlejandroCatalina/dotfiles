@@ -1,0 +1,7 @@
+<p>I’ve just released Flycheck 0.21, the result of two months of work.  It’s
+already on MELPA and Marmalade, so take a look at the <a href="http://www.flycheck.org/2014/08/12/flycheck-0.21.html">release annoucement</a>
+and the <a href="http://www.flycheck.org/changes.html#oct-26-2014">changelog</a>, and update Flycheck with <code class="highlighter-rouge">M-x list-packages RET U x</code>.</p>
+
+<!--more-->
+
+<p>Enjoy the new release, and many many thanks for your support!</p>

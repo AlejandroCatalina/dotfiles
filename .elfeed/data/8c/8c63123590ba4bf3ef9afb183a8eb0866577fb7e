@@ -1,0 +1,50 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  I'm a fairly busy person, and need to keep track of a lot of things. That
+  includes following a bunch of internal IRC channels, attending meetings, meeting
+  deadlines and so on. But I don't want to stare at my <code>org-mode</code> calendar, or
+  flip through <a href="http://emacs-fu.blogspot.com/2009/06/erc-emacs-irc-client.html">ERC</a> buffers all the time. 
+</p>
+<p>
+  Instead, I'd like to have one little emacs frame (window) that gathers these
+  ('events'), and transfers me to wherever the event came from when I click it - some
+  IRC-channel in ERC, my org-calendar etc.  and other inputs. Note, using
+  <a href="http://www.bitlbee.org">Bitlbee</a>, you can include Facebook-contacts, GoogleTalk-buddies and
+  Twitter-tweets, &hellip; in ERC - so, you can track just about <i>anything</i>.
+</p>
+<p>
+  In addition, with so many inputs, I'd also like the possibility to filter out unwanted
+  events, and generate various light/sound effects and fireworks, proportional
+  to the priority of the event.
+</p>
+<p>
+  For all this, I wrote a little emacs-tool called <b>Sauron</b> that does just
+  that. <code>M-x sauron-start</code> pops up a frame that receives events, and <code>M-x sauron-stop</code> hides it and stops listening. It works with <code>ERC</code>, <code>org</code>, and
+  listens for <a href="http://emacs-fu.blogspot.com/2009/01/using-d-bus-example.html">D-Bus messages</a>; so it's pretty easy to get events from all over
+  the place.
+</p>
+<p>
+  It's a bit of a balancing act to get all the important information while not
+  being swamped in noise, but Sauron allows you to fine-tune it to whatever
+  works the best for you. I've tried to have sane defaults though, so things
+  should mostly work without too much configuration - but if you need the power,
+  it's there.  I also added some convenience functions to make it easy to get
+  sounds and other special effects.
+</p>
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://3.bp.blogspot.com/-0iI3p7Hpbjc/TvJWGjx0AJI/AAAAAAAAAnk/Bd3SrTvLvbo/s1600/sauron.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="108" width="400" src="http://3.bp.blogspot.com/-0iI3p7Hpbjc/TvJWGjx0AJI/AAAAAAAAAnk/Bd3SrTvLvbo/s400/sauron.png" /></a></div>
+
+<p>
+  So - it's brand new, it is of <i>seems-to-work-for-me</i>-quality, and I'd like to
+  invite others to try it out, hack it, give feedback, add new back-ends and so
+  on &ndash; what better Christmas present to ask for!
+</p>
+<p>
+  There's <a href="https://github.com/djcb/sauron#readme">documentation, examples</a> etc. to be found in <a href="https://github.com/djcb/sauron">Sauron's github repository</a>.
+</p>
+
+</div>
+</div>

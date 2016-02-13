@@ -1,0 +1,55 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  Emacs must be gathering a lot of enthusiasts lately; there's hardly a week
+  where I don't discover some new gem. Recently, I discovered <a href="http://jblevins.org/projects/deft/">deft</a>. And
+  apparently, I wasn't the only one.
+</p>
+<p>
+  So what is it <code>deft</code> good for? Well, often I want to jot down some quick thing
+  during a meeting or a telephone-call. Of course, I don't want to think about
+  file names or anything else distracting me from my task, just get me that note
+  already! In addition, at some later time, I want to be able to quickly search
+  through the notes I made.
+</p>
+<p>
+  For MacOS, there's a program called <a href="http://notational.net/">Notational Velocity</a> which does this. But
+  really - it sounds like a typical task for emacs - wouldn't it be nice to have
+  an emacs package that does roughly the same?
+</p>
+<p>
+  And that is what <code>deft</code> does - enable you to quickly write notes, and
+  retrieving them later. The author has an excellent introduction on his
+  website, so my job is very easy :) <code>deft</code> is not part of <a href="http://orgmode.org/">org-mode</a>, but they
+  can work together seamlessly. Here's my set-up:
+</p>
+
+
+
+<pre class="src src-emacs-lisp"><span style="color: #99968b;">;; </span><span style="color: #99968b;">http://jblevins.org/projects/deft/</span>
+(<span style="color: #8ac6f2; font-weight: bold;">when</span> (<span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">deft</span> nil 'noerror) 
+   (<span style="color: #8ac6f2; font-weight: bold;">setq</span>
+      deft-extension <span style="color: #95e454;">"org"</span>
+      deft-directory <span style="color: #95e454;">"~/Org/deft/"</span>
+      deft-text-mode 'org-mode)
+   (global-set-key (kbd <span style="color: #95e454;">"&lt;f9&gt;"</span>) 'deft))
+</pre>
+
+
+<p>
+  This blob goes in my <code>.emacs</code>. Note, the first line ensures that emacs starts
+  without errors, even when I run on a system without <code>deft</code>. Apart from that, I
+  make <code>deft</code> use <code>org</code> files for note taking, which makes it all very familiar.
+</p>
+<p>  
+  All notes are saved <code>~/Org/deft</code> - you can set it to something else of
+  course. A Dropbox-folder seems to be a popular choice for synchronizing
+  between machines.
+</p>
+<p>
+  Finally, the last line binds <code>F9</code> to <code>deft-mode</code>. So, when I need a quick
+  note, I can type <code>F9 C-c C-n</code> and start writing.
+</p></div>
+</div>

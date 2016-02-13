@@ -1,0 +1,20 @@
+<p>
+Normally, <code>org-mode</code> ignores your attempts to markup text that starts with
+    " or '. That’s probably a safe measure because <code>"~/"</code> is a very
+    common string to write but <code>~</code> is one of Org’s markup elements.
+</p>
+
+<p>
+Fixing that is a simple matter, but it takes a bit of digging around. We just
+need to remove those two characters from the 3rd element of
+<a href="http://doc.endlessparentheses.com/Var/org-emphasis-regexp-components"><code>org-emphasis-regexp-components</code></a>.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="c1">;; This HAS to come before (require 'org)</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">org-emphasis-regexp-components</span>
+      <span class="o">'</span><span class="p">(</span><span class="s">"     ('\"{“”"</span>
+        <span class="s">"-   .,!?;''“”\")}/\\“”"</span>
+        <span class="s">"    \r\n,"</span>
+        <span class="s">"."</span>
+        <span class="mi">1</span><span class="p">))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/applying-markup-to-strings-in-org-mode.html?source=rss#disqus_thread">Comment on this.</a></p>

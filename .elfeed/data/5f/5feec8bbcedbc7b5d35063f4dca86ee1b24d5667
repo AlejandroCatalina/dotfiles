@@ -1,0 +1,56 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>  
+  Things have been rather quiet at emacs-fu - reason for this is that most of my
+  emacs hacking time has been spent on <a href="http://www.djcbsoftware.nl/code/mu/">mu4e</a>, the emacs e-mail client I
+  wrote. It's been shaping up pretty nicely, I should probably write some
+  emacs-fu posts about it :)
+</p>
+<p>
+  Another interesting pastime (esp. in Europe) is football/soccer, in particular
+  the Euro2012 games; long-time readers will remember the <a href="http://emacs-fu.blogspot.fi/2010/06/worldcup-games-in-your-org-mode-agenda.html">schedule for world cup games</a>; I made a new one for Euro2012: <a href="https://github.com/djcb/org-euro2012">https://github.com/djcb/org-euro2012</a>.
+</p>
+<p>
+  In order to have the games show up in your agenda, make sure the file is in
+  your org-agenda-files. If needed, you could add it with something like this in
+  your org-mode settings (change the directory path to wherever you have put
+  <code>euro2012.org</code>):
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(add-to-list 'org-agenda-files <span class="org-string">"~/org/euro2012.org"</span>)
+</pre>
+
+
+<p>
+  One small issue with the schedule is that it uses the central-european summer
+  time (UTC+2), and there is no automatic way to adjust times for the local time
+  zone. As a work-around, Juan Pechiar provided the following function which makes
+  it easy to update all org-timestamps in a file:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">update-org-hours</span> (n)
+  <span class="org-doc">"Change all org-mode timestamps in the current buffer by N hours."</span>
+  (interactive <span class="org-string">"nAdd hours: "</span>)
+  (<span class="org-keyword">save-excursion</span>
+    (goto-char (point-min))
+    (<span class="org-keyword">while</span> (re-search-forward <span class="org-string">"[[&lt;]"</span> nil t)
+      (<span class="org-keyword">when</span> (org-at-timestamp-p t)
+        (org-timestamp-change n 'hour)))))
+</pre>
+
+
+<p>
+  Evaluate this function. After that, you can go to the file with the schedule,
+  and give an M-x update-org-hours, provide the offset for your timezone, compared to
+  UTC+2.
+</p>
+<p>
+  Let the games begin!
+</p></div>
+</div>

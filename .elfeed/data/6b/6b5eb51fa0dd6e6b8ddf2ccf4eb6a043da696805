@@ -1,0 +1,151 @@
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">Special characters</h2>
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  Living in a post-<a href="http://en.wikipedia.org/wiki/Ascii">ASCII</a> world offers great opportunities, but brings some
+  problems, too. After all, it's nice to be able to write <i>Ångström</i> or
+  <i>Καλημέρα</i> or <i>☺☎☯</i>, but it's not necessarily easy to enter those
+  characters.
+</p>
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1">input methods</h3>
+<div class="outline-text-3" id="text-1-1">
+
+
+<p>
+  So - what to do? First, you can set the input-method, as <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Input-Methods.html">explained in the emacs manual</a>. This is the best solution if you're writing a non-Latin
+  language &ndash; Russian, Thai, Japanese, &hellip;
+</p>
+<p>
+  If you only occasionally need some accented character, input methods like
+  <code>latin-postfix</code> (e" -&gt; ë), <code>latin-prefix</code> ("e -&gt; ë) or <code>TeX</code> (\"e -&gt; ë) are
+  useful. They also tend to annoy me a bit, as they often assume I need an
+  accented character, when all I want is to put a word in quotation marks&hellip;
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2">compose key</h3>
+<div class="outline-text-3" id="text-1-2">
+
+
+<p>
+  Another method is to use a special compose key; for example, under Gnome 3
+  it's in the the <i>Region and Language</i> applet, under <code>Options...</code>, in Gnome 2
+  it's in the <i>Keyboard</i> applet in <i>Layouts/Options&hellip;</i>. This works for all
+  programs, not just emacs (see <a href="https://help.ubuntu.com/community/ComposeKey">this Ubuntu help page</a> for some details). I've
+  set my Compose-key to Right-Alt, so <code>Right-Alt</code> "e -&gt; ë.
+</p>
+<p>
+  Using the compose key works pretty well for me; setting the input method may
+  be more convenient when you need to write <i>a lot</i> of accented characters.    
+</p>
+<p>    
+  Now, his may be good and well for the accented characters and other variants    
+  of Latin characters, such as the German Ess-Zet ligature "ß" (note, you can    
+  get that character with <code>latin-prefix</code> "s -&gt; ß, <code>latin-postfix</code> s" -&gt; ß or    
+  <code>&lt;compose-key&gt;</code> ss -&gt; ß). But what about Greek characters? Mathematical
+  symbols? Smileys?
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-3" class="outline-3">
+<h3 id="sec-1-3">ucs-insert</h3>
+<div class="outline-text-3" id="text-1-3">
+
+
+<p>
+  One way to add characters like <i>α</i>, <i>∞</i> or <i>☺</i> is to use <code>ucs-insert</code>, by
+  default bound to <code>C-x 8 RET</code>. If you know the official Unicode name for a
+  character, you can find it there; note that there's auto-completion and you
+  can use <code>*</code> wild-cards. For the mentioned characters, that would be <code>GREEK   SMALL LETTER ALPHA</code>, <code>INFINITY</code> and <code>WHITE SMILING FACE</code>.
+</p>
+<p>
+  You can also use the Unicode code points; so <code>C-x 8 RET 03b1 RET</code> will insert
+  <code>α</code> as well, since its code point is <code>U+03B1</code>. In case you don't know the code
+  points of Unicode characters, a tool like the <i>Character Map</i> (<code>gucharmap</code>) in
+  Gnome may be useful.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4" class="outline-3">
+<h3 id="sec-1-4">abbrev</h3>
+<div class="outline-text-3" id="text-1-4">
+
+
+<p>
+   Since <code>ucs-insert</code> may not be convenient in all cases, you may want to add
+   shortcuts for oft-used special characters to you <i>abbrev table</i>. See the
+   entry on <a href="http://www.gnu.org/software/emacs/manual/html_node/elisp/Abbrevs.html#Abbrevs">Abbrevs</a> in the emacs manual. I usually edit the entries by hand with
+   <code>M-x edit-abbrevs</code>, and I have entries like:
+</p>
+
+
+
+<pre class="example">(text-mode-abbrev-table)
+"Delta0"       0    "Δ"
+"^2"           0    "²"
+"^3"           0    "³"
+"almost0"      0    "≈"
+"alpha0"       0    "α"
+"any0"         0    "∀"
+"beta0"        0    "β"
+"c0"           0    "©"
+"deg0"         0    "℃"
+"delta0"       0    "δ"
+"elm0"         0    "∈"
+"epsilon0"     0    "ε"
+"eta0"         0    "η"
+"heart0"       0    "♥"
+"inf0"         0    "∞"
+"int0"         0    "∫"
+"notis0"       0    "≠"
+</pre>
+
+
+<p>
+   Now, <code>alpha0</code> will be auto-replaced with <i>α</i>. I'm using the <code>0</code> suffix for
+   most entries so I can easily remember them, without making it hard to use
+   <code>alpha</code> as a normal word. Note, <code>abbrevs</code> are a bit picky when it comes to
+   the characters in the shortcut &ndash; for example, setting <code>!=</code> -&gt; <code>≠</code> won't
+   work.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-5" class="outline-3">
+<h3 id="sec-1-5">inheriting abbrevs from other modes</h3>
+<div class="outline-text-3" id="text-1-5">
+
+
+<p>
+   If you have set up a nice set of abbreviations for <code>text-mode</code>, you may want
+   to use them in other modes as well; you can accomplish this by including the
+   <code>text-mode</code> abbreviations into the table for the current one, for example in
+   your ERC setup: 
+</p>
+
+
+
+<pre class="src src-elisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">inherit abbrevs from text-mode</span>
+(abbrev-table-put erc-mode-abbrev-table <span class="org-builtin">:parents</span> (list text-mode-abbrev-table))
+</pre>
+
+
+
+
+</div>
+</div>
+</div>

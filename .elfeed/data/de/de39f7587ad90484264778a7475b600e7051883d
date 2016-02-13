@@ -1,0 +1,45 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+<p>
+  Regular emacs-fu programming will resume shortly, but for now I'll provide a
+  brief update on some of my projects.
+</p>
+<ul>
+<li>Recently, I discussed <a href="http://emacs-fu.blogspot.com/2011/12/sauron-keeping-eye-on-whats-going-on.html">sauron</a>, and event-tracking tool for emacs. I added
+    some new features, fixed some bugs, and got some contributions (yay!)
+
+<ul>
+<li>tweak/improve priority handling
+</li>
+<li>add a backend for the emacs-24 notification system
+</li>
+<li>add settings to make the sauron frame 'sticky', and to hide the mode-line
+</li>
+<li>enable dbus-message source outside your session; useful for cron/procmail
+      etc.
+</li>
+<li>display events in a tabular fashion
+</li>
+<li>add support for John Wiegley's <code>event.el</code>
+</li>
+<li>much improved documentation
+</li>
+<li>other things&hellip;
+
+</li>
+</ul>
+
+<p>    Sauron version 0.2 is available through <a href="http://marmalade-repo.org/">Marmalade</a> (see <a href="http://emacs-fu.blogspot.com/2011/11/package-management-revisited.html">Package Management Revisited</a>)
+</p>
+</li>
+<li>I released version 0.9.8 of <a href="http://www.djcbsoftware.nl/code/mu">mu</a> (e-mail searcher/indexer, previously
+    discussed in <a href="http://emacs-fu.blogspot.com/2011/03/searching-e-mails-with-wanderlust-and.html">Searching e-mails with Wanderlust and mu</a>). Now, for emacs-users
+    I've added <a href="http://www.djcbsoftware.nl/code/mu/mu4e.html">mu4e</a> (<a href="http://www.djcbsoftware.nl/code/mu/mu4e/index.html">manual</a>), a new &amp; experimental e-mail client. It won't be
+    big and professional like <code>gnus</code>, but it's fun to hack on, and I've been
+    using it for a few months.
+</li>
+</ul>
+
+</div>
+</div>

@@ -1,0 +1,87 @@
+<p><a href="http://twitter.com">Pete Hunt</a> of React fame recently got into an
+online discussion about the pros and cons of
+<a href="https://gist.github.com/substack/68f8d502be42d5cd4942#comment-1365101">Webpack vs. Browserify</a>.
+In the discussion he inadvertently coins a hilarious term for a form
+of rhetoric in some circles of the JavaScript community - &quot;Modularity
+Shaming&quot;. React itself has been on the receiving end of &quot;Modularity
+Shaming&quot; due to its relatively large size for a JavaScript dependency,
+~37K gzipped.</p>
+
+<p>The wellspring of &quot;Modularity Shaming&quot; is of course the very real need for
+JavaScript applications to load quickly. This means trying to decrease
+the payload of the application through some obvious approaches like
+concatenation and minification. However the very popular combination of jQuery
+and Underscore.js alone add up to ~40K gzipped, and of course real
+applications need significantly more support than that and we haven&#39;t
+even gotten to your application code yet!</p>
+
+<p>At this point there are a couple of options - break apart the code and
+only use what you need when you need it through asynchronous module
+loading. While this works OK for library dependencies, for your
+application modules you&#39;ll likely as not be fighting race conditions
+if you don&#39;t exert some discipline. Surmountable for sure, but
+certainly not as simple to reason about as a single concatenated file.</p>
+
+<p>The other option is to use smaller dependencies. The problem with this
+is that the
+<a href="https://web.archive.org/web/20111214102140/http://momentjs.com/">microlib</a>
+of yesterday may very well become the <a href="http://momentjs.com">macrolib</a> of
+tomorrow. The fully internationalized version of moment.js is as big as
+jQuery &amp; Underscore.js combined!</p>
+
+<p>There is an alternative solution to this problem that&#39;s rarely discussed.</p>
+
+<h2>Dead Code Elimination</h2>
+
+<p>For suitably written JavaScript, the
+<a href="https://developers.google.com/closure/compiler/">Google Closure Compiler</a>
+to this day defeats all comers in producing compact JavaScript - this
+is due to
+<a href="http://en.wikipedia.org/wiki/Dead_code_elimination">Dead Code Elimination</a>. Google
+long ago decided they would need an incredible amount of JavaScript
+functionality across their products so they created
+the <a href="https://github.com/google/closure-library">Google Closure Libary</a>. The
+code base including all tests is a whopping 300,000 lines of
+JavaScript!</p>
+
+<p>Through the magic of Dead Code Elimination if I use just one single
+function in this behemoth of a JavaScript library I will only get
+the code that&#39;s necessary for that one function to do its job.</p>
+
+<p>But just how good is it in practice?</p>
+
+<p>Consider the following ClojureScript program. It includes DateTime
+formatting, DateTime arithmetic, and internationalization:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">practice.core</span>
+  <span class="p">(</span><span class="ss">:import</span> <span class="p">[</span><span class="nv">goog.date</span> <span class="nv">DateTime</span> <span class="nv">Interval</span><span class="p">]</span>
+           <span class="p">[</span><span class="nv">goog.i18n</span> <span class="nv">DateTimeFormat</span><span class="p">]))</span>
+
+<span class="p">(</span><span class="k">def </span><span class="nv">f</span> <span class="p">(</span><span class="nf">DateTimeFormat.</span> <span class="s">&quot;EEEE MMMM d, y&quot;</span><span class="p">))</span>
+
+<span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">week</span> <span class="p">(</span><span class="nf">Interval.</span> <span class="nv">nil</span> <span class="nv">nil</span> <span class="mi">7</span><span class="p">)</span>
+      <span class="nv">dt</span>   <span class="p">(</span><span class="nf">DateTime.</span><span class="p">)]</span>
+  <span class="p">(</span><span class="nf">.add</span> <span class="nv">dt</span> <span class="nv">week</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">.log</span> <span class="nv">js/console</span> <span class="p">(</span><span class="nf">.format</span> <span class="nv">f</span> <span class="nv">dt</span><span class="p">)))</span>
+</code></pre></div>
+<p>If I want this ClojureScript program to emit a DateTime string in
+French the total cost of this entire program will be ~4K
+gzipped. That&#39;s 10X less of a dependency than moment.js with
+internationalization.</p>
+
+<h3>Use Google Closure</h3>
+
+<p>If you&#39;re a ClojureScript developer I highly recommend always first
+checking to see if there isn&#39;t a
+<a href="http://docs.closure-library.googlecode.com/git/index.html">satisfactory Google Closure module</a>
+that will get the job done. Just the
+other day I needed a pseudorandom number generator for
+<a href="https://github.com/clojure/test.check">test.check</a>, Closure did not
+<a href="http://docs.closure-library.googlecode.com/git/class_goog_testing_PseudoRandom.html">disappoint</a>.</p>
+
+<p>In some cases Google Closure doesn&#39;t provide the nicest of APIs or
+is poorly documented but it&#39;s generally a simple matter to present
+a
+<a href="https://github.com/andrewmcveigh/cljs-time">lovingly crafted facade</a>. There&#39;s
+no need to promulgate the disease of
+<a href="http://en.wikipedia.org/wiki/Not_invented_here">NIH</a> you encounter so
+often in JavaScript circles.</p>

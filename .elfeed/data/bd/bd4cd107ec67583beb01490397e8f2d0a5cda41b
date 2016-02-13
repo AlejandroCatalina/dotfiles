@@ -1,0 +1,13 @@
+<p>
+For reasons which ellude me, the <a href="http://doc.endlessparentheses.com/Fun/org-in-src-block-p"><code>org-in-src-block-p</code></a> function is
+disappointingly inconsistent for me. Given its major role in
+<a href="/emacs-narrow-or-widen-dwim.html">narrow-or-widen-dwim</a>, this frequently led to <a href="http://doc.endlessparentheses.com/Fun/org-edit-src-code"><code>org-edit-src-code</code></a> not
+getting called when point was inside a code block.
+</p>
+
+<p>
+I’ve edited the <a href="/emacs-narrow-or-widen-dwim.html">narrow-or-widen-dwim</a> to not need that function. Go
+copy it again if you were using it.
+</p>
+
+   <p><a href="http://endlessparentheses.com/fixing-org-in-src-block-p.html?source=rss#disqus_thread">Comment on this.</a></p>

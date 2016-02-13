@@ -1,0 +1,20 @@
+<p>By default in Emacs the <code>Tab</code> key does only indentation. If some major
+mode provides completion of some form, you normally have to trigger it
+with <code>M-Tab</code>. In most window managers, however, this keybinding is used to
+switch between open windows, which makes it a bit hard to use out of the box.</p>
+
+<p>There&#8217;s a simple trick to augment the default <code>Tab</code> behavior. Just put
+this in your Emacs config:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="k">setq</span> <span class="nv">tab-always-indent</span> <span class="err">‘</span><span class="nv">complete</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, when you press <code>Tab</code> one time it will indent and if you press it
+again you&#8217;ll get completion candidates. If the indentation at point is
+already correct you&#8217;ll get the completion candidates right away. As an
+added bonus - you don&#8217;t really need <code>M-Tab</code> anymore.</p>
+
+<p>Simple and neat! One really has to wonder why this isn&#8217;t the default
+behavior.</p>

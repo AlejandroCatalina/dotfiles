@@ -1,0 +1,87 @@
+<p>
+What do you do if you want to override a key only in a certain context? Take
+this <a href="/prettify-your-quotation-marks.html">Quotation Marks</a> post as an example. We want to change the <kbd>"</kbd> key in
+general, but retain the regular behaviour if we’re inside a code-block. In this
+case the solution was to just call the old behaviour manually, but what if
+you’re writing a more general command and you don’t know what this “old
+behaviour” is?
+</p>
+
+<p>
+As it turns out, it’s a little-known feature of Emacs that you can specify
+filter functions to determine whether a keybind should be active. We use this
+quite a bit in <a href="https://github.com/vermiculus/sx.el">SX.el</a>. While the syntax is far from simple, it’s very easy to
+copy-paste and just fill in your predicate.
+</p>
+
+<p>
+First, we redefine <code>endless/round-quotes</code> without that ugly part that
+conditionally calls <code>self-insert-command</code> (previous version <a href="/prettify-your-quotation-marks.html">here</a>).
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/round-quotes</span> <span class="p">(</span><span class="nv">italicize</span><span class="p">)</span>
+  <span class="s">"Insert “” and leave point in the middle.
+With prefix argument ITALICIZE, insert /“”/ instead (meant
+for org-mode)."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">looking-at</span> <span class="s">"”[/=_\\*]?"</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">match-end</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">when</span> <span class="nv">italicize</span>
+      <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">derived-mode-p</span> <span class="ss">'markdown-mode</span><span class="p">)</span>
+          <span class="p">(</span><span class="nv">insert</span> <span class="s">"__"</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">insert</span> <span class="s">"//"</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">-1</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">insert</span> <span class="s">"“”"</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">-1</span><span class="p">)))</span></code></pre></figure>
+<p>
+Then, we define the same key as before, but instead of just passing the command
+we use a menu-item bound to <code>nil</code>. The fact that it’s a menu-item is irrelevant
+here, it behaves exactly like a key bound to <code>nil</code> (i.e., an empty keybind).
+However, this allows us to setup a filter that changes the keybind to
+<code>endless/round-quotes</code> if we’re <b>not</b> inside an org-src-block.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-key</span> <span class="nv">org-mode-map</span> <span class="s">"\""</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">menu-item</span> <span class="s">"maybe-round-quotes"</span> <span class="no">nil</span>
+              <span class="ss">:filter</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="k">&amp;optional</span> <span class="nv">_</span><span class="p">)</span>
+                        <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">org-in-src-block-p</span><span class="p">)</span>
+                          <span class="nf">#'</span><span class="nv">endless/round-quotes</span><span class="p">))))</span></code></pre></figure>
+
+<p>
+That <code>maybe-round-quotes</code> is just a useless name for the menu-item, and you can
+learn more about all of this on <a href="http://www.gnu.org/software/emacs/manual/html_node/elisp/Extended-Menu-Items.html#Extended-Menu-Items">this manual page</a>. For now, it suffices to say we
+deserve a more convenient way to use this feature.
+</p>
+
+<p>
+Of course, that’s nothing a good macro can’t fix.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">endless/define-conditional-key</span> <span class="p">(</span><span class="nv">keymap</span> <span class="nv">key</span> <span class="nv">def</span>
+                                                 <span class="k">&amp;rest</span> <span class="nv">body</span><span class="p">)</span>
+  <span class="s">"In KEYMAP, define key sequence KEY as DEF conditionally.
+This is like `define-key', except the definition
+\"disappears\" whenever BODY evaluates to nil."</span>
+  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="nv">indent</span> <span class="mi">3</span><span class="p">)</span>
+           <span class="p">(</span><span class="nv">debug</span> <span class="p">(</span><span class="nv">form</span> <span class="nv">form</span> <span class="nv">form</span> <span class="k">&amp;rest</span> <span class="nv">sexp</span><span class="p">)))</span>
+  <span class="o">`</span><span class="p">(</span><span class="nv">define-key</span> <span class="o">,</span><span class="nv">keymap</span> <span class="o">,</span><span class="nv">key</span>
+     <span class="o">'</span><span class="p">(</span><span class="nv">menu-item</span>
+       <span class="o">,</span><span class="p">(</span><span class="nb">format</span> <span class="s">"maybe-%s"</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nb">car</span> <span class="p">(</span><span class="nv">cdr-safe</span> <span class="nv">def</span><span class="p">))</span> <span class="nv">def</span><span class="p">))</span>
+       <span class="no">nil</span>
+       <span class="ss">:filter</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="k">&amp;optional</span> <span class="nv">_</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nb">when</span> <span class="o">,</span><span class="p">(</span><span class="nv">macroexp-progn</span> <span class="nv">body</span><span class="p">)</span>
+                   <span class="o">,</span><span class="nv">def</span><span class="p">)))))</span></code></pre></figure>
+<p>
+Which leads to the much nicer syntax:
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">endless/define-conditional-key</span> <span class="nv">org-mode-map</span> <span class="s">"\""</span>
+                                <span class="nf">#'</span><span class="nv">endless/round-quotes</span>
+  <span class="p">(</span><span class="nb">not</span> <span class="p">(</span><span class="nv">org-in-src-block-p</span><span class="p">)))</span></code></pre></figure>
+
+<p>
+And a similar keybind for Markdown, which is a bit more of a mouth-full.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">endless/define-conditional-key</span> <span class="nv">markdown-mode-map</span> <span class="s">"\""</span>
+                                <span class="nf">#'</span><span class="nv">endless/round-quotes</span>
+  <span class="p">(</span><span class="nb">not</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">markdown-code-at-point-p</span><span class="p">)</span>
+           <span class="p">(</span><span class="nv">memq</span> <span class="ss">'markdown-pre-face</span>
+                 <span class="p">(</span><span class="nv">face-at-point</span> <span class="no">nil</span> <span class="ss">'mult</span><span class="p">)))))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/define-context-aware-keys-in-emacs.html?source=rss#disqus_thread">Comment on this.</a></p>

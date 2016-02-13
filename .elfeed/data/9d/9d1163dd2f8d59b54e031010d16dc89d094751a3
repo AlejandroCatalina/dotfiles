@@ -1,0 +1,1 @@
+Lately I&#8217;ve been obsessed with palindromes. I have no idea why, but I find the topic fascinating. Besides reading papers and books1 on the subject, I&#8217;ve been exploring writing some utilities for detecting2 and generating palindromes in Clojure sequences. Before I talk about a couple of (IMO) cool Clojure functions, let me take a moment [&#8230;]

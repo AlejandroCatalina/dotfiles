@@ -1,0 +1,56 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+<p>
+Emacs-lisp (elisp) is a nice language to play around with code and try things as
+you develop them &ndash; <i>explorative programming</i>. I often use the <code>*scratch*</code>
+buffer for that, but sometimes it's nice to use a so-called '<a href="http://en.wikipedia.org/wiki/REPL">REPL</a>' (
+<i>Read-Eval-Print-Loop</i>) instead. A REPL is a sort-of command-line interface
+where your expressions are evaluated as soon as they are considered 'complete'
+and you press <code>Enter</code>.
+</p>
+<p>
+So, enter Emacs's built-in repl: <code>IELM</code>. You can activate it with <code>M-x ielm</code>,
+and the interaction looks something like the following:
+</p>
+
+
+
+<pre class="example">*** Welcome to IELM ***  Type (describe-mode) for help.
+ELISP&gt; 123 
+123
+ELISP&gt; (+ 1 2)
+3
+ELISP&gt; ;; comment
+ELISP&gt; (defun fac (n)
+         (if (= 0 n)
+           1
+           (* n (fac (- n 1)))))
+fac
+ELISP&gt; (fac 5)
+120
+ELISP&gt; 
+</pre>
+
+
+
+<p>
+By default, IELM evaluates <b>complete</b> expressions automatically as soon you as
+you press Enter. So one thing to remember is that if you want to have
+multi-line expression (like above), you must make sure that after each line
+the expression is <i>not</i> complete (i.e., the brackets are not balanced) --
+otherwise the expression will be evaluated too early. That makes modes like
+<a href="http://emacs-fu.blogspot.com/2010/06/automatic-pairing-of-brackets-and.html">autopair</a> or <a href="http://www.emacswiki.org/emacs/ParEdit">paredit</a> a bit inconvenient for this.
+</p>
+<p>
+If you don't like that behavior, you can do:
+</p>
+<p>
+(setq ielm-dynamic-return nil)
+</p>
+<p>
+which will allow you to Enter as much as you want and only evaluate things when
+you press <code>C-j</code>. But then you might as well use <code>*scratch*</code> I
+suppose. Personally, I use IELM mostly as a calculator.
+</p></div>
+</div>

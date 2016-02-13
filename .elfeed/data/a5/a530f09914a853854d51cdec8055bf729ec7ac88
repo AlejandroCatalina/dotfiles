@@ -1,0 +1,250 @@
+<p><img src="http://upload.wikimedia.org/wikipedia/en/c/c2/Greenegg.gif"></p>
+
+<p>A quick tour of Clojure Transducers with core.async with Dr. Seuss as a guide.</p>
+
+<p>Follow along at home by:</p>
+
+<ul>
+<li><code>lein new green-eggs</code></li>
+<li>modify your project.clj to include the following:</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defproject </span><span class="nv">green-eggs</span> <span class="s">&quot;0.1.0-SNAPSHOT&quot;</span>
+</span><span class='line'>  <span class="ss">:description</span> <span class="s">&quot;try them&quot;</span>
+</span><span class='line'>  <span class="ss">:url</span> <span class="s">&quot;http://en.wikipedia.org/wiki/Green_Eggs_and_Ham&quot;</span>
+</span><span class='line'>  <span class="ss">:license</span> <span class="p">{</span><span class="ss">:name</span> <span class="s">&quot;Eclipse Public License&quot;</span>
+</span><span class='line'>            <span class="ss">:url</span> <span class="s">&quot;http://www.eclipse.org/legal/epl-v10.html&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">org.clojure/clojure</span> <span class="s">&quot;1.7.0-alpha1&quot;</span><span class="p">]</span>
+</span><span class='line'>                 <span class="p">[</span><span class="nv">org.clojure/core.async</span> <span class="s">&quot;0.1.338.0-5c5012-alpha&quot;</span><span class="p">]])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Start up a repl and hack in!</li>
+</ul>
+
+
+<h2>Green Eggs and Ham</h2>
+
+<p>Transducers are a new feature of Clojure 1.7.  Instead of trying to explain them with words, let&rsquo;s take a look of them in action.  First we need some data.  Let&rsquo;s def a vector of all the places you could try green eggs and ham.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">ns </span><span class="nv">green-eggs.core</span>
+</span><span class='line'>  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">clojure.core.async</span> <span class="ss">:as</span> <span class="nv">async</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">green-eggs-n-ham</span>
+</span><span class='line'>  <span class="p">[</span><span class="s">&quot;in the rain&quot;</span>
+</span><span class='line'>   <span class="s">&quot;on a train&quot;</span>
+</span><span class='line'>   <span class="s">&quot;in a box&quot;</span>
+</span><span class='line'>   <span class="s">&quot;with a fox&quot;</span>
+</span><span class='line'>   <span class="s">&quot;in a house&quot;</span>
+</span><span class='line'>   <span class="s">&quot;with a mouse&quot;</span>
+</span><span class='line'>   <span class="s">&quot;here or there&quot;</span>
+</span><span class='line'>   <span class="s">&quot;anywhere&quot;</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next, let&rsquo;s create a function that will transform the places into a &ldquo;I would not eat them &hellip;&rdquo; sentence.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">i-do-not-like-them</span> <span class="p">[</span><span class="nv">s</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">format</span> <span class="s">&quot;I would not eat them %s.&quot;</span> <span class="nv">s</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">i-do-not-like-them</span> <span class="s">&quot;in the rain&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1">;; -&gt; &quot;I would not eat them in the rain.&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We also need a function to take this result and actually try the green eggs and ham.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="kd">defn </span><span class="nv">try-them</span> <span class="p">[</span><span class="nv">s</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">clojure.string/replace</span> <span class="nv">s</span>  <span class="o">#</span><span class="s">&quot; not&quot;</span> <span class="s">&quot;&quot;</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nf">try-them</span> <span class="s">&quot;I would not eat them in the rain.&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1">;; -&gt; &quot;I would eat them in the rain.&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we have two transformations that we can apply to the vector of green-eggs-n-ham strings.
+One of the really nice things about transducers is that you can describe and compose this transformation without a data structure present.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">sam-i-am-xform</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">comp</span>
+</span><span class='line'>   <span class="p">(</span><span class="nb">map </span><span class="nv">i-do-not-like-them</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">(</span><span class="nb">map </span><span class="nv">try-them</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can run the transformation of the transducers against the data in a few ways.</p>
+
+<ul>
+<li><em>into</em>: Non-lazy turn the transformation into a collection</li>
+<li><em>sequence</em>: Same thing but lazy</li>
+<li><em>transduce</em>: Acts like reduce on the all the transformed elements</li>
+<li>With <em>core.async</em> channels doing the transformations.</li>
+</ul>
+
+
+<p>Let&rsquo;s look at the green eggs and ham example for each one of these ways:</p>
+
+<h3>Into</h3>
+
+<p>Into takes a transducer and collection to work on and returns the vector we asked for:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nb">into </span><span class="p">[]</span> <span class="nv">sam-i-am-xform</span> <span class="nv">green-eggs-n-ham</span><span class="p">)</span>
+</span><span class='line'><span class="c1">;; -&gt; [&quot;I would eat them in the rain.&quot;</span>
+</span><span class='line'><span class="c1">;;     &quot;I would eat them on a train.&quot;</span>
+</span><span class='line'><span class="c1">;;     &quot;I would eat them in a box.&quot;</span>
+</span><span class='line'><span class="c1">;;     &quot;I would eat them with a fox.&quot;</span>
+</span><span class='line'><span class="c1">;;     &quot;I would eat them in a house.&quot;</span>
+</span><span class='line'><span class="c1">;;     &quot;I would eat them with a mouse.&quot;</span>
+</span><span class='line'><span class="c1">;;     &quot;I would eat them here or there.&quot;</span>
+</span><span class='line'><span class="c1">;;     &quot;I would eat them anywhere.&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Sequence</h3>
+
+<p>Sequence takes similar arguments, but as promised, returns a lazy sequence that we can interact with.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nb">class </span><span class="p">(</span><span class="nf">sequence</span> <span class="nv">sam-i-am-xform</span> <span class="nv">green-eggs-n-ham</span><span class="p">))</span>
+</span><span class='line'><span class="c1">;; -&gt; clojure.lang.LazyTransformer</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">(</span><span class="nb">take </span><span class="mi">1</span> <span class="p">(</span><span class="nf">sequence</span> <span class="nv">sam-i-am-xform</span> <span class="nv">green-eggs-n-ham</span><span class="p">))</span>
+</span><span class='line'><span class="c1">;; -&gt; (&quot;I would eat them in the rain.&quot;)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Transduce</h3>
+
+<p>If we want to finally arrange all our sentences in the vectors into one string, we would use reduce.  The way to do this with transducers is to use <em>transduce</em>.  It takes a function of two arguments to perform the reduce, as well as an initial data input.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">transduce</span> <span class="nv">sam-i-am-xform</span> <span class="o">#</span><span class="p">(</span><span class="nb">str </span><span class="nv">%1</span> <span class="nv">%2</span> <span class="s">&quot; &quot;</span><span class="p">)</span> <span class="s">&quot;&quot;</span> <span class="nv">green-eggs-n-ham</span><span class="p">)</span>
+</span><span class='line'><span class="c1">;; -&gt; &quot;I would eat them in the rain.</span>
+</span><span class='line'><span class="c1">;;     I would eat them on a train.</span>
+</span><span class='line'><span class="c1">;;     I would eat them in a box.</span>
+</span><span class='line'><span class="c1">;;     I would eat them with a fox.</span>
+</span><span class='line'><span class="c1">;;     I would eat them in a house.</span>
+</span><span class='line'><span class="c1">;;     I would eat them with a mouse.</span>
+</span><span class='line'><span class="c1">;;     I would eat them here or there.</span>
+</span><span class='line'><span class="c1">;;     I would eat them anywhere.&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">;;_note: In  1.7.0-alpha2, transduce changed and you need to use a</span>
+</span><span class='line'><span class="c1">;;(transduce sam-i-am-xform (completing #(str %1 %2 &quot; &quot;)) &quot;&quot; green-eggs-n-ham)</span>
+</span><span class='line'><span class="c1">;;instead.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Core.async</h3>
+
+<p>Core.async has a really nice way to define channels with a transducer that will transform each element on the channel.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">sam-i-am-chan</span> <span class="p">(</span><span class="nf">async/chan</span> <span class="mi">1</span> <span class="nv">sam-i-am-xform</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s define another channel to reduce the results of the sam-i-am-chan to a string.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">result-chan</span> <span class="p">(</span><span class="nf">async/reduce</span> <span class="o">#</span><span class="p">(</span><span class="nb">str </span><span class="nv">%1</span> <span class="nv">%2</span> <span class="s">&quot; &quot;</span><span class="p">)</span> <span class="s">&quot;&quot;</span> <span class="nv">sam-i-am-chan</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, let&rsquo;s actually put the green-eggs-n-ham data onto the sam-i-am-chan and let the data transformations flow&hellip;.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">async/onto-chan</span> <span class="nv">sam-i-am-chan</span> <span class="nv">green-eggs-n-ham</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At last,
+we can get our result off the result channel and revel in the beauty of asynchronous data transducers.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="k">def </span><span class="nv">i-like-them</span> <span class="p">(</span><span class="nf">async/&lt;!!</span> <span class="nv">result-chan</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">i-like-them</span>
+</span><span class='line'><span class="c1">;; -&gt; &quot;I would eat them in the rain.</span>
+</span><span class='line'><span class="c1">;;     I would eat them on a train.</span>
+</span><span class='line'><span class="c1">;;     I would eat them in a box.</span>
+</span><span class='line'><span class="c1">;;     I would eat them with a fox.</span>
+</span><span class='line'><span class="c1">;;     I would eat them in a house.</span>
+</span><span class='line'><span class="c1">;;     I would eat them with a mouse.</span>
+</span><span class='line'><span class="c1">;;     I would eat them here or there.</span>
+</span><span class='line'><span class="c1">;;     I would eat them anywhere.&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Transducers are elegant and powerful, just like the rest of Clojure.  Try them, you will like them :)</p>
+
+<p><img src="http://ecx.images-amazon.com/images/I/51JqhoQCtgL.jpg"></p>

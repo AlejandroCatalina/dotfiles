@@ -1,0 +1,104 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+The 'frame title' (window title) that emacs uses in graphical environments
+defaults to something like <code>emacs@hostname</code>. 
+</p>
+<p>
+Of course emacs lets us customize this, by changing the value of
+<code>frame-title-format</code>. Emacs accepts many different things there, (see the
+documentation for <code>frame-title-format</code> and <code>mode-line-format</code> for that), but
+let's look at an example.
+</p>
+<p>
+Instead of the default <code>emacs@hostname</code>, I find it more useful to include the
+name of the file I'm working on instead, or, in case of non-file buffers, the
+buffer name. To do this, I have something like the following in my <code>.emacs</code>:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">setq</span> frame-title-format
+  '(<span class="org-string">""</span> invocation-name <span class="org-string">": "</span>(<span class="org-builtin">:eval</span> (<span class="org-keyword">if</span> (buffer-file-name)
+                (abbreviate-file-name (buffer-file-name))
+                  <span class="org-string">"%b"</span>))))
+</pre>
+
+
+
+<p>
+As you see, <code>frame-title-format</code> is a template for the items that are present
+in the title bar; i.e.. emacs concatenates the items in the list, and it
+supports various <code>%</code>-constructs, which are replaced with actual values; see
+below.
+</p>
+<p>
+In addition to the <code>%</code>-constructs, you can use <code>:eval</code> to make emacs evaluate
+the expression whenever it wants to update the title bar.
+</p>
+<p>
+<code>invocation-name</code> is the name of the emacs binary.
+</p>
+<p>
+<code>abbreviate-file-name</code> replaces the home directory part in file names with
+<code>~</code>; for very deep paths it might be nice to do some abbreviation as well as
+some shells do; this is left as an exercise to the reader :)
+</p>
+<p>
+You can experiment with some other things to put in <code>frame-title-format</code>;
+use the <code>:eval</code> construct as above to use emacs-lisp functions, and the
+various <code>%</code>-specifiers which are replaced by certain values; the emacs
+documentation lists the following:
+</p>
+
+
+
+<pre class="src src-text">%b -- print buffer name.      %f -- print visited file name.
+%F -- print frame name.
+%* -- print %, * or hyphen.   %+ -- print *, % or hyphen.
+      %&amp; is like %*, but ignore read-only-ness.
+      % means buffer is read-only and * means it is modified.
+      For a modified read-only buffer, %* gives % and %+ gives *.
+%s -- print process status.
+%i -- print the size of the buffer.
+%I -- like %i, but use k, M, G, etc., to abbreviate.
+%p -- print percent of buffer above top of window, or Top, Bot or All.
+%P -- print percent of buffer above bottom of window, perhaps plus Top,
+      or print Bottom or All.
+%n -- print Narrow if appropriate.
+%t -- visited file is text or binary (if OS supports this distinction).
+%z -- print mnemonics of keyboard, terminal, and buffer coding systems.
+%Z -- like %z, but including the end-of-line format.
+%e -- print error message about full memory.
+%@ -- print @ or hyphen.  @ means that default-directory is on a
+      remote machine.
+%[ -- print one [ for each recursive editing level.  %] similar.
+%% -- print %.   %- -- print infinitely many dashes.
+Decimal digits after the % specify field width to which to pad.
+</pre>
+
+
+
+<p>
+So, if we'd like to include the host (system) name and some indication of the
+status of this buffer, we could do something like:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">setq</span> frame-title-format
+  '(<span class="org-string">"emacs%@"</span> (<span class="org-builtin">:eval</span> (system-name)) <span class="org-string">": "</span> (<span class="org-builtin">:eval</span> (<span class="org-keyword">if</span> (buffer-file-name)
+                (abbreviate-file-name (buffer-file-name))
+                  <span class="org-string">"%b"</span>)) <span class="org-string">" [%*]"</span>))
+</pre>
+
+
+
+<p>
+Of course, some of the information is available elsewhere already, but it
+might be clearer in the frame-title. Or not &ndash; there's a lot of room for
+tweaking and experimentation here.
+</p></div>
+</div>

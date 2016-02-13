@@ -1,0 +1,47 @@
+<p>
+It’s difficult for me to spend much time interacting with a major-mode and not
+find something to tweak. Even when that mode is my oldest companion in the world
+of Emacs, something will surely pop up. So it’s only fitting that in the final
+week of my thesis submission deadline I start tinkering with <code>latex-mode</code> again.
+</p>
+
+<p>
+I wrote the following snippet after compiling a recent Emacs snapshot which
+defines a myriad of rules for <code>prettify-symbols-mode</code> in <code>tex-mode</code>. Equations
+become much easier to read when you replace the verbose math symbols like
+<code>\alpha</code> with <code>α</code>, but that only makes all the LaTeX styling commands stand out
+even more. Suddenly, all those <code>\left</code>, <code>\right</code>, <code>\!</code> and <code>\;</code>, are sticking
+out like that mole on a hag’s nose.
+</p>
+
+<p>
+What do we do about that? We hide them away. Not completely, of course. We still
+need to see those commands. We just tuck them away a little, where we <i>can</i> see
+them without <i>having</i> to see them.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">defface</span> <span class="nv">endless/unimportant-latex-face</span>
+  <span class="o">'</span><span class="p">((</span><span class="no">t</span> <span class="ss">:height</span> <span class="mf">0.7</span>
+       <span class="ss">:inherit</span> <span class="nv">font-lock-comment-face</span><span class="p">))</span>
+  <span class="s">"Face used on less relevant math commands."</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nv">font-lock-add-keywords</span>
+ <span class="ss">'latex-mode</span>
+ <span class="o">`</span><span class="p">((</span><span class="o">,</span><span class="p">(</span><span class="nv">rx</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nb">and</span> <span class="s">"\\"</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">any</span> <span class="s">",.!;"</span><span class="p">)</span>
+                           <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nb">or</span> <span class="s">"left"</span> <span class="s">"right"</span>
+                                    <span class="s">"big"</span> <span class="s">"Big"</span><span class="p">)</span>
+                                <span class="nv">symbol-end</span><span class="p">)))</span>
+             <span class="p">(</span><span class="nv">any</span> <span class="s">"_^"</span><span class="p">)))</span>
+    <span class="mi">0</span> <span class="ss">'endless/unimportant-latex-face</span> <span class="nv">prepend</span><span class="p">))</span>
+ <span class="ss">'end</span><span class="p">)</span></code></pre></figure>
+
+<p>
+Here’s a sample of what it might look like for you.
+</p>
+
+
+<div class="figure">
+<p><a href="/images/latex-unimportant-font-lock.png"><img src="/images/latex-unimportant-font-lock.png" alt="latex-unimportant-font-lock.png" /></a>
+</p>
+</div>
+
+   <p><a href="http://endlessparentheses.com/improving-latex-equations-with-font-lock.html?source=rss#disqus_thread">Comment on this.</a></p>

@@ -1,0 +1,81 @@
+<style>
+  .radio label {
+     margin-left: 0.5em;
+  }
+  .edit {
+     width: 250px;
+     border: 1px solid #ccc;
+     padding: 4px;
+     margin-left: 0.5em;
+  }
+  .editor code {
+     margin-left: 0.5em;
+  }
+  .inspector {
+     font-size: 11px;
+     text-transform: uppercase;
+     color: #aaa;
+  }
+  .editor .radio {
+     margin-bottom: 10px;
+  }
+</style>
+
+<p>Here is a simple user interface component:</p>
+
+<div id="ex0"></div>
+
+<p>Here is the exact same interface component again peeking under the blindfold:</p>
+
+<div id="ex1"></div>
+
+<p>Clicking on the checkboxes should convince you that they are backed by
+the same data. Note that in the second case you can edit the <a href="http://github.com/edn-format/edn">EDN</a>
+representation of the user interface and see corresponding changes.</p>
+
+<p>It bears repeating that both examples are actually exactly the same:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(defn radio-button [data owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:className &quot;radio&quot;}
+        (dom/input
+          #js {:type &quot;checkbox&quot;
+               :checked (:checked data)
+               :onChange (fn [e]
+                           (om/transact! data :checked not)
+                           (om/transact! data :count inc))})
+        (dom/label nil (:label data))))))
+
+(defn all-buttons [data owner]
+  (reify
+    om/IRender
+    (render [_]
+      (apply dom/div nil
+        (om/build-all radio-button (:ui data))))))
+</code></pre></div>
+<p>Then how are we getting the editing interface? <a href="http://github.com/swannodette/om">Om</a> now supports a very
+useful notion called <em>instrumenting</em> which allows us to peek under the
+blindfold without changing any of the original code.</p>
+
+<p>The first example is rendered with the following:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(om/root all-buttons app-state
+  {:target (.getElementById js/document &quot;ex0&quot;)})
+</code></pre></div>
+<p>The second example is rendered with the following:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(om/root all-buttons app-state
+  {:target (.getElementById js/document &quot;ex1&quot;)
+   :instrument
+   (fn [f cursor m]
+     (if (= f radio-button)
+       (om/build* editor (om/graft [f cursor m] cursor))
+       ::om/pass))})
+</code></pre></div>
+<p>The new <code>:instrument</code> option of <code>om.core/root</code> lets us intercept all
+calls to <code>om.core/build</code> so that we can <em>instrument</em> the user
+interface without having to actually change it directly.</p>
+
+<p>I suspect <code>:instrument</code> will allow us to build a useful universe of
+<em>meta</em> components that <a href="http://worrydream.com/LearnableProgramming/">help us see more clearly</a>.</p>
+
+<script src="/assets/js/instrument/main.js" type="text/javascript"></script>

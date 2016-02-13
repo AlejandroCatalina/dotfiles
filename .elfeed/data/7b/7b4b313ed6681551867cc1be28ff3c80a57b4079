@@ -1,0 +1,106 @@
+<p>
+When you have more than one browser installed, you must choose which
+one’s the default. The OS will then proceed to open all URLs in the
+default browser, even if it happens to be closed while another one
+happens to be running.
+</p>
+
+<p>
+At least in Emacs we can fix that behaviour. The following code
+configures Emacs to use whatever browser happens to be open right now,
+instead of always defaulting to the same one.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="c1">;;; We don't need to `require' because this function is only</span>
+<span class="c1">;;; ever called by `browse-url' itself. But if you have</span>
+<span class="c1">;;; problems, try uncommenting this:</span>
+<span class="c1">;; (require 'browse-url)</span>
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/browse-url-best-browser</span> <span class="p">(</span><span class="nv">url</span> <span class="k">&amp;rest</span> <span class="nv">_</span><span class="p">)</span>
+  <span class="s">"Use a running browser or start the preferred one."</span>
+  <span class="p">(</span><span class="k">setq</span> <span class="nv">url</span> <span class="p">(</span><span class="nv">browse-url-encode-url</span> <span class="nv">url</span><span class="p">))</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">process-environment</span>
+         <span class="p">(</span><span class="nv">browse-url-process-environment</span><span class="p">))</span>
+        <span class="p">(</span><span class="nv">command</span> <span class="p">(</span><span class="nv">endless/decide-browser</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nv">start-process</span> <span class="p">(</span><span class="nv">concat</span> <span class="nv">command</span> <span class="s">" "</span> <span class="nv">url</span><span class="p">)</span>
+                   <span class="no">nil</span> <span class="nv">command</span> <span class="nv">url</span><span class="p">)))</span>
+
+<span class="c1">;; Use this for all links. If you actually don't want some</span>
+<span class="c1">;; links to be viewed externally, change this line here.</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">browse-url-browser-function</span>
+      <span class="o">'</span><span class="p">((</span><span class="s">"."</span> <span class="o">.</span> <span class="nv">endless/browse-url-best-browser</span><span class="p">)))</span></code></pre></figure>
+
+<p>
+Here we configure our preferences through the <code>endless/browser-list</code>
+variable. Its value is a list of cons cells, each representing a
+browser. The <code>car</code> is a regexp to match the name of the browser’s
+process (used to determine whether the browser is running), and the <code>cdr</code> 
+is the name of the executable.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">defcustom</span> <span class="nv">endless/browser-list</span>
+  <span class="o">'</span><span class="p">((</span><span class="s">"xulrunner\\|conkeror"</span> <span class="o">.</span> <span class="s">"conkeror.sh"</span><span class="p">)</span>
+    <span class="s">"conkeror.exe"</span> <span class="c1">;; This works if it's in your $PATH</span>
+    <span class="s">"luakit"</span>
+    <span class="p">(</span><span class="s">"chrome$"</span> <span class="o">.</span> <span class="s">"google-chrome-stable"</span><span class="p">)</span>
+    <span class="s">"chromium"</span>
+    <span class="p">(</span><span class="s">"firefox\\|mozilla"</span> <span class="o">.</span> <span class="s">"firefox"</span><span class="p">)</span>
+    <span class="c1">;; This works regardless of your $PATH</span>
+    <span class="p">(</span><span class="s">"firefox.exe"</span> <span class="o">.</span>
+     <span class="s">"c:/Program Files (x86)/Mozilla Firefox/firefox.exe"</span><span class="p">))</span>
+  <span class="s">"List of browsers by order of preference.
+Each element is a cons cell (REGEXP . EXEC-FILE).
+If REGEXP matches the name of a currently running process and if
+EXEC-FILE a valid executable, EXEC-FILE will be used to open the
+given URL.
+
+An element can also be a string, in this case, it is used as both
+the REGEXP and the EXEC-FILE.
+
+It is safe to have items referring to not-installed browsers,
+they are gracefully ignored."</span>
+  <span class="ss">:type</span> <span class="o">'</span><span class="p">(</span><span class="nv">repeat</span> <span class="p">(</span><span class="nv">choice</span> <span class="nb">string</span> <span class="p">(</span><span class="nb">cons</span> <span class="nv">regexp</span> <span class="nv">file</span><span class="p">))))</span></code></pre></figure>
+<p>
+And this is the function responsible for checking the running
+processes and finding a browser in there.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/decide-browser</span> <span class="p">()</span>
+  <span class="s">"Decide best browser to use based on `endless/browser-list'."</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">process-list</span>
+         <span class="p">(</span><span class="nb">mapcar</span> <span class="nf">#'</span><span class="nv">endless/process-name</span>
+                 <span class="p">(</span><span class="nv">list-system-processes</span><span class="p">)))</span>
+        <span class="p">(</span><span class="nv">browser-list</span> <span class="nv">endless/browser-list</span><span class="p">)</span>
+        <span class="nv">browser</span> <span class="nv">out</span><span class="p">)</span>
+    <span class="c1">;; Find the first browser on the list that is open.</span>
+    <span class="p">(</span><span class="nv">while</span> <span class="p">(</span><span class="nb">and</span> <span class="nv">browser-list</span> <span class="p">(</span><span class="nb">null</span> <span class="nv">out</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">setq</span> <span class="nv">browser</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">browser-list</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nv">cl-member</span> <span class="p">(</span><span class="nv">car-or-self</span> <span class="nv">browser</span><span class="p">)</span>
+                          <span class="nv">process-list</span> <span class="ss">:test</span> <span class="ss">'string-match</span><span class="p">)</span>
+               <span class="p">(</span><span class="nv">executable-find</span> <span class="p">(</span><span class="nv">cdr-or-self</span> <span class="nv">browser</span><span class="p">)))</span>
+          <span class="p">(</span><span class="k">setq</span> <span class="nv">out</span> <span class="p">(</span><span class="nv">cdr-or-self</span> <span class="nv">browser</span><span class="p">))</span>
+        <span class="p">(</span><span class="k">setq</span> <span class="nv">browser-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">browser-list</span><span class="p">))))</span>
+    <span class="c1">;; Use the one we found, or the first one available.</span>
+    <span class="p">(</span><span class="nb">or</span> <span class="nv">out</span> <span class="p">(</span><span class="nv">endless/first-existing-browser</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/first-existing-browser</span> <span class="p">()</span>
+  <span class="s">"Return the first installed browser in `endless/browser-list'."</span>
+  <span class="p">(</span><span class="nb">require</span> <span class="ss">'cl-lib</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">cdr-or-self</span>
+   <span class="p">(</span><span class="nb">car</span>
+    <span class="p">(</span><span class="nv">cl-member-if</span>
+     <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nv">executable-find</span> <span class="p">(</span><span class="nv">cdr-or-self</span> <span class="nv">x</span><span class="p">)))</span>
+     <span class="nv">endless/browser-list</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/process-name</span> <span class="p">(</span><span class="nv">proc</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nb">assoc</span> <span class="ss">'comm</span> <span class="p">(</span><span class="nv">process-attributes</span> <span class="nv">proc</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">car-or-self</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+  <span class="s">"If X is a list, return the car. Otherwise, return X."</span>
+  <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">car-safe</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">x</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">cdr-or-self</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+  <span class="s">"If X is a list, return the cdr. Otherwise, return X."</span>
+  <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">cdr-safe</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">x</span><span class="p">))</span></code></pre></figure>
+
+<p>
+I’ve tested it on Windows and a couple of Linux distros. Could a Mac
+user test it for me as well?</p>
+
+   <p><a href="http://endlessparentheses.com/intelligent-browse-url.html?source=rss#disqus_thread">Comment on this.</a></p>

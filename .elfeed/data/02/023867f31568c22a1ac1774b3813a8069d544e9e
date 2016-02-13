@@ -1,0 +1,101 @@
+<p>Facebook just released
+<a href="https://github.com/facebook/immutable-js">immutable-js</a>
+<a href="http://en.wikipedia.org/wiki/Persistent_data_structure">a persistent data structure library</a>
+for JavaScript. Given the
+<a href="http://swannodette.github.io/2013/12/17/the-future-of-javascript-mvcs/">performance benefit immutable data can bring to React</a>,
+it&#39;s little surprise Facebook is investing in them. However the question
+remains how to deliver immutable data to clients given the prevalence
+of <a href="http://json.org">JSON</a>.</p>
+
+<p>In this post I&#39;m going to demonstrate consuming plain
+JSON with
+<a href="http://github.com/cognitect/transit-js">transit-js</a> and producing
+immutable-js values instead of JavaScript objects and arrays.</p>
+
+<p>If you have <a href="http://nodejs.org">Node.js</a> installed you can follow the
+code presented in the post easily on your machine. Create a directory
+on your machine and add the following <code>package.json</code> file to it:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;immutable-json&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;version&quot;</span><span class="o">:</span> <span class="s2">&quot;0.1.0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dependencies&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;immutable&quot;</span><span class="o">:</span> <span class="s2">&quot;2.0.3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;transit-js&quot;</span><span class="o">:</span> <span class="s2">&quot;0.8.670&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Then run the following at the command line to install the
+dependencies:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">npm install
+</code></pre></div>
+<p>Create a JavaScript file and put the following requires at the top:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">Immutable</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;immutable&quot;</span><span class="p">),</span>
+    <span class="nx">transit</span>   <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;transit-js&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>transit-js exposes two low-level options <code>arrayBuilder</code> and
+<code>mapBuilder</code> for constructing readers. This allows readers to
+interpret the meaning of the <a href="http://transit-format.org">Transit</a>
+array and map encodings.</p>
+
+<p>We can customize a reader to return <code>Immutable.Vector</code> and <code>Immutable.Map</code>
+like so:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">rdr</span> <span class="o">=</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">reader</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">arrayBuilder</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">init</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">Immutable</span><span class="p">.</span><span class="nx">Vector</span><span class="p">().</span><span class="nx">asMutable</span><span class="p">();</span> <span class="p">},</span>
+        <span class="nx">add</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ret</span><span class="p">,</span> <span class="nx">val</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">val</span><span class="p">);</span> <span class="p">},</span>
+        <span class="nx">finalize</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ret</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">asImmutable</span><span class="p">();</span> <span class="p">},</span>
+        <span class="nx">fromArray</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">Immutable</span><span class="p">.</span><span class="nx">Vector</span><span class="p">.</span><span class="nx">from</span><span class="p">(</span><span class="nx">arr</span><span class="p">);</span> <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="nx">mapBuilder</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">init</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">Immutable</span><span class="p">.</span><span class="nx">Map</span><span class="p">().</span><span class="nx">asMutable</span><span class="p">();</span> <span class="p">},</span>
+        <span class="nx">add</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ret</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">val</span><span class="p">);</span>  <span class="p">},</span>
+        <span class="nx">finalize</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ret</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">asImmutable</span><span class="p">();</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>Note that the builder methods get the original JSON node as contextual
+information. By default transit-js builds the values
+incrementally. transit-js can also build values at once from an array
+as in the case of <code>Immutable.Vector</code>. Sadly this can&#39;t be done for
+<code>Immutable.Map</code> yet. transit-js maps and ClojureScript both have an
+array map type for maps with less than or equal to 8 keys and it is a
+significant performance enhancement in time and space.</p>
+
+<p>We can now read JSON objects and arrays into immutable maps and vectors:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">rdr</span><span class="p">.</span><span class="nx">read</span><span class="p">(</span><span class="s2">&quot;[1,2,3]&quot;</span><span class="p">);</span> <span class="c1">// Vector [ 1, 2, 3 ]</span>
+<span class="nx">rdr</span><span class="p">.</span><span class="nx">read</span><span class="p">(</span><span class="s1">&#39;{&quot;foo&quot;:&quot;bar&quot;}&#39;</span><span class="p">);</span> <span class="c1">// Map { foo: &quot;bar&quot; }</span>
+</code></pre></div>
+<p>For writing we need to make write handlers. This is also pretty
+straightforward:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">VectorHandler</span> <span class="o">=</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">makeWriteHandler</span><span class="p">({</span>
+    <span class="nx">tag</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="s2">&quot;array&quot;</span><span class="p">;</span> <span class="p">},</span>
+    <span class="nx">rep</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">v</span><span class="p">;</span> <span class="p">},</span>
+    <span class="nx">stringRep</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">null</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">MapHandler</span> <span class="o">=</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">makeWriteHandler</span><span class="p">({</span>
+    <span class="nx">tag</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="s2">&quot;map&quot;</span><span class="p">;</span> <span class="p">},</span>
+    <span class="nx">rep</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">v</span><span class="p">;</span> <span class="p">},</span>
+    <span class="nx">stringRep</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">null</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">wrtr</span> <span class="o">=</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">writer</span><span class="p">(</span><span class="s2">&quot;json-verbose&quot;</span><span class="p">,</span> <span class="p">{</span>
+   <span class="nx">handlers</span><span class="o">:</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">map</span><span class="p">([</span>
+       <span class="nx">Immutable</span><span class="p">.</span><span class="nx">Vector</span><span class="p">,</span> <span class="nx">VectorHandler</span><span class="p">,</span>
+       <span class="nx">Immutable</span><span class="p">.</span><span class="nx">Map</span><span class="p">,</span> <span class="nx">MapHandler</span>
+   <span class="p">])</span> 
+<span class="p">});</span>
+</code></pre></div>
+<p>And now we can roundtrip:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">wrtr</span><span class="p">.</span><span class="nx">write</span><span class="p">(</span><span class="nx">rdr</span><span class="p">.</span><span class="nx">read</span><span class="p">(</span><span class="s2">&quot;[1,2,3]&quot;</span><span class="p">));</span> <span class="c1">// [1,2,3]</span>
+<span class="nx">wrtr</span><span class="p">.</span><span class="nx">write</span><span class="p">(</span><span class="nx">rdr</span><span class="p">.</span><span class="nx">read</span><span class="p">(</span><span class="s1">&#39;{&quot;foo&quot;:&quot;bar&quot;}&#39;</span><span class="p">));</span> <span class="c1">// {&quot;foo&quot;:&quot;bar&quot;}</span>
+</code></pre></div>
+<p>If you&#39;re excited about getting immutable data from your server into
+your <a href="http://facebook.github.io/react/">React client application</a>,
+transit-js presents a pretty good story even if you marshal plain
+JSON. However, if you change your backend to emit Transit JSON you
+will see a fairly significant performance boost. In the future
+if Immutable provides more efficient means to construct values as well as
+exposing an array map type, you will be able to deserialize immutable
+values nearly as fast or faster than you can <code>JSON.parse</code> plain JSON
+data in many modern browsers.</p>

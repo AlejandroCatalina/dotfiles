@@ -1,0 +1,14 @@
+<p>Sometimes you might need to convert a symbol to string (or vice versa) in Emacs Lisp. You start
+looking for functions like <code>symbol-to-string</code> and <code>string-to-symbol</code> but, alas, they do not seem exist.
+Do not despair! Such functions do actually exist, although their names are likely to surprise you:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">symbol-name</span> <span class="ss">&#39;some-symbol</span><span class="p">)</span>
+</span><span class='line'><span class="c1">; =&gt; &quot;some-symbol&quot;</span>
+</span><span class='line'><span class="p">(</span><span class="nb">intern</span> <span class="s">&quot;some-symbol&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1">; =&gt; some-symbol</span>
+</span></code></pre></td></tr></table></div></figure>
+

@@ -1,0 +1,58 @@
+
+
+
+<p><tt class="docutils literal">xwidget.el</tt> has <a class="reference external" href="http://thread.gmane.org/gmane.emacs.devel/196096/">made it</a> into Emacs 25!  You might wonder how
+exactly the interaction between a webkit widget and Emacs works.  The
+answer to this is simple, while lower-level tasks require bindings to
+the library exposing webkit, higher-level tasks are solved in
+JavaScript.  This is why <tt class="docutils literal"><span class="pre">xwidget-webkit-execute-script</span></tt> is used
+throughout the sources, it binds <a class="reference external" href="http://webkitgtk.org/reference/webkitgtk/stable/webkitgtk-webkitwebview.html#webkit-web-view-execute-script">webkit_view_execute_script</a>.  Now,
+what’s weird about that one is that while it has an argument for the
+code to evaluate, there is no mechanism to retrieve the return value
+at all.  This oversight has been fixed in a later version of webkit by
+introducing <a class="reference external" href="http://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebView.html#webkit-web-view-run-javascript">webkit_web_view_run_javascript</a> for kicking off and
+<a class="reference external" href="http://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebView.html#webkit-web-view-run-javascript-finish">webkit_web_view_run_javascript_finish</a> for finalizing and retrieving
+the return value.  Given this information, how the heck does
+<tt class="docutils literal">xwidget.el</tt> solve that problem with the earlier version of the
+library?</p>
+<p>That’s how:</p>
+<pre class="code elisp literal-block">
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">xwidget-webkit-execute-script-rv</span> <span class="p">(</span><span class="nv">xw</span> <span class="nv">script</span> <span class="kp">&amp;optional</span> <span class="nv">default</span><span class="p">)</span>
+  <span class="s">"Same as 'xwidget-webkit-execute-script' but but with return value.
+XW is the webkit instance.  SCRIPT is the script to execute.
+DEFAULT is the defaultreturn value."</span>
+  <span class="c1">;; Notice the ugly "title" hack.  It is needed because the Webkit</span>
+  <span class="c1">;; API at the time of writing didn't support returning values.  This</span>
+  <span class="c1">;; is a wrapper for the title hack so it's easy to remove should</span>
+  <span class="c1">;; Webkit someday support JS return values or we find some other way</span>
+  <span class="c1">;; to access the DOM.</span>
+
+  <span class="c1">;; Reset webkit title.  Not very nice.</span>
+  <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">emptytag</span> <span class="s">"titlecantbewhitespaceohthehorror"</span><span class="p">)</span>
+         <span class="nv">title</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">xwidget-webkit-execute-script</span> <span class="nv">xw</span> <span class="p">(</span><span class="nf">format</span> <span class="s">"document.title=\"%s\";"</span>
+                                              <span class="p">(</span><span class="k">or</span> <span class="nv">default</span> <span class="nv">emptytag</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nv">xwidget-webkit-execute-script</span> <span class="nv">xw</span> <span class="p">(</span><span class="nf">format</span> <span class="s">"document.title=%s;"</span> <span class="nv">script</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">setq</span> <span class="nv">title</span> <span class="p">(</span><span class="nv">xwidget-webkit-get-title</span> <span class="nv">xw</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nf">equal</span> <span class="nv">emptytag</span> <span class="nv">title</span><span class="p">)</span>
+        <span class="p">(</span><span class="k">setq</span> <span class="nv">title</span> <span class="s">""</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">unless</span> <span class="nv">title</span>
+      <span class="p">(</span><span class="k">setq</span> <span class="nv">title</span> <span class="nv">default</span><span class="p">))</span>
+    <span class="nv">title</span><span class="p">))</span>
+</pre>
+<p><a class="reference external" href="http://git.savannah.gnu.org/cgit/emacs.git/tree/lisp/xwidget.el?h=emacs-25&amp;id=6ff8b45f18619c2dc95dfb1d92a5c48b14049973#n491">The above hack</a> poses a number of questions:</p>
+<ul class="simple">
+<li>Why does the title need to be a non-blank string?</li>
+<li>Why is the previous title not saved and restored?</li>
+<li>Why are you forcing me to use an optional default parameter to
+distinguish a return value serializing to an empty string from the
+empty string as return value?</li>
+<li>Why do I need to decode JSON to make sense of the result?</li>
+<li>The injection is just wrong.  If you pass <tt class="docutils literal">1+1;2+2</tt> you only get
+the return value of the first expression, but both are evaluated
+anyways.  Nothing the good old <tt class="docutils literal"><span class="pre">function(){...}()</span></tt> trick couldn’t
+fix though…</li>
+<li>Under what other circumstances will this hack break?</li>
+</ul>
+<p>Definitely not what I’ve expected the title to be used for when you’re
+not looking.</p>

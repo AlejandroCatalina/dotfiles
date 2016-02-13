@@ -1,0 +1,8 @@
+
+    <p>
+    Today I got around to playing around with the <code>wrap</code> and the <code>post</code>
+    options to <code>org-mode</code> source blocks, and updated my <a href="http://howardism.org/Technical/Emacs/literate-devops.html#sec-7">Literate Devops
+    essay</a>, to help explain how I email my formatted notes directly to my
+    team mates.
+    </p>
+    

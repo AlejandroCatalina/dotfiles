@@ -1,0 +1,79 @@
+<p>
+The Multiple Cursors package has been given much praise throughout the
+Emacsphere. It has a smaller use-case than keyboard macros, but it is usually
+quicker and just plain looks awesome. To make full use of its commands, I
+combine two of the concepts I've explained here before, <a href="/Meta-Binds-Part-1%253A-Drunk-in-the-Dark.html">rebinding <code>M-number</code></a> and
+<a href="/the-toggle-map-and-wizardry.html">intuitive keymaps</a>.
+</p>
+
+<p>
+I won’t go into what this package is, as Magnar already has <a href="http://emacsrocks.com/e13.html">a whole video on
+that</a>. Instead, I’ll just explain how I use it.
+</p>
+
+<p>
+Firstly, the following keys make the most sense to me.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">require</span> <span class="ss">'multiple-cursors-core</span><span class="p">)</span>
+<span class="c1">;; This is globally useful, so it goes under `C-x', and `m'</span>
+<span class="c1">;; for "multiple-cursors" is easy to remember.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">ctl-x-map</span> <span class="s">"\C-m"</span> <span class="nf">#'</span><span class="nv">mc/mark-all-dwim</span><span class="p">)</span>
+<span class="c1">;; Usually, both `C-x C-m' and `C-x RET' invoke the</span>
+<span class="c1">;; `mule-keymap', but that's a waste of keys. Here we put it</span>
+<span class="c1">;; _just_ under `C-x RET'.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">ctl-x-map</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"&lt;return&gt;"</span><span class="p">)</span> <span class="nv">mule-keymap</span><span class="p">)</span>
+
+<span class="c1">;; Remember `er/expand-region' is bound to M-2!</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"M-3"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">mc/mark-next-like-this</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"M-4"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">mc/mark-previous-like-this</span><span class="p">)</span></code></pre></figure>
+<p>
+These three commands do most of the hard work. I'll never forget about them, so
+their keys don't need to be clever, they just need to be quick. Having
+<code>mc/mark-next-like-this</code> <a href="/where-do-you-bind-expand-region-.html">right next to <code>er/expand-region</code></a> is really the best
+place, although now-a-days I use <code>mc/mark-all-dwim</code> almost exclusively.
+</p>
+
+<p>
+Something that took me a long time to figure out is that you can unmark stuff
+you just marked. Previously, whenever I marked-next-like-this once too many I’d
+just abort and start again. It makes sense to bind this to the same keys as
+above with the <kbd>Shift</kbd> modifier.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="c1">;; These vary between keyboards. They're supposed to be</span>
+<span class="c1">;; Shifted versions of the two above.</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"M-£"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">mc/unmark-next-like-this</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"M-$"</span><span class="p">)</span> <span class="nf">#'</span><span class="nv">mc/unmark-previous-like-this</span><span class="p">)</span></code></pre></figure>
+
+<p>
+On the other hand, this package has a myriad of commands which are extremely
+useful on a less-than-daily basis, and this is where we invoke the power of
+intuitive key-maps.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-prefix-command</span> <span class="ss">'endless/mc-map</span><span class="p">)</span>
+<span class="c1">;; C-x m is usually `compose-mail'. Bind it to something</span>
+<span class="c1">;; else if you use this command.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">ctl-x-map</span> <span class="s">"m"</span> <span class="ss">'endless/mc-map</span><span class="p">)</span>
+
+<span class="c1">;;; Really really nice!</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"i"</span> <span class="nf">#'</span><span class="nv">mc/insert-numbers</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"h"</span> <span class="nf">#'</span><span class="nv">mc-hide-unmatched-lines-mode</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"a"</span> <span class="nf">#'</span><span class="nv">mc/mark-all-like-this</span><span class="p">)</span>
+
+<span class="c1">;;; Occasionally useful</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"d"</span>
+  <span class="nf">#'</span><span class="nv">mc/mark-all-symbols-like-this-in-defun</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"r"</span> <span class="nf">#'</span><span class="nv">mc/reverse-regions</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"s"</span> <span class="nf">#'</span><span class="nv">mc/sort-regions</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"l"</span> <span class="nf">#'</span><span class="nv">mc/edit-lines</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"\C-a"</span>
+  <span class="nf">#'</span><span class="nv">mc/edit-beginnings-of-lines</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/mc-map</span> <span class="s">"\C-e"</span>
+  <span class="nf">#'</span><span class="nv">mc/edit-ends-of-lines</span><span class="p">)</span></code></pre></figure>
+<p>
+Note how easy these keys are to remember. I use <code>mc/insert-numbers</code> barely once
+a week, but I never forget it's bound to <kbd>C-x m i</kbd> (and when I do use it, it’s a
+godsend). Other commands that I rarely use but save me a lot of trouble when I
+do are <code>sort/reverse-regions</code> and <code>mc-hide-unmatched-lines-mode</code>.
+</p>
+
+   <p><a href="http://endlessparentheses.com/multiple-cursors-keybinds.html?source=rss#disqus_thread">Comment on this.</a></p>

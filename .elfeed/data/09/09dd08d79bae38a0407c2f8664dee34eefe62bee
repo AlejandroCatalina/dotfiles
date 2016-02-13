@@ -1,0 +1,12 @@
+<p>
+My <a href="/ispell-and-abbrev-the-perfect-auto-correct.html">Emacs auto-correct</a> is one of the oldest posts on this blog, and I still see
+it pop up here and there on occasion. Last week, Norman Ramsey <a href="/ispell-and-abbrev-the-perfect-auto-correct.html#comment-2440958792">asked</a> about an
+improvement to that command and I figured it’s worth an update post.
+</p>
+
+<p>
+As of today, the code in the post will search backwards for a typo, instead of
+just correcting the current word. So you can invoke it without trouble even if
+the typo happened several words ago.</p>
+
+   <p><a href="http://endlessparentheses.com/an-improvement-to-emacs-auto-correct.html?source=rss#disqus_thread">Comment on this.</a></p>

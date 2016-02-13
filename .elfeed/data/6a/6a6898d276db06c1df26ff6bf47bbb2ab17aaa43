@@ -1,0 +1,53 @@
+<p>There’s not a day in which I don’t find a new gem for Emacs.  Today it’s the
+built-in <code class="highlighter-rouge">bug-reference-mode</code>.  This fancy little thing turns issue references
+in text into clickable buttons that browse the corresponding issue in a bug
+tracker.  I discovered it via the <a href="https://github.com/arnested/bug-reference-github">bug-reference-github</a> package, which
+automatically configures the mode for files in Github repositories.</p>
+
+<!--more-->
+
+<p>I don’t use that package, though, because I don’t feel that it’s necessary:
+<a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html#Directory-Variables">Directory Variables</a> are easy enough.  Just use <code class="highlighter-rouge">M-x add-dir-local-variable</code>
+to set <code class="highlighter-rouge">bug-reference-url-format</code> to the URL of your bug tracker.</p>
+
+<p>For instance, I have the following <code class="highlighter-rouge">.dir-locals.el</code> for <a href="https://github.com/flycheck/flycheck">Flycheck</a>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">((</span><span class="no">nil</span>
+  <span class="p">(</span><span class="nv">bug-reference-url-format</span> <span class="o">.</span> <span class="s">"https://github.com/flycheck/flycheck/issues/%s"</span><span class="p">))</span>
+ <span class="p">(</span><span class="nv">rst-mode</span>
+  <span class="p">(</span><span class="nv">bug-reference-bug-regexp</span> <span class="o">.</span> <span class="s">"\\[GH-\\(?2:[[:digit:]]+\\)]"</span><span class="p">)))</span>
+</code></pre>
+</div>
+
+<p>This sets <code class="highlighter-rouge">bug-reference-url-format</code> for all files in Flycheck to the URL of the
+Github issue tracker.  The URL string is passed through <code class="highlighter-rouge">format</code> with the issue
+ID as argument, so be sure to have an <code class="highlighter-rouge">%s</code> escape in the URL at the proper
+place.</p>
+
+<p>In source code, I tend to use pretty standard references such as <code class="highlighter-rouge">bug #111</code>,
+which are caught by the standard <code class="highlighter-rouge">bug-reference-bug-regexp</code>. The
+<a href="https://github.com/flycheck/flycheck/blob/master/CHANGES.rst">changelog of Flycheck</a> however uses a more structured format for bug
+references, to make it easier to parse issue references out of the changelog.  A
+reference to the bug 111 will look like <code class="highlighter-rouge">[GH-111]</code>.</p>
+
+<p>Hence, I set <code class="highlighter-rouge">bug-reference-bug-regexp</code> for <code class="highlighter-rouge">rst-mode</code> (the changelog is written
+in in ReST) to match this format.  Note the peculiar <code class="highlighter-rouge">(?2:…)</code> grouping: For
+whatever mysterious reason, <code class="highlighter-rouge">bug-reference-mode</code> expects that the <em>second</em>(!)
+group in the regexp matches the issue ID.  Hence my regexp uses an explicitly
+numbered group for the ID—one of the lesser known features of Emacs.</p>
+
+<p>Now all I am left to do is turn on <code class="highlighter-rouge">bug-reference-mode</code> in my <code class="highlighter-rouge">init.el</code>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'text-mode-hook</span> <span class="nf">#'</span><span class="nv">bug-reference-mode</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'prog-mode-hook</span> <span class="nf">#'</span><span class="nv">bug-reference-prog-mode</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">bug-reference-prog-mode</code> is like <code class="highlighter-rouge">bug-reference-mode</code>, but only for comments
+and strings, which is generally what you want in source code.  Just like
+<code class="highlighter-rouge">flyspell-prog-mode</code> basically.</p>
+
+<p>Next time I visit the changelog, all bug references are emphasized and turned
+into buttons.  I can either use the mouse to click on them, or press <code class="highlighter-rouge">C-c Ret</code>
+while the point is on a bug reference, to open the corresponding bug on the
+Github webpage.</p>

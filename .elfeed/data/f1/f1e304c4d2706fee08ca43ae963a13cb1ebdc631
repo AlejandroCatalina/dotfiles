@@ -1,0 +1,37 @@
+<div class="outline-3" id="outline-container-1">
+<div class="outline-text-3" id="text-1">
+Emacs has the very useful feature of blinking the corresponding left "(" when
+   you type its partner ")" (and the same for other delimiters like "[]", "{}"
+   etc., depending on the mode). This is very useful for programming, especially
+   for languages like Lisp and Scheme and the like.<br />
+<br />
+<br />
+Further help can come from tools like <a href="http://emacs-fu.blogspot.com/2010/06/automatic-pairing-of-brackets-and.html">autopair</a> or <a href="http://www.emacswiki.org/emacs/ParEdit">paredit</a> – although the
+   latter is a bit too much <i>bondage &amp; discipline</i> for me, many people love it.
+<br />
+Anyway, recently I discovered a new helper in the quest for balance in
+   delimited universe: <a href="http://www.emacswiki.org/emacs/RainbowDelimiters">rainbow-delimiters</a>. With this package, the delimiters all
+   get different colors based on their nesting level. It works wonderfully well.
+<br />
+Installation is straightforward:
+<br />
+<ul>
+<li>download <a href="http://www.emacswiki.org/emacs/rainbow-delimiters.el">rainbow-delimiters</a> and put it in your <code>load-path</code>
+</li>
+<li>add something like the following in your <code>.emacs</code>:
+</li>
+</ul>
+<pre class="src src-elisp">(<span class="org-keyword">when</span> (<span class="org-keyword">require</span> '<span class="org-constant">rainbow-delimiters</span> nil 'noerror) 
+  (<span class="org-keyword">add-hook</span> 'scheme-mode-hook 'rainbow-delimiters-mode))
+</pre>
+That's it – of course you'll need to do the equivalent for modes where you'd
+   like to enable it. See the screenshot below – maybe a bit <i>too</i> colorful for
+   some people, but I like it and I have found it <i>actually useful</i> to see the
+   corresponding delimiters without having to move the cursor over them.<br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://2.bp.blogspot.com/-kY5iKW2yB38/TdF_nIEzR3I/AAAAAAAAAio/poikN3URlgY/s1600/rainbow-delimiter.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="206" src="http://2.bp.blogspot.com/-kY5iKW2yB38/TdF_nIEzR3I/AAAAAAAAAio/poikN3URlgY/s400/rainbow-delimiter.png" width="400" /></a></div>
+<br />
+<br />
+I already added some nice Zenburn colors for this to the <a href="https://github.com/djcb/elisp/blob/master/themes/zenburn-theme.el">Zenburn theme for Emacs-24</a>, as can be seen in the screenshot.
+</div>
+</div>

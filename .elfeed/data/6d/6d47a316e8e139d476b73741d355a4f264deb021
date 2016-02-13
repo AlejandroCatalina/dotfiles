@@ -1,0 +1,12 @@
+<p>I’ve recently found the best Emacs package ever: <a href="https://github.com/dunn/company-emoji">company-emoji</a>.  It’s a
+<a href="http://company-mode.github.io">Company</a> source for Emoji input 😍.</p>
+
+<!--more-->
+
+<figure>
+<img alt="Animation showning emoji input with Company" src="/images/company-emoji.gif" />
+<figcaption>Emoji input with Company</figcaption>
+</figure>
+
+<p>Just install from MELPA, enable it with <code class="highlighter-rouge">(add-to-list 'company-backends
+'company-emoji)</code> and enjoy 😍 👍</p>

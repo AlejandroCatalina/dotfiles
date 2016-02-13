@@ -1,0 +1,18 @@
+<div class="date">29 Oct 2015</div>
+
+    <p>
+    Had a good time at the first <a href="http://www.meetup.com/PDX-Emacs-Hackers/events/225601726/">Portland Emacs Hackers</a> meetup.
+    I couldn’t record my presentation on Magit that night,
+    so I <a href="https://www.youtube.com/watch?v=vQO7F2Q9DwA">recorded my demonstration</a> of Magit and its ease of rebasing.
+    </p>
+
+    <p>
+    Also, some teammates accidentally pushed a merge into one of our
+    repositories at work, so I wrote shortcut instructions on keeping a
+    clean, sequential Git history.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Git/rebasing.html">Read more...</a>
+    </p>
+    

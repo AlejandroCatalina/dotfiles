@@ -1,0 +1,21 @@
+<p>
+I keep a couple of subdirectories inside my <i>“.emacs.d/”</i> for the
+purpose of organization, so <a href="http://doc.endlessparentheses.com/Fun/rgrep"><code>rgrep</code></a>'ing is tremendously useful for
+finding where a variable is being changed. By default, that will also
+search inside <i>“elpa/”</i>, which slows the search and pollutes the
+results page.
+</p>
+
+<p>
+We can make grep more selective and, while we're at it, enable line
+truncation.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'grep</span>
+  <span class="o">'</span><span class="p">(</span><span class="k">progn</span>
+     <span class="p">(</span><span class="nv">add-to-list</span> <span class="ss">'grep-find-ignored-directories</span> <span class="s">"auto"</span><span class="p">)</span>
+     <span class="p">(</span><span class="nv">add-to-list</span> <span class="ss">'grep-find-ignored-directories</span> <span class="s">"elpa"</span><span class="p">)))</span>
+<span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'grep-mode-hook</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="p">(</span><span class="nv">toggle-truncate-lines</span> <span class="mi">1</span><span class="p">)))</span></code></pre></figure>
+<p>
+And don't forget to bind <code>rgrep</code> to your <a href="/launcher-keymap-for-standalone-features.html">Launcher Keymap</a>!
+</p>
+   <p><a href="http://endlessparentheses.com/exclude-directories-from-grep.html?source=rss#disqus_thread">Comment on this.</a></p>

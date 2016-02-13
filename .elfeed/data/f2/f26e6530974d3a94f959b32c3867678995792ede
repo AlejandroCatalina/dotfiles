@@ -1,0 +1,28 @@
+<p>
+Although there’s a surprising number of packages offering alternative minibuffer
+selection systems, the default minibuffer completion in Emacs is nothing to be
+scoffed at. Hitting <kbd>Tab</kbd> in the minibuffer gives you a slightly beefed up
+version of the bash completion, and after all these years that is still my
+preferred method for completing file-names (though I do have some <a href="/visit-directory-inside-a-set-of-directories.html">custom-written
+alternatives</a>).
+</p>
+
+<p>
+Still, there are two small changes you can make that significantly improve the
+convenience of this feature. The simplest one is to make it case-insensitive.
+The second, and more fine-tuned, is to exclude extensions which you never really
+want. These are usually auto-generated files whose names are similar to files
+you care about. My list is useful for elisp and LaTeX, so you may need to figure
+out yours.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="k">setq</span> <span class="nv">read-file-name-completion-ignore-case</span> <span class="no">t</span><span class="p">)</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">read-buffer-completion-ignore-case</span> <span class="no">t</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">mapc</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">add-to-list</span> <span class="ss">'completion-ignored-extensions</span> <span class="nv">x</span><span class="p">))</span>
+      <span class="o">'</span><span class="p">(</span><span class="s">".aux"</span> <span class="s">".bbl"</span> <span class="s">".blg"</span> <span class="s">".exe"</span>
+        <span class="s">".log"</span> <span class="s">".meta"</span> <span class="s">".out"</span> <span class="s">".pdf"</span>
+        <span class="s">".synctex.gz"</span> <span class="s">".tdo"</span> <span class="s">".toc"</span>
+        <span class="s">"-pkg.el"</span> <span class="s">"-autoloads.el"</span>
+        <span class="s">"Notes.bib"</span> <span class="s">"auto/"</span><span class="p">))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/improving-emacs-file-name-completion.html?source=rss#disqus_thread">Comment on this.</a></p>

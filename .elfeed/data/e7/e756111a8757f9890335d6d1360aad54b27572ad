@@ -1,0 +1,46 @@
+<p>Today, an Emacs user on Reddit asked
+<a href="http://www.reddit.com/r/emacs/comments/2t1886/organising_extensions_git_submodule_vs/">how to organise their Emacs extensions</a>, specifically whether to use
+package.el or a “home-made” solution.  This post answers that question.  It’s
+essentially a copy of a <a href="http://www.reddit.com/r/emacs/comments/1z9awm/to_use_packageel_or_not/">Reddit comment of mine</a> from about a year ago.</p>
+
+<!--more-->
+
+<hr />
+
+<p>package.el goes beyond just fetching files, and</p>
+
+<ul>
+  <li>installs dependencies of a package,</li>
+  <li>adds packages to the <code class="highlighter-rouge">load-path</code>,</li>
+  <li>byte-compiles the package files,</li>
+  <li>generates and loads autoload definition (improves startup time, since package
+files are loaded on demand),</li>
+  <li>and registers manuals for the built-in Info viewer (lets your read manuals of
+packages right in Emacs).</li>
+</ul>
+
+<p>The differences by example: Suppose you want to use <a href="http://www.flycheck.org">Flycheck</a> (shameless
+plug, sorry :) ), with all of the above features. You’d need to</p>
+
+<ul>
+  <li>manually install about six packages which are direct or indirect dependencies
+of Flycheck,</li>
+  <li>clone or update the Flycheck repository,</li>
+  <li>add the Flycheck directory to <code class="highlighter-rouge">load-path</code>,</li>
+  <li>run <code class="highlighter-rouge">make compile</code>,</li>
+  <li>run <code class="highlighter-rouge">M-x update-directory-autoloads</code> on the Flycheck directory,</li>
+  <li>load <code class="highlighter-rouge">flycheck-autoloads.el</code> in your <code class="highlighter-rouge">init.el</code>,</li>
+  <li>run <code class="highlighter-rouge">make info</code> (make sure that you have Texinfo, Python, Sphinx and a bunch
+of other packages installed),</li>
+  <li>and add the <code class="highlighter-rouge">doc/</code> sub-directory of the Flycheck directory to
+<code class="highlighter-rouge">Info-directory-list</code>.</li>
+</ul>
+
+<p>And most of these <em>every time</em> you update Flycheck.  With package.el, however,
+you’d just add the MELPA archive and run <code class="highlighter-rouge">M-x package-install RET flycheck</code>.
+<em>See the difference? Does your manual workflow really work well?</em></p>
+
+<p>Besides, as a package author, I consider package.el as the only official
+distribution channel for my extensions, and I refuse to provide support for
+other installation methods, so if you screw up on your manual installation,
+you’re on your own.</p>

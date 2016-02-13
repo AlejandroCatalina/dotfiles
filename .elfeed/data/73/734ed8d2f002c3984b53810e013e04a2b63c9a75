@@ -1,0 +1,8 @@
+<p>I&#39;m putting together an
+<a href="http://github.com/swannodette/lt-cljs-tutorial">interactive ClojureScript tutorial for Light Table users</a>. You
+can go through the tutorial by <em>directly evaluating</em> forms in the file
+via the Light Table UI Connection.</p>
+
+<p>I hope this can be a collaborative wiki for those people who want to
+extend their editor with an extremely capable and powerful programming
+language.</p>

@@ -1,0 +1,26 @@
+<p>From time to time people ask me about my personal Emacs
+configuration. Other just assume that I use
+<a href="https://github.com/bbatsov/prelude">Prelude</a>. For a very long time my
+personal configuration was pretty similar to Prelude - in a way it was
+a staging ground for things to go into Prelude eventually (although
+changes would travel both ways when Prelude users suggest some cool
+things).</p>
+
+<p>Recently I&#8217;ve decided that in the future I want to do a few things with Prelude:</p>
+
+<ul>
+<li>extract as much functionality from it as possible into reusable
+packages (e.g. <a href="https://github.com/bbatsov/super-save">super-save</a>
+and <a href="https://github.com/bbatsov/crux">crux</a>)</li>
+<li>adopt there <a href="https://github.com/jwiegley/use-package">use-package</a></li>
+<li>improve the support for Windows (because now I have Windows computer)</li>
+</ul>
+
+
+<p>As part of these efforts I reworked my personal config into something
+pretty simple (it&#8217;s a single <code>init.el</code> file) and I&#8217;ve started
+experimenting with ideas for the future. Stay tuned for the results!</p>
+
+<p>The config is available
+<a href="https://github.com/bbatsov/emacs.d">here</a>. Perhaps some of you will
+find something useful there.</p>

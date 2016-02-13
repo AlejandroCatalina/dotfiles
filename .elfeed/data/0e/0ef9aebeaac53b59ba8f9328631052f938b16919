@@ -1,0 +1,41 @@
+<p>At June, 13th Emacs trunk introduced a new macro with-eval-after-load in
+<a href="http://git.savannah.gnu.org/cgit/emacs.git/commit/?id=de0503df97a507a523a192e877a8d5c7439c4846">r112976</a>.  It behaves like <code class="highlighter-rouge">eval-after-load</code>, except that it takes multiple
+unquoted forms and wraps them into a <code class="highlighter-rouge">lambda</code> to enable byte compilation:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nv">with-eval-after-load</span> <span class="ss">'python</span>
+  <span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'python-mode-hook</span> <span class="nf">#'</span><span class="nv">subword-mode</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">setq</span> <span class="nv">python-check-command</span> <span class="s">"flake8"</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>This supersedes much of my <a href="/2013/05/01/byte-compiling-eval-after-load.html">last post</a> about byte compilation in
+<code class="highlighter-rouge">eval-after-load</code>.  However, the new macro does not load the corresponding
+features during byte compilation, so I’ll wrap my old <code class="highlighter-rouge">stante-after</code> macro
+around it to avoid bogus warnings, just like in the last post:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">stante-after</span> <span class="p">(</span><span class="nv">feature</span> <span class="k">&amp;rest</span> <span class="nv">forms</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="nv">indent</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nv">debug</span> <span class="no">t</span><span class="p">))</span>
+  <span class="o">`</span><span class="p">(</span><span class="o">,</span><span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">byte-compile-current-file</span><span class="p">)</span>
+             <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">symbolp</span> <span class="nv">feature</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nb">require</span> <span class="nv">feature</span> <span class="no">nil</span> <span class="ss">:no-error</span><span class="p">)</span>
+               <span class="p">(</span><span class="nb">load</span> <span class="nv">feature</span> <span class="ss">:no-message</span> <span class="ss">:no-error</span><span class="p">)))</span>
+         <span class="ss">'progn</span>
+       <span class="p">(</span><span class="nv">message</span> <span class="s">"stante-after: cannot find %s"</span> <span class="nv">feature</span><span class="p">)</span>
+       <span class="ss">'with-no-warnings</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">with-eval-after-load</span> <span class="ss">',feature</span> <span class="o">,@</span><span class="nv">forms</span><span class="p">)))</span>
+</code></pre>
+</div>
+
+<p>To ensure compatibility with releases and older snapshot builds, I define
+<code class="highlighter-rouge">with-eval-after-load</code> if it is absent:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nb">fboundp</span> <span class="ss">'with-eval-after-load</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">defmacro</span> <span class="nv">with-eval-after-load</span> <span class="p">(</span><span class="nv">file</span> <span class="k">&amp;rest</span> <span class="nv">body</span><span class="p">)</span>
+    <span class="o">`</span><span class="p">(</span><span class="nv">eval-after-load</span> <span class="o">,</span><span class="nv">file</span>
+       <span class="o">`</span><span class="p">(</span><span class="nb">funcall</span> <span class="p">(</span><span class="k">function</span> <span class="o">,</span><span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="o">,@</span><span class="nv">body</span><span class="p">))))))</span>
+</code></pre>
+</div>
+
+<p>This compatibility definition of <code class="highlighter-rouge">with-eval-after-load</code> uses the same idea as
+the old definition of the <code class="highlighter-rouge">stante-after</code> macro and simply wraps the body in a
+<code class="highlighter-rouge">lambda</code> form.</p>

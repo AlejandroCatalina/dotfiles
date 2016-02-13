@@ -1,0 +1,131 @@
+<style type="text/css">
+    body {
+       padding: 0;
+       margin: 0;
+    }
+    canvas, img {
+       image-rendering: optimizeSpeed;
+       image-rendering: -moz-crisp-edges;
+       image-rendering: -webkit-optimize-contrast;
+       image-rendering: optimize-contrast;
+       -ms-interpolation-mode: nearest-neighbor;
+       width: 600px;
+       height: 340px;
+    }
+</style>
+
+<p>I apologize for not wrapping up my series of posts on
+<a href="http://arxiv.org/abs/cs/0609062">nominal logic programming</a>, I&#39;ll
+return to that bit of fun soon enough. But lets take leave of
+theoretical computer science and turn to something more &quot;pragmatic&quot;.</p>
+
+<p>In this post I want to talk about
+<a href="http://github.com/swannodette/chambered">my port</a> of
+<a href="http://twitter.com/notch">Notch</a>&#39;s beautiful
+<a href="http://jsfiddle.net/uzMPU/">Minecraft JavaScript demo</a> to
+<a href="http://github.com/clojure/clojurescript">ClojureScript</a>. When I say
+beautiful I&#39;m not referring to the code - frankly it&#39;s ugly. And being
+a faithful port the ClojureScript version ain&#39;t much prettier. But
+this post isn&#39;t about writing beautiful code, it&#39;s about
+ClojureScript&#39;s suitability for computationally intensive interactive
+applications. However, I did make one very important major conceptual
+change to Notch&#39;s code and I&#39;ll elaborate on this later.</p>
+
+<p>Without further ado here it is (it will look best in Chrome &amp; Firefox):</p>
+
+<div style="text-align: center">
+    <canvas id="game" width="424" height="240"></canvas>
+</div>
+
+<p>Pretty neat huh? It&#39;s not just fast, it&#39;s quite small,
+<a href="/assets/js/chambered.js">shockingly small</a> given that ClojureScript
+ships with a standard library nearly 7500 lines long. That&#39;s right,
+<em>400</em> lines of pretty printed Closure advanced compiled code (200 of
+those are unnecessary and will disappear when ClojureScript gets real
+keywords instead of piggy-backing on JavaScript strings).</p>
+
+<p>Voodoo?! No,
+<a href="https://developers.google.com/closure/compiler/">Google Closure Compiler</a>
+dead code elimination is really that good. I&#39;ve only employed the
+ClojureScript operations that map directly to fast JavaScript
+constructs, no persistent data structures or cool seq operations in
+sight and the advanced compiled source reflects that.</p>
+
+<h1>Local mutation</h1>
+
+<p>So then where and how does this version really diverge from the original?
+Are we just back to writing yucky mutable JavaScript with crazy
+syntax? Is functional programming in the end unsuitable for demanding
+interactive applications?
+Some time ago <a href="http://prog21.dadgum.com/37.html">this blog post</a> made me wonder.</p>
+
+<p>First off, Notch&#39;s original source, like many typical JavaScript
+applications, unnecessarily wields global mutation - the procedural
+texture and block generation both operate on global mutable arrays. In
+the ClojureScript port we instead have functions that return the
+populated arrays. this is the value oriented approach -
+<code>set!</code> is pure code smell for a Clojure programmer.</p>
+
+<p>For example here is the block generation code:</p>
+
+<script src="https://gist.github.com/swannodette/5756831.js"> </script>
+
+<p>Ok, but still isn&#39;t it cheating to be bashing on mutable arrays inside of
+functions?</p>
+
+<p>No even among people who argue even more strongly for functional purity,
+<em>local mutation is absolutely ok</em>. Clojure has long supported this
+insanely great idea in the notion of
+<a href="http://clojure.org/transients">transients</a>.</p>
+
+<p>But what about <code>render-minecraft!</code>? In the original Notch allocated
+an <code>ImageData</code> instance <em>once</em> and he would bash on this at each turn
+of the loop.</p>
+
+<p>Surprisingly this bit of optimization is entirely unnecessary. We can
+allocate this internally every single time <code>render-minecraft!</code> is
+called - the cost of allocating a 424 by 240 <code>ImageData</code> object is
+completely dwarfed by the real work done in <code>render-minecraft!</code>.</p>
+
+<h1>Challenges</h1>
+
+<p>I admit one tricky bit that required experimentation is that Clojure&#39;s
+semantics don&#39;t admit mutable locals - something that Notch&#39;s code
+uses freely. This required a little bit of experimenting, I tried
+using a <code>Box</code> type with one mutable field, I tried putting the entire
+render step into a <code>deftype</code> with mutable fields. In the end I settled
+on representing mutable locals as arrays of one element. The
+performance of this representation is stunningly good on Chrome and
+pretty good in Firefox as well. Surprisingly Safari performs the least
+well on this bit of code and I haven&#39;t had time to dig into why.</p>
+
+<p>I honestly spent most of the development
+time just trying to understand what the original code did. I did find
+the ClojureScript development cycle relatively pleasant due to
+<a href="http://github.com/emezeske/lein-cljsbuild">lein-cljsbuild</a>&#39;s <code>auto</code> feature. I wish we had CoffeeScript&#39;s
+lightning fast build times, but once the JVM is warm, the turn around
+is not large enough to matter.</p>
+
+<p>One thing that I absolutely loved about using ClojureScript on this is
+how many warnings you get from the compiler - getting file and line
+information for typos and bad arities for functions calls save a lot
+of time I often lose when doing JavaScript.</p>
+
+<p>The one real scratch your head issue I ran into while developing this
+was a Google Closure mishandling of the modulo operator. Closure will
+incorrectly remove parentheses, this is easily worked around by putting
+the result of the modulo operation in an intermediate variable but I
+lost more time on this subtle issue than I care to recall.</p>
+
+<p>While this exercise might only seem like a bit of fun, it really
+isn&#39;t. If ClojureScript could not guarantee this kind of performance
+we would have written those fancy persistent data structures in
+JavaScript the same way Clojure on the JVM implements them in Java.</p>
+
+<p>I think the intersection of computationally intensive games and
+functional programming is a rich area to innovate and ClojureScript
+provides the tools needed to forge new ground.</p>
+
+<script type="text/javascript" src="/assets/js/chambered.js">
+
+</script>

@@ -1,0 +1,31 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  I tend to do a lot of file management from the shell (<code>zsh</code>, in my case); this
+  is very flexible / powerful and so on. But, for some things a bit more
+  graphical approach is nicer.
+</p>
+<p>
+  There are fully graphical file-managers like <i>Nautilus</i> or <i>Thunar</i>, but for a
+  bit more keyboard-friendly file-management, there are so-called <i>orthodox file   managers</i> - the archetypical Norton Commander and its descendants, like
+  <a href="http://www.midnight-commander.org">midnight-commander</a> (mc) and <a href="http://www.nongnu.org/gcmd/">gnome commander</a>.
+</p>
+<p>
+  Not surprisingly, emacs has its own incarnation - it is called the <a href="http://www.emacswiki.org/emacs/Sunrise_Commander">sunrise commander</a> and happily it's obtainable through <a href="http://emacs-fu.blogspot.fi/2011/11/package-management-revisited.html">ELPA</a>. It's become an important
+  of my workflow. When you're used to Midnight Commander, you'll feel right at
+  home.
+</p>
+<p>
+  If you want to use <code>emacs</code> for <i>yet another</i> of your computer-based
+  activities, give it a try.
+</p>
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://2.bp.blogspot.com/-7Mue1E8DQlE/UCUiXWepRWI/AAAAAAAAAuo/Dg53j8RZtYE/s1600/Screenshot%2Bfrom%2B2012-08-10%2B17%253A58%253A53.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="235" width="400" src="http://2.bp.blogspot.com/-7Mue1E8DQlE/UCUiXWepRWI/AAAAAAAAAuo/Dg53j8RZtYE/s400/Screenshot%2Bfrom%2B2012-08-10%2B17%253A58%253A53.png" /></a></div>
+
+
+
+
+</div>
+</div>

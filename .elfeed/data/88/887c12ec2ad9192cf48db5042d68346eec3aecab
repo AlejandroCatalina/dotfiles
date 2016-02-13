@@ -1,0 +1,256 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  <a href="http://orgmode.org/worg/org-contrib/babel/">org-babel</a> is the mechanism that <code>org-mode</code> offers for evaluating (executing)
+  blocks of source code embedded in your <code>org-mode</code>-documents. This is useful
+  for so-called <a href="http://reproducibleresearch.net/index.php/Main_Page">reproducible research</a>, i.e., where you allow your readers to go
+  through the steps that led to your results. 
+</p>
+<p>
+  Here, I'm just scratching the surface with some simple examples.
+</p>
+
+</div>
+
+<div id="outline-container-1_1" class="outline-3">
+<h3 id="sec-1_1">source code blocks </h3>
+<div class="outline-text-3" id="text-1_1">
+
+
+<p>
+   Let's first look at how it all began: source code blocks. I guess most
+   <code>org-mode</code>-users will be familiar with those: the ability to include
+   syntax-highlighted ('font-locked') snippets of source code in
+   <code>org</code>-documents. We discussed source blocks <a href="http://emacs-fu.blogspot.com/2009/05/writing-and-blogging-with-org-mode.html">before</a>, they look like this:
+</p>
+
+
+
+<pre class="example">#+begin_src perl
+sub my_func {
+        print "Hello, world!\n";
+}
+#+end_src
+</pre>
+
+
+
+<p>   
+   And note that code blocks can be edited in their 'native mode' using <code>C-c'=     (or, =org-edit-src-code</code>).
+</p>
+<p>
+   When code block like this are exported to, say, HTML, they'll look like the
+   following fully highlighted snippet (assuming you're reading Emacs-fu in
+   it's full-color version):
+</p>
+
+
+
+<pre class="src src-perl"><span class="org-keyword">sub</span> <span class="org-function-name">my_func</span> {
+        <span class="org-cperl-nonoverridable">print</span> <span class="org-string">"Hello, world!\n"</span>;
+}
+</pre>
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1_2" class="outline-3">
+<h3 id="sec-1_2">evaluating source code </h3>
+<div class="outline-text-3" id="text-1_2">
+
+
+<p>
+   <code>org-babel</code> takes this a few steps further: instead of just <i>looking</i> at
+   source code, we can actually evaluate (execute) it, using the
+   <code>org-mode</code>-based system called <code>org-babel</code>.
+</p>
+<p>
+   If you have a recent version of <code>org-mode</code> (7.x or later), add the
+   following to your <code>.emacs</code> (or equivalent):
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(org-babel-do-load-languages
+ 'org-babel-load-languages
+  '( (perl . t)         
+     (ruby . t)
+     (sh . t)
+     (python . t)
+     (emacs-lisp . t)   
+   ))
+</pre>
+
+
+
+<p>   
+   This enables <code>org-babel</code> for the mentioned languages; there are <i>many</i>
+   other languages <a href="http://orgmode.org/worg/org-contrib/babel/languages.php">available as well</a>.
+</p>
+<p>   
+   Now, suppose we have a snippet of <code>python</code> in an <code>org-mode</code>-buffer:
+</p>
+
+
+
+<pre class="example">#+begin_src python
+def hello(str):
+        return "Hello, " + str + "!"
+return hello ("dude")
+#+end_src
+</pre>
+
+
+
+<p>
+   You can move the cursor (point) inside the src-block and press <code>C-c C-c</code> (or,
+   <code>org-confirm-babel-evaluate</code>). This causes the block of code to be evaluated
+   (executed), after asking you for confirmation. The result will inserted below
+   the block, like:
+</p>
+
+
+
+<pre class="example">#+results:
+: Hello, dude!
+</pre>
+
+
+
+<p>
+   Note, in the <code>hello</code> example, the result of the block is the <i>value</i> of the
+   evaluation - that is, the value of the last expression evaluated. This is
+   the also the default, so we don't need to (but could) write:
+</p>
+
+
+
+<pre class="example">#+begin_src python :results value
+</pre>
+
+
+
+<p>
+   The alternative is to use the (standard) <i>output</i> of the function, which is
+   activated with <code>:results output</code>, e.g.:
+</p>
+
+
+
+<pre class="example">#+begin_src sh :results output
+   echo "Hello $USER! Today is `date`"
+#+end_src
+</pre>
+
+
+
+<p>
+   Moving to this block and pressing <code>C-c C=c</code> would get you something like
+   the following &ndash; probably with a different username and time:
+</p>
+
+
+
+<pre class="example">˜#+results:
+: Hello djcb! Today is Sun Feb 27 13:51:50 EET 2011
+</pre>
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1_3" class="outline-3">
+<h3 id="sec-1_3">almost like functions </h3>
+<div class="outline-text-3" id="text-1_3">
+
+
+<p>
+   <code>org-babel</code> also allows you to refer to the code blocks from elsewhere in
+   your document, by labeling your code-blocks with <code>srcname</code>. Let's say we
+   have some Ruby code to revert a string:
+</p>
+
+
+
+<pre class="example">#+begin_src ruby
+def revert(s)
+  if s == "" then 
+    return ""
+  else
+    return s[-1].chr + revert(s.slice(0, s.length()-1))
+  end
+end
+revert(str)
+#+end_src
+</pre>
+
+
+
+<p>
+   We can now 'call' this block; note that we get the result of <i>evaluating the    block</i>. So if you want to use the result of a function in the block, you also
+   need to add the call to that function (see the last line).
+</p>
+<p>
+   Now, we can use:
+</p>
+
+
+
+<pre class="example">#+call: revert(str="VeryCoolStuff")
+</pre>
+
+
+
+<p>
+   And we get: 
+</p>
+
+
+
+<pre class="example">: ffutSlooCyreV
+</pre>
+
+
+
+<p>
+   Note, due to some limitation/bug in my version of <code>org-babel</code>, the strings
+   should not contain spaces or other special characters, so the following
+   will give result in an error note:
+</p>
+
+
+
+<pre class="example">˜#+call: revert(str="Very Cool Stuff")
+</pre>
+
+
+
+<p>
+   Whenever you try to evaluate a code block, emacs will ask for confirmation --
+   this is important, because of the obvious security implications of executing
+   unknown code. Anyway, if you <b>do</b> trust the code, you can use the following
+   to skip the confirmation:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">setq</span> org-confirm-babel-evaluate nil)
+</pre>
+
+
+
+<p>
+   These simple examples do not really capture the power that <code>org-babel</code>
+   brings, but it's a start. There is quite a bit of <a href="http://orgmode.org/worg/org-contrib/babel/">documentation</a> for
+   <code>org-babel</code> to help you further. Finally, if you are already using
+   <code>org-babel</code>, feel free to share your experiences in the comments!
+</p></div>
+</div>
+</div>

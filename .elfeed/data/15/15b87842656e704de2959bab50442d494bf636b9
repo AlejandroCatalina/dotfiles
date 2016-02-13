@@ -1,0 +1,49 @@
+<p>
+Having to confirm-before-save buffers every time you call <a href="http://doc.endlessparentheses.com/Fun/compile"><code>compile</code></a> is nearly as
+outrageous as having no key bound to <a href="http://doc.endlessparentheses.com/Fun/compile"><code>compile</code></a> in the first place. This snippet
+takes care of both and, as a bonus, makes the compilation window follow a
+predetermined size and ensures that point will follow the output.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="c1">;; This gives a regular `compile-command' prompt.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">prog-mode-map</span> <span class="nv">[C-f9]</span> <span class="nf">#'</span><span class="nb">compile</span><span class="p">)</span>
+<span class="c1">;; This just compiles immediately.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">prog-mode-map</span> <span class="nv">[f9]</span>
+  <span class="nf">#'</span><span class="nv">endless/compile-please</span><span class="p">)</span>
+
+<span class="c1">;; I'm not scared of saving everything.</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">compilation-ask-about-save</span> <span class="no">nil</span><span class="p">)</span>
+<span class="c1">;; Stop on the first error.</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">compilation-scroll-output</span> <span class="ss">'next-error</span><span class="p">)</span>
+<span class="c1">;; Don't stop on info or warnings.</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">compilation-skip-threshold</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nv">defcustom</span> <span class="nv">endless/compile-window-size</span> <span class="mi">60</span>
+  <span class="s">"Width given to the compilation window."</span>
+  <span class="ss">:type</span> <span class="ss">'integer</span>
+  <span class="ss">:group</span> <span class="ss">'endless</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/compile-please</span> <span class="p">()</span>
+  <span class="s">"Compile without confirmation."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="c1">;; Do the command without a prompt.</span>
+  <span class="p">(</span><span class="nv">save-window-excursion</span>
+    <span class="p">(</span><span class="nb">compile</span> <span class="nv">compile-command</span><span class="p">))</span>
+  <span class="c1">;; Create a compile window of the desired width.</span>
+  <span class="p">(</span><span class="nv">pop-to-buffer</span> <span class="p">(</span><span class="nv">get-buffer</span> <span class="s">"*compilation*"</span><span class="p">))</span>
+  <span class="p">(</span><span class="nv">enlarge-window</span>
+   <span class="p">(</span><span class="nb">-</span> <span class="nv">endless/compile-window-size</span> <span class="p">(</span><span class="nv">window-width</span><span class="p">))</span>
+   <span class="ss">'horizontal</span><span class="p">))</span></code></pre></figure>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;2015-06-16 Tue&gt;</span></span></h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Thanks to Clément and abo-abo for the variable suggestions, which also led me to
+find the <a href="http://doc.endlessparentheses.com/Var/compilation-skip-threshold"><code>compilation-skip-threshold</code></a> variable. Warnings are important to fix,
+but in some languages it’s common to have warnings you can’t fix, so it’s nice
+for the compilation buffer to not stop scrolling on them.
+</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/better-compile-command.html?source=rss#disqus_thread">Comment on this.</a></p>

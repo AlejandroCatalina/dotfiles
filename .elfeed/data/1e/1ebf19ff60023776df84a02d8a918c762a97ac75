@@ -1,0 +1,47 @@
+<p>
+As I was catching up on a few <a href="http://www.parens-of-the-dead.com/">Parens of the Dead</a> episodes this weekend, I was
+amused at how Magnar set up his Emacs to run tests whenever the file is saved.
+At first I thought it wasn’t for me (I’m one of those who obsessively saves
+every few seconds), but I’ve been trying it out lately and it’s starting to grow
+on me.
+</p>
+
+<p>
+At its core, all you really need is an hook. But I walked the extra yard and
+wrote a minor mode for it, so I can easily call <kbd>M-x</kbd> <code>tdd-mode</code> to disable it
+if it ever gets on my nerves.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">tdd-test</span> <span class="p">()</span>
+  <span class="s">"Thin wrapper around `cider-test-run-tests'."</span>
+  <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nv">cider-connected-p</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">cider-auto-select-test-report-buffer</span> <span class="no">nil</span><span class="p">)</span>
+          <span class="p">(</span><span class="nv">cider-test-show-report-on-success</span> <span class="no">nil</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">cider-test-run-tests</span> <span class="no">nil</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nv">define-minor-mode</span> <span class="nv">tdd-mode</span>
+  <span class="s">"Run all tests whenever a file is saved."</span>
+  <span class="no">t</span> <span class="no">nil</span> <span class="no">nil</span>
+  <span class="ss">:global</span> <span class="no">t</span>
+  <span class="p">(</span><span class="k">if</span> <span class="nv">tdd-mode</span>
+      <span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'cider-file-loaded-hook</span> <span class="nf">#'</span><span class="nv">tdd-test</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">remove-hook</span> <span class="ss">'cider-file-loaded-hook</span> <span class="nf">#'</span><span class="nv">tdd-test</span><span class="p">)))</span></code></pre></figure>
+
+<p>
+I also had to change the <code>cider-test-success-face</code> to something a little less
+“screamy”.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">custom-set-faces</span>
+ <span class="o">'</span><span class="p">(</span><span class="nv">cider-test-success-face</span>
+   <span class="p">((</span><span class="no">t</span> <span class="p">(</span><span class="ss">:foreground</span> <span class="s">"green"</span> <span class="ss">:background</span> <span class="no">nil</span><span class="p">)))))</span></code></pre></figure>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;21 Nov 2015&gt;</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Made it a global mode, so it’s easy to disable everywhere, and set the initial
+value to <code>t</code>.
+</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/test-driven-development-in-cider-and-emacs.html?source=rss#disqus_thread">Comment on this.</a></p>

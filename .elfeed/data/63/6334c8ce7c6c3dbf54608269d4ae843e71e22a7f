@@ -1,0 +1,19 @@
+<div class="date">12 Aug 2015</div>
+
+    <p>
+    I’ve collected some <i>table formatting</i> code for OpenStack’s <code>nova</code>
+    command, and placed them in an <a href="https://github.com/howardabrams/dot-files/blob/master/babel/openstack.org">Tower of Babel file</a> that make
+    <code>:post</code> commands in org-mode files able to use them.
+    </p>
+
+    <p>
+    The <code>os-table</code> function, in that file, converts the ASCII tables
+    from OpenStack’s CLI into <code>org-mode</code> tables that I can export,
+    render, and feed into other code blocks as values. This feature
+    came in handy today...
+    </p>
+
+    <p>
+    <a href="http:Technical/Emacs/literate-devops-examples.html#sec-4">Read all about it...</a>
+    </p>
+    

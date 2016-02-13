@@ -1,0 +1,20 @@
+<div class="date">17 Jan 2015</div>
+
+    <p>
+    I have played with a lot of window managers, and while many claim to
+    be unobtrusive and minimal, I really just want Emacs in full-screen
+    mode. So,  I create an <code>.xinitrc</code> file that contains only:
+    </p>
+
+    <pre class="example">
+    exec emacs
+    </pre>
+
+    <p>
+    That&rsquo;s right, folks, <b>Emacs is my window manager</b>.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Emacs/new-window-manager.html">Read more...</a> or simply <a href="http://www.howardism.org/Technical/Emacs/new-window-manager-warm.png">check out the results</a>.
+    </p>
+    

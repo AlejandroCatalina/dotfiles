@@ -1,0 +1,83 @@
+<p>
+I am not a fantastic typist. My speed is acceptable, but I make a great
+deal of mistakes. The following snippet has turned me into the Messi
+of keyboards.
+</p>
+
+<p>
+Whenever I make a typo:
+</p>
+
+<ol class="org-ol">
+<li>Hit <kbd>C-x C-i</kbd>, instead of erasing the mistake;</li>
+<li>Select the appropriate correction (thanks to Ispell);</li>
+<li>Sleep easier at night knowing I'll never see that mistake again (thanks to abbrev).</li>
+</ol>
+
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-key</span> <span class="nv">ctl-x-map</span> <span class="s">"\C-i"</span>
+  <span class="nf">#'</span><span class="nv">endless/ispell-word-then-abbrev</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/ispell-word-then-abbrev</span> <span class="p">(</span><span class="nv">p</span><span class="p">)</span>
+  <span class="s">"Call `ispell-word', then create an abbrev for it.
+With prefix P, create local abbrev. Otherwise it will
+be global.
+If there's nothing wrong with the word at point, keep
+looking for a typo until the beginning of buffer. You can
+skip typos you don't want to fix with `SPC', and you can
+abort completely with `C-g'."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">(</span><span class="nv">bef</span> <span class="nv">aft</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">save-excursion</span>
+      <span class="p">(</span><span class="nv">while</span> <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="k">setq</span> <span class="nv">bef</span> <span class="p">(</span><span class="nv">thing-at-point</span> <span class="ss">'word</span><span class="p">))</span>
+                 <span class="c1">;; Word was corrected or used quit.</span>
+                 <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">ispell-word</span> <span class="no">nil</span> <span class="ss">'quiet</span><span class="p">)</span>
+                     <span class="no">nil</span> <span class="c1">; End the loop.</span>
+                   <span class="c1">;; Also end if we reach `bob'.</span>
+                   <span class="p">(</span><span class="nb">not</span> <span class="p">(</span><span class="nv">bobp</span><span class="p">)))</span>
+               <span class="c1">;; If there's no word at point, keep looking</span>
+               <span class="c1">;; until `bob'.</span>
+               <span class="p">(</span><span class="nb">not</span> <span class="p">(</span><span class="nv">bobp</span><span class="p">)))</span>
+        <span class="p">(</span><span class="nv">backward-word</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">setq</span> <span class="nv">aft</span> <span class="p">(</span><span class="nv">thing-at-point</span> <span class="ss">'word</span><span class="p">)))</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="nv">aft</span> <span class="nv">bef</span> <span class="p">(</span><span class="nb">not</span> <span class="p">(</span><span class="nb">equal</span> <span class="nv">aft</span> <span class="nv">bef</span><span class="p">)))</span>
+        <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">aft</span> <span class="p">(</span><span class="nv">downcase</span> <span class="nv">aft</span><span class="p">))</span>
+              <span class="p">(</span><span class="nv">bef</span> <span class="p">(</span><span class="nv">downcase</span> <span class="nv">bef</span><span class="p">)))</span>
+          <span class="p">(</span><span class="nv">define-abbrev</span>
+            <span class="p">(</span><span class="k">if</span> <span class="nv">p</span> <span class="nv">local-abbrev-table</span> <span class="nv">global-abbrev-table</span><span class="p">)</span>
+            <span class="nv">bef</span> <span class="nv">aft</span><span class="p">)</span>
+          <span class="p">(</span><span class="nv">message</span> <span class="s">"\"%s\" now expands to \"%s\" %sally"</span>
+                   <span class="nv">bef</span> <span class="nv">aft</span> <span class="p">(</span><span class="k">if</span> <span class="nv">p</span> <span class="s">"loc"</span> <span class="s">"glob"</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nv">user-error</span> <span class="s">"No typo at or before point"</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="k">setq</span> <span class="nv">save-abbrevs</span> <span class="ss">'silently</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">setq-default</span> <span class="nv">abbrev-mode</span> <span class="no">t</span><span class="p">)</span></code></pre></figure>
+<p>
+In my innocence, I had initially assigned this command to a
+3-key sequence. It took me less then a month to realise it needed a
+shorter bind, I'd been using it 30 times a day.
+</p>
+
+<p>
+Auto correction with abbrev is <a href="http://www.emacswiki.org/emacs/autocorrection_abbrev_defs">far from a new concept</a>. Do you use
+anything similar?
+</p>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Update <span class="timestamp-wrapper"><span class="timestamp">11 Jan 2016</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+The command now searches backward for the closest wrong word. So you can just
+hit <kbd>C-x C-i</kbd> even if the mistake happened several words ago.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2">Update <span class="timestamp-wrapper"><span class="timestamp">20 Jan 2016</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline2">
+<p>
+Fixed some corner-case issues with the previous update.</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/ispell-and-abbrev-the-perfect-auto-correct.html?source=rss#disqus_thread">Comment on this.</a></p>

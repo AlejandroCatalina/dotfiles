@@ -1,0 +1,57 @@
+
+
+
+<p>There’s more than just the splash screen to disable for a minimalistic
+looking Emacs setup.  The menu, scroll and tool bar are a close
+second.  While taking a look how one would customize the buttons of
+the latter, I’ve found <a class="reference external" href="http://git.savannah.gnu.org/cgit/emacs.git/tree/lisp/tool-bar.el?id=4580671f5e2a68885e0fca93eeaf9daaeebe82b3#n286">a rather curious code snippet</a>:</p>
+<pre class="code elisp literal-block">
+<span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">featurep</span> <span class="ss">'move-toolbar</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">defcustom</span> <span class="nv">tool-bar-position</span> <span class="ss">'top</span>
+      <span class="s">"Specify on which side the tool bar shall be.
+Possible values are </span><span class="ss">`top'</span><span class="s"> (tool bar on top), </span><span class="ss">`bottom'</span><span class="s"> (tool bar at bottom),
+</span><span class="ss">`left'</span><span class="s"> (tool bar on left) and </span><span class="ss">`right'</span><span class="s"> (tool bar on right).
+Customize </span><span class="ss">`tool-bar-mode'</span><span class="s"> if you want to show or hide the tool bar."</span>
+      <span class="nb">:version</span> <span class="s">"24.1"</span>
+      <span class="nb">:type</span> <span class="o">'</span><span class="p">(</span><span class="nv">choice</span> <span class="p">(</span><span class="nv">const</span> <span class="nv">top</span><span class="p">)</span>
+                     <span class="p">(</span><span class="nv">const</span> <span class="nv">bottom</span><span class="p">)</span>
+                     <span class="p">(</span><span class="nv">const</span> <span class="nv">left</span><span class="p">)</span>
+                     <span class="p">(</span><span class="nv">const</span> <span class="nv">right</span><span class="p">))</span>
+      <span class="nb">:group</span> <span class="ss">'frames</span>
+      <span class="nb">:initialize</span> <span class="ss">'custom-initialize-default</span>
+      <span class="nb">:set</span> <span class="p">(</span><span class="nb">lambda</span> <span class="p">(</span><span class="nv">sym</span> <span class="nv">val</span><span class="p">)</span>
+             <span class="p">(</span><span class="nf">set-default</span> <span class="nv">sym</span> <span class="nv">val</span><span class="p">)</span>
+             <span class="p">(</span><span class="nv">modify-all-frames-parameters</span>
+              <span class="p">(</span><span class="nf">list</span> <span class="p">(</span><span class="nf">cons</span> <span class="ss">'tool-bar-position</span> <span class="nv">val</span><span class="p">))))))</span>
+</pre>
+<p>Emacs comes with rather rudimentary library support.  You can use
+<tt class="docutils literal">provide</tt> at the end of a library to inform the current Emacs
+session of it and <tt class="docutils literal">require</tt> to load the library from <tt class="docutils literal"><span class="pre">load-path</span></tt>
+if it hasn’t been loaded before.  If you’ve spotted usage of a library
+you wish to inspect, <tt class="docutils literal"><span class="pre">M-x</span> <span class="pre">find-library</span></tt> is your friend.  Now, what’s
+unusual about the code snippet above is that <tt class="docutils literal"><span class="pre">move-toolbar</span></tt> is most
+definitely not a library and even weirder, it doesn’t seem to be
+unconditionally provided.  Just what the hell is going on there?</p>
+<pre class="code c literal-block">
+<span class="cp">#ifdef USE_GTK
+</span>  <span class="cm">/* Provide x-toolkit also for GTK.  Internally GTK does not use Xt so it
+     is not an X toolkit in that sense (USE_X_TOOLKIT is not defined).
+     But for a user it is a toolkit for X, and indeed, configure
+     accepts --with-x-toolkit=gtk.  */</span>
+  <span class="n">Fprovide</span> <span class="p">(</span><span class="n">intern_c_string</span> <span class="p">(</span><span class="s">"x-toolkit"</span><span class="p">),</span> <span class="n">Qnil</span><span class="p">);</span>
+  <span class="n">Fprovide</span> <span class="p">(</span><span class="n">intern_c_string</span> <span class="p">(</span><span class="s">"gtk"</span><span class="p">),</span> <span class="n">Qnil</span><span class="p">);</span>
+  <span class="n">Fprovide</span> <span class="p">(</span><span class="n">intern_c_string</span> <span class="p">(</span><span class="s">"move-toolbar"</span><span class="p">),</span> <span class="n">Qnil</span><span class="p">);</span>
+
+  <span class="n">DEFVAR_LISP</span> <span class="p">(</span><span class="s">"gtk-version-string"</span><span class="p">,</span> <span class="n">Vgtk_version_string</span><span class="p">,</span>
+               <span class="nl">doc</span><span class="p">:</span> <span class="cm">/* Version info for GTK+.  */</span><span class="p">);</span>
+  <span class="p">{</span>
+    <span class="kt">char</span> <span class="n">gtk_version</span><span class="p">[</span><span class="k">sizeof</span> <span class="s">".."</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">INT_STRLEN_BOUND</span> <span class="p">(</span><span class="kt">int</span><span class="p">)];</span>
+    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">sprintf</span> <span class="p">(</span><span class="n">gtk_version</span><span class="p">,</span> <span class="s">"%d.%d.%d"</span><span class="p">,</span>
+                       <span class="n">GTK_MAJOR_VERSION</span><span class="p">,</span> <span class="n">GTK_MINOR_VERSION</span><span class="p">,</span> <span class="n">GTK_MICRO_VERSION</span><span class="p">);</span>
+    <span class="n">Vgtk_version_string</span> <span class="o">=</span> <span class="n">make_pure_string</span> <span class="p">(</span><span class="n">gtk_version</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="cp">#endif </span><span class="cm">/* USE_GTK */</span>
+</pre>
+<p>So, <a class="reference external" href="http://git.savannah.gnu.org/cgit/emacs.git/tree/src/xfns.c?id=4580671f5e2a68885e0fca93eeaf9daaeebe82b3#n6902">this</a> is basically an <tt class="docutils literal">#ifdef</tt> that’s been exported to the Lisp
+level.  I can’t help but wonder why this couldn’t have just been made
+a variable…</p>

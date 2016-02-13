@@ -1,0 +1,134 @@
+<p><em>UPDATE: This post now contains obsolete information. Please
+read the new
+<a href="https://github.com/clojure/clojurescript/wiki/Quick-Start">ClojureScript Quick Start</a>
+instead</em></p>
+
+<p>This post will walk you through using ClojureScript from master, using
+a contrib SNAPSHOT release, and getting a productive fast REPL setup
+using the new Node.js REPL support.</p>
+
+<p>Imagine that you want to try out the new ClojureScript support in
+test.check <code>0.6.3-SNAPSHOT</code>. You would really like to play around with
+the API at the REPL.</p>
+
+<p>For kicks let&#39;s use ClojureScript master:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">git clone https://github.com/clojure/clojurescript
+cd clojurescript
+</code></pre></div>
+<p>We&#39;re going to build ClojureScript from source and install into our
+local Maven cache:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./script/build
+</code></pre></div>
+<p>You&#39;ll see a bunch of stuff scroll by, the most important is this:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">[INFO] ------------------------------------------------------------------------
+[INFO] Building ClojureScript 0.0-2606
+[INFO] ------------------------------------------------------------------------
+</code></pre></div>
+<p>This tells us the version number we&#39;ll need to use in our
+project.clj. It will probably NOT be <code>0.0-2606</code> for you.</p>
+
+<p>Let switch to the directory where our project will live and create it:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein new mies test-fun
+cd test-fun
+</code></pre></div>
+<p>We need to make several modifications to our project.clj file.
+It should look like this:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defproject </span><span class="nv">test-fun</span> <span class="s">&quot;0.1.0-SNAPSHOT&quot;</span>
+  <span class="c1">;; so we can get SNAPSHOT releases</span>
+  <span class="ss">:repositories</span> 
+  <span class="p">{</span><span class="s">&quot;sonatype-oss-public&quot;</span> <span class="s">&quot;https://oss.sonatype.org/content/groups/public/&quot;</span><span class="p">}</span>
+
+  <span class="c1">;; replace NNNN with whatever you saw above</span>
+  <span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">org.clojure/clojure</span> <span class="s">&quot;1.6.0&quot;</span><span class="p">]</span>
+                 <span class="p">[</span><span class="nv">org.clojure/clojurescript</span> <span class="s">&quot;0.0-NNNN&quot;</span><span class="p">]</span>
+                 <span class="p">[</span><span class="nv">org.clojure/test.check</span> <span class="s">&quot;0.6.3-SNAPSHOT&quot;</span><span class="p">]]</span>
+
+  <span class="ss">:plugins</span> <span class="p">[[</span><span class="nv">lein-cljsbuild</span> <span class="s">&quot;1.0.4&quot;</span><span class="p">]]</span>
+
+  <span class="ss">:source-paths</span> <span class="p">[</span><span class="s">&quot;src&quot;</span> <span class="s">&quot;target/classes&quot;</span><span class="p">]</span>
+
+  <span class="ss">:clean-targets</span> <span class="p">[</span><span class="s">&quot;out/test_fun&quot;</span> <span class="s">&quot;test_fun.js&quot;</span> <span class="s">&quot;test_fun.min.js&quot;</span><span class="p">]</span>
+
+  <span class="ss">:cljsbuild</span> <span class="p">{</span>
+    <span class="ss">:builds</span> <span class="p">[{</span><span class="ss">:id</span> <span class="s">&quot;dev&quot;</span>
+              <span class="ss">:source-paths</span> <span class="p">[</span><span class="s">&quot;src&quot;</span><span class="p">]</span>
+              <span class="ss">:compiler</span> <span class="p">{</span>
+                <span class="ss">:output-to</span> <span class="s">&quot;test_fun.js&quot;</span>
+                <span class="ss">:output-dir</span> <span class="s">&quot;out&quot;</span>
+                <span class="ss">:optimizations</span> <span class="ss">:none</span>
+                <span class="ss">:cache-analysis</span> <span class="nv">true</span>                
+                <span class="ss">:source-map</span> <span class="nv">true</span><span class="p">}}]})</span>
+</code></pre></div>
+<p>Let&#39;s set things up so our ClojureScript experience is a bit
+snappier. It&#39;s assumed that you&#39;ve already got <code>LEIN_FAST_TRAMPOLINE</code>
+<a href="http://swannodette.github.io/2014/12/22/waitin/">configured</a>.</p>
+
+<p>Let&#39;s compile the ClojureScript bits we&#39;re going to need once
+and for all:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein trampoline run -m clojure.main
+user=&gt; (compile &#39;cljs.repl.rhino)
+cljs.repl.rhino
+user=&gt; (compile &#39;cljs.repl.node)
+cljs.repl.node
+user=&gt; (compile &#39;cljs.core)
+cljs.core
+</code></pre></div>
+<p>Quit the REPL with CTRL-D.</p>
+
+<p>Now we&#39;re ready to start a REPL. This will demonstrate how bad
+the REPL experience was prior to enhancements to ClojureScript
+REPL support.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein trampoline cljsbuild repl-rhino
+</code></pre></div>
+<p>On my 2010 Macbook Pro this takes <em>20 to 30 seconds</em> to start even for
+subsequent runs.</p>
+
+<p>This would be enough for me to walk away from my computer in utter
+disgust, all enthusiasm lost for exploring test.check.</p>
+
+<p>This is because prior to the last ClojureScript changes REPLs did
+not cache compilation and analysis to disk. Every REPL invocation
+recompiles everything in memory again and streams it to the JS
+process.</p>
+
+<p>Now let&#39;s try the new Node.js REPL. Make a new file
+<code>node_repl.clj</code>, it&#39;s contents should like the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="nf">require</span> <span class="o">&#39;</span><span class="p">[</span><span class="nv">cljs.repl</span> <span class="ss">:as</span> <span class="nv">repl</span><span class="p">]</span> 
+         <span class="o">&#39;</span><span class="p">[</span><span class="nv">cljs.repl.node</span> <span class="ss">:as</span> <span class="nv">node</span><span class="p">])</span> 
+
+<span class="p">(</span><span class="nf">repl/repl*</span> <span class="p">(</span><span class="nf">node/repl-env</span><span class="p">)</span> 
+  <span class="p">{</span><span class="ss">:output-dir</span> <span class="s">&quot;.cljs_node_repl&quot;</span> 
+   <span class="ss">:cache-analysis</span> <span class="nv">true</span> 
+   <span class="ss">:source-map</span> <span class="nv">true</span><span class="p">})</span><span class="err">&quot;</span>
+</code></pre></div>
+<p>Run the following:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein trampoline run -m clojure.main node_repl.clj
+</code></pre></div>
+<p>The first time will be slow as we cache everything. Quit the
+REPL and try this again.</p>
+
+<p>On my 2010 laptop the REPL launches in a couple of seconds. On
+newer hardware this should be quite a bit faster.</p>
+
+<p>It&#39;s time for test.check fun, require the generators namespace:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">To quit, type: :cljs/quit
+ClojureScript Node.js REPL server listening on 5001
+ClojureScript:cljs.user&gt; (require &#39;[cljs.test.check.generators :as gen])
+</code></pre></div>
+<p>Now generate some data!</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">ClojureScript:cljs.user&gt; (gen/sample (gen/vector gen/int))
+([] [] [] [] [4 0 -4] [3 -4 3] [-4 -5 -3 -5 6 5] [-1 4] ...)
+</code></pre></div>
+<p>Check out some docstrings:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">ClojureScript:cljs.user&gt; (doc gen/sample)
+-------------------------
+cljs.test.check.generators/sample
+([generator] [generator num-samples])
+  Return a sequence of `num-samples` (default 10)
+  realized values from `generator`.
+nil
+</code></pre></div>
+<p>The old REPL model provided an inferior development experience. By
+embracing the same caching infrastructure as provided to ClojureScript
+builds we can deliver a REPL experience far more in the line with the
+one enjoyed in Clojure today.</p>

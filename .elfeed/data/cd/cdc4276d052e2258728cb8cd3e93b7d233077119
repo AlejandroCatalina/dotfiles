@@ -1,0 +1,48 @@
+<p>
+The <a href="/launcher-keymap-for-standalone-features.html">launcher-map</a> wouldn't be half of what it is if not for the <code>run</code>
+macro. With it, we can easily turn Emacs into a quick 'n dirty app
+launcher.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">run</span> <span class="p">(</span><span class="nv">exec</span><span class="p">)</span>
+  <span class="s">"Return a named function that runs EXEC."</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">func-name</span> <span class="p">(</span><span class="nb">intern</span> <span class="p">(</span><span class="nv">concat</span> <span class="s">"endless/run-"</span> <span class="nv">exec</span><span class="p">))))</span>
+    <span class="o">`</span><span class="p">(</span><span class="k">progn</span>
+       <span class="p">(</span><span class="nb">defun</span> <span class="o">,</span><span class="nv">func-name</span> <span class="p">()</span>
+         <span class="o">,</span><span class="p">(</span><span class="nb">format</span> <span class="s">"Run the %s executable."</span> <span class="nv">exec</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">start-process</span> <span class="s">""</span> <span class="no">nil</span> <span class="o">,</span><span class="nv">exec</span><span class="p">))</span>
+       <span class="nf">#'</span><span class="o">,</span><span class="nv">func-name</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"m"</span> <span class="p">(</span><span class="nv">run</span> <span class="s">"Mathematica"</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"k"</span> <span class="p">(</span><span class="nv">run</span> <span class="s">"keepass"</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"v"</span> <span class="p">(</span><span class="nv">run</span> <span class="s">"steam"</span><span class="p">))</span> <span class="c1">; Vapor =P</span></code></pre></figure>
+<p>
+We could use a lambda instead of the macro, but the macro defines a
+nicely documented function.
+</p>
+
+<p>
+While we're at it, let's do something similar for websites.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">browse</span> <span class="p">(</span><span class="nv">url</span><span class="p">)</span>
+  <span class="s">"Return a named function that calls `browse-url' on URL."</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">func-name</span> <span class="p">(</span><span class="nb">intern</span> <span class="p">(</span><span class="nv">concat</span> <span class="s">"endless/browse-"</span> <span class="nv">url</span><span class="p">))))</span>
+    <span class="o">`</span><span class="p">(</span><span class="k">progn</span>
+       <span class="p">(</span><span class="nb">defun</span> <span class="o">,</span><span class="nv">func-name</span> <span class="p">()</span>
+         <span class="o">,</span><span class="p">(</span><span class="nb">format</span> <span class="s">"Browse to the url %s."</span> <span class="nv">url</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">browse-url</span> <span class="o">,</span><span class="nv">url</span><span class="p">))</span>
+       <span class="nf">#'</span><span class="o">,</span><span class="nv">func-name</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"t"</span>
+  <span class="p">(</span><span class="nv">browse</span> <span class="s">"http://twitter.com/"</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"?"</span> <span class="c1">;; See also SX.el.</span>
+  <span class="p">(</span><span class="nv">browse</span> <span class="s">"http://emacs.stackexchange.com/"</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"r"</span>
+  <span class="p">(</span><span class="nv">browse</span> <span class="s">"http://www.reddit.com/r/emacs/"</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"w"</span>
+  <span class="p">(</span><span class="nv">browse</span> <span class="s">"http://www.emacswiki.org/"</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"+"</span>
+  <span class="p">(</span><span class="nv">browse</span> <span class="s">"https://plus.google.com/communities/114815898697665598016"</span><span class="p">))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/keymap-for-launching-external-applications-and-websites.html?source=rss#disqus_thread">Comment on this.</a></p>

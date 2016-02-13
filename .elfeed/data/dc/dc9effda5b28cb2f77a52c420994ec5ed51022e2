@@ -1,0 +1,155 @@
+<p>One of the nicest features of
+<a href="https://github.com/cognitect/transit-format">Transit</a> and thus
+<a href="https://github.com/cognitect/transit-js">transit-js</a> is the standard
+caching mechanism. Query results often contain an incredible amount of
+data duplication in the map keys and Transit largely eliminates this
+problem for you.</p>
+
+<p>Periodically users have requested that the caching mechanism be
+extended beyond just map keys to richer data structures. It turns out
+this feature has existed within Transit in plain sight since its
+initial release. As usual, better data structures save the day, the
+presence of ES6-like Maps in <strong>transit-js</strong> makes the solution nearly
+trivial ...</p>
+
+<p>Imagine you have a type <code>Point</code> that looks like the following:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">transit</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;transit-js&quot;</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">Point</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="nx">x</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="nx">y</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>You write your <code>PointHandler</code> and construct a Transit writer and write
+out the following bit of data:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">write</span> <span class="o">=</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">writer</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s2">&quot;handlers&quot;</span><span class="o">:</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">map</span><span class="p">([</span>
+        <span class="nx">Point</span><span class="p">,</span> <span class="p">(</span><span class="k">new</span> <span class="nx">PointHandler</span><span class="p">())</span>        
+    <span class="p">])</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Point</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">2.5</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">writer</span><span class="p">.</span><span class="nx">write</span><span class="p">([</span><span class="nx">p</span><span class="p">,</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">p</span><span class="p">]));</span>
+</code></pre></div>
+<p>What will we get in return?</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="p">[[</span><span class="s2">&quot;~#point&quot;</span><span class="p">,[</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">2.5</span><span class="p">]],[</span><span class="s2">&quot;^0&quot;</span><span class="p">,[</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">2.5</span><span class="p">]],[</span><span class="s2">&quot;^0&quot;</span><span class="p">,[</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">2.5</span><span class="p">]]]</span>
+</code></pre></div>
+<p>The keys were cached, but obviously we&#39;re not successfully eliminating
+the real data duplication here. If you try to serialize something less
+trivial like application state you&#39;ll quickly find yourself in
+trouble.</p>
+
+<h2>Custom Write Handlers With Caching</h2>
+
+<p>We need to duplicate the idea behind Transit&#39;s key caching. Key
+caching works because the traversal order for reading and writing is
+precisely the same. With this knowledge we can build a caching system on
+top of Transit with the help of some Maps!</p>
+
+<p>Examine our new caching <code>PointHandler</code>:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">PointHandler</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">cache</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">cache</span> <span class="o">=</span> <span class="nx">cache</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="nx">PointHandler</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">tag</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">toId</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">v</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s2">&quot;cache&quot;</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s2">&quot;point&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+<span class="nx">PointHandler</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">rep</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">toId</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">toId</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">v</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">curId</span><span class="o">++</span><span class="p">);</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nx">v</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span> <span class="nx">v</span><span class="p">.</span><span class="nx">y</span><span class="p">];</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">id</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>We construct the <code>PointHandler</code> with a shared <code>cache</code> object. This
+<code>cache</code> object has two properties <code>toId</code>, a <strong>transit-js</strong> Map from an
+arbitrary object to its cache id, and <code>curId</code> the current cache id.</p>
+
+<p>When we go to get its representation if it&#39;s the first time we&#39;ve seen
+it we add it to the cache and return the full representation. Because
+we&#39;re using real Maps <em>we&#39;re not restricted to string based keys</em>. We
+can easily and efficiently map objects to integers.</p>
+
+<p>Of course if we have seen the object before we simply return its integer
+id.</p>
+
+<p>That&#39;s it! Now let&#39;s write a <code>cachingWrite</code> function:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">function</span> <span class="nx">cachingWrite</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">cache</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nx">toId</span><span class="o">:</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">map</span><span class="p">(),</span>
+            <span class="nx">curId</span><span class="o">:</span> <span class="mi">1</span>
+        <span class="p">},</span>
+        <span class="nx">writer</span> <span class="o">=</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">writer</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;handlers&quot;</span><span class="o">:</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">map</span><span class="p">([</span>
+                <span class="nx">Point</span><span class="p">,</span> <span class="p">(</span><span class="k">new</span> <span class="nx">PointHandler</span><span class="p">(</span><span class="nx">cache</span><span class="p">))</span>
+            <span class="p">])</span>
+        <span class="p">});</span>
+
+    <span class="k">return</span> <span class="nx">writer</span><span class="p">.</span><span class="nx">write</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Let&#39;s try it out:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">cachingWrite</span><span class="p">([</span><span class="nx">p</span><span class="p">,</span><span class="nx">p</span><span class="p">,</span><span class="nx">p</span><span class="p">]));</span>
+</code></pre></div>
+<p>What do we get?</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="p">[[</span><span class="s2">&quot;~#point&quot;</span><span class="p">,[</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">2.5</span><span class="p">]],[</span><span class="s2">&quot;~#cache&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="s2">&quot;^1&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span>
+</code></pre></div>
+<p>This should put a smile on your face. The second time we see a cached
+value we emit the <code>&quot;cache&quot;</code> tagged value. The third time we emit, the
+standard Transit key caching kicks in and we get a very succinct
+representation.</p>
+
+<p>What about reading this back out?</p>
+
+<h2>Custom Read Handler With Caching</h2>
+
+<p>Writing <code>cachingRead</code> is quite a bit simpler than <code>cachingWrite</code>:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">function</span> <span class="nx">cachingRead</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">cache</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nx">fromId</span><span class="o">:</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">map</span><span class="p">(),</span>
+            <span class="nx">curId</span><span class="o">:</span> <span class="mi">1</span>
+        <span class="p">},</span>
+        <span class="nx">reader</span> <span class="o">=</span> <span class="nx">transit</span><span class="p">.</span><span class="nx">reader</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;handlers&quot;</span><span class="o">:</span> <span class="p">{</span>
+                <span class="s2">&quot;point&quot;</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">v</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Point</span><span class="p">(</span><span class="nx">v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+                    <span class="nx">cache</span><span class="p">.</span><span class="nx">fromId</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">cache</span><span class="p">.</span><span class="nx">curId</span><span class="o">++</span><span class="p">,</span> <span class="nx">ret</span><span class="p">);</span>
+                    <span class="k">return</span> <span class="nx">ret</span><span class="p">;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;cache&quot;</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">v</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">cache</span><span class="p">.</span><span class="nx">fromId</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+
+    <span class="k">return</span> <span class="nx">reader</span><span class="p">.</span><span class="nx">read</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Let&#39;s roundtrip!</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">cachingRead</span><span class="p">(</span><span class="nx">cachingWrite</span><span class="p">([</span><span class="nx">p</span><span class="p">,</span><span class="nx">p</span><span class="p">,</span><span class="nx">p</span><span class="p">])));</span>
+</code></pre></div>
+<p>And we&#39;ll get the following result:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="p">[{</span><span class="nx">x</span><span class="o">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mf">2.5</span> <span class="p">,</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">},</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">}]</span>
+</code></pre></div>
+<p>Perhaps you&#39;re not convinced these are all the same object in
+memory. Let&#39;s do a quick check:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">equal</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="o">!</span><span class="nx">x</span> <span class="o">?</span> <span class="kc">false</span> <span class="o">:</span> <span class="nx">x</span><span class="o">===</span><span class="nx">y</span> <span class="o">&amp;&amp;</span> <span class="nx">y</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">cachingRead</span><span class="p">(</span><span class="nx">cachingWrite</span><span class="p">([</span><span class="nx">p</span><span class="p">,</span><span class="nx">p</span><span class="p">,</span><span class="nx">p</span><span class="p">])).</span><span class="nx">reduce</span><span class="p">(</span><span class="nx">equal</span><span class="p">));</span>
+</code></pre></div>
+<p>We get back a non-false value:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mf">2.5</span><span class="p">}</span>
+</code></pre></div>
+<p>Which means all the values in the array were exactly the same object.</p>
+
+<p>Go forth and serialize your application states into efficiently packed
+JSON values!</p>

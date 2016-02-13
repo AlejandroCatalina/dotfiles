@@ -1,0 +1,11 @@
+<div class="date">23 Dec 2014</div>
+
+    <p>
+    Manipulating the commit history in Emacs isn’t as straight-forward as
+    other Magit processes, so I thought I would share my notes.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Emacs/magit-squashing.html">Read more...</a>
+    </p>
+    

@@ -1,0 +1,43 @@
+<p>
+Following on our series of mnemonic keymaps, we arrive on the
+<b>launcher-map</b>. Where the <a href="/the-toggle-map-and-wizardry.html">toggle-map</a> was designed for toggling values
+and minor-modes we only use every once in a while, the launcher-map
+runs those standalone features of Emacs that also don't always see the
+light of day.
+</p>
+
+<p>
+To remember these keybinds, think of <i>“Emacs launch calc”</i> for instance.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-prefix-command</span> <span class="ss">'launcher-map</span><span class="p">)</span>
+<span class="c1">;; `C-x l' is `count-lines-page' by default. If you</span>
+<span class="c1">;; use that, you can try s-l or &lt;C-return&gt;.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">ctl-x-map</span> <span class="s">"l"</span> <span class="ss">'launcher-map</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"s-l"</span><span class="p">)</span> <span class="ss">'launcher-map</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"p"</span> <span class="nf">#'</span><span class="nv">paradox-list-packages</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"c"</span> <span class="nf">#'</span><span class="nv">calc</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"d"</span> <span class="nf">#'</span><span class="nv">ediff-buffers</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"f"</span> <span class="nf">#'</span><span class="nv">find-dired</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"g"</span> <span class="nf">#'</span><span class="nv">lgrep</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"G"</span> <span class="nf">#'</span><span class="nv">rgrep</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"h"</span> <span class="nf">#'</span><span class="nv">man</span><span class="p">)</span> <span class="c1">; Help</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"i"</span> <span class="nf">#'</span><span class="nv">package-install-from-buffer</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"n"</span> <span class="nf">#'</span><span class="nv">endless/visit-notifications</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">launcher-map</span> <span class="s">"s"</span> <span class="nf">#'</span><span class="nv">shell</span><span class="p">)</span></code></pre></figure>
+<p>
+<code>calc</code>, <code>man</code>, <code>list-packages</code>&#x2026; I use these features, on average, once or
+twice every other moon. An intuitive keymap is exactly what I need to always
+remember their keybinds and not have to <kbd>M-x</kbd> their whole name.
+</p>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;30 Nov 2015&gt;</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Changed the <code>n</code> key from <code>nethack</code> to <code>endless/visit-notifications</code>, as per <a href="/using-paradox-for-github-notifications.html">the
+new post</a>.
+</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/launcher-keymap-for-standalone-features.html?source=rss#disqus_thread">Comment on this.</a></p>

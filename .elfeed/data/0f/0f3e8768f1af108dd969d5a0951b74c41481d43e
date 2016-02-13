@@ -1,0 +1,156 @@
+<p><a href="el-function:which-func-mode">Which Func Mode</a> shows the name of the current
+“tag” in the mode line.  A tag is whatever the current major mode adds to its
+<a href="el-function:imenu">imenu</a> index, e.g. function names in Emacs Lisp, class
+declarations in Python, or section names in Markdown.</p>
+
+<p>By default, Which Func Mode just dumps the entire tag name at the very end of
+the mode line, after the entire list of minor modes, which is neither
+particularly sophisticated nor particularly visible.  When I
+<a href="/2014/07/26/make-your-emacs-mode-line-more-useful.html">redesigned my mode line</a>, I already moved it to a more prominent
+place in my mode line, by changing the position of
+<a href="el-variable:mode-line-misc-info">mode-line-misc-info</a>.</p>
+
+<p>In this post I’ll show you how to boost the tag name itself with some nifty
+tricks.</p>
+
+<!--more-->
+
+<h1 id="customising-the-appearance-of-which-func-mode">Customising the appearance of Which Func Mode</h1>
+
+<p>Which Func Mode exposes its mode line format in the variable
+<a href="el-variable:which-func-format">which-func-format</a>, which holds a standard
+<a href="http://www.gnu.org/s/emacs/manual/html_node/elisp/Mode-Line-Format.html">Mode Line Format</a>.  The default value takes the tag name from the internal
+variable <code class="highlighter-rouge">which-func-current</code> and adds some standard text properties to specify
+the key map (for mouse support) and faces.</p>
+
+<p>We’ll just copy the standard value, but replace <code class="highlighter-rouge">which-func-current</code> with our
+own function:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="k">setq</span> <span class="nv">which-func-format</span>
+      <span class="o">`</span><span class="p">(</span><span class="s">"["</span>
+        <span class="p">(</span><span class="ss">:propertize</span> <span class="p">(</span><span class="ss">:eval</span> <span class="p">(</span><span class="nv">lunaryorn-which-func-current</span><span class="p">))</span>
+                     <span class="nv">local-map</span> <span class="o">,</span><span class="nv">which-func-keymap</span>
+                     <span class="nv">face</span> <span class="nv">which-func</span>
+                     <span class="nv">mouse-face</span> <span class="nv">mode-line-highlight</span>
+                     <span class="nv">help-echo</span> <span class="err">"</span><span class="nv">mouse-1:</span> <span class="k">go</span> <span class="nv">to</span> <span class="nv">beginning\n</span><span class="err">\</span>
+<span class="nv">mouse-2:</span> <span class="nv">toggle</span> <span class="nb">rest</span> <span class="nv">visibility\n</span><span class="err">\</span>
+<span class="nv">mouse-3:</span> <span class="k">go</span> <span class="nv">to</span> <span class="nv">end</span><span class="s">")
+        "</span><span class="nv">]</span><span class="err">"</span><span class="p">)</span>
+      <span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Note that we call our custom function <code class="highlighter-rouge">lunaryorn-which-func-format</code> to obtain
+the actual tag name.  That’s where the magic will happen.</p>
+
+<h1 id="truncating-the-tag-name">Truncating the tag name</h1>
+
+<p>Some IMenu tags can be really, really long.  Let’s make some fun with nested
+classes in Python:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Spam</span><span class="p">:</span>
+
+    <span class="k">class</span> <span class="nc">With</span><span class="p">:</span>
+
+        <span class="k">class</span> <span class="nc">Eggs</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">bake</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="k">def</span> <span class="nf">doit</span><span class="p">():</span>
+                    <span class="err">▮</span><span class="k">pass</span>
+
+            <span class="k">return</span> <span class="n">doit</span>
+</code></pre>
+</div>
+
+<p>The box indicates the position of the point.  In this situation Which Func Mode
+will show <code class="highlighter-rouge">Spam.With.Eggs.bake.doit</code> in the mode line.  That’s a long name,
+which takes a lot of space, especially on small displays.</p>
+
+<p>Let’s fix this, by truncating tag names to a maximum of 20 characters:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">require</span> <span class="ss">'subr-x</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">lunaryorn-which-func-current</span> <span class="p">()</span>
+  <span class="p">(</span><span class="nv">if-let</span> <span class="p">(</span><span class="nv">current</span> <span class="p">(</span><span class="nb">gethash</span> <span class="p">(</span><span class="nv">selected-window</span><span class="p">)</span> <span class="nv">which-func-table</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">truncate-string-to-width</span> <span class="nv">current</span> <span class="mi">20</span> <span class="no">nil</span> <span class="no">nil</span> <span class="s">"…"</span><span class="p">)</span>
+    <span class="nv">which-func-unknown</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>This function takes the current tag name from <code class="highlighter-rouge">which-func-table</code> which caches
+the current tag for each window, because computing the imenu index may be
+expensive depending on the major mode and the buffer size.  If there is a
+current tag, we truncate it to 20 characters at the end, replacing trailing text
+with an ellipsis.  Otherwise we just return the standard “unknown” string.</p>
+
+<p>We are using the <code class="highlighter-rouge">if-let</code> macro from <code class="highlighter-rouge">subr-x</code> in this function, which is only
+available as of Emacs 24.4.  For earlier Emacs versions you can either replace
+it with a nested <code class="highlighter-rouge">let</code>/<code class="highlighter-rouge">if</code>, or use the <code class="highlighter-rouge">-if-let</code> macro from the popular
+<a href="https://github.com/magnars/dash.el">dash.el</a> library.</p>
+
+<p>We truncate the tag name at the end, because that’s likely where the “nearest”
+part of the tag name appears.  We have a good chance to see that in the buffer
+anyway, so it’s better to omit this part if we have little space, and preserve
+“farther away” parts of the tag name.</p>
+
+<h1 id="mode-specific-truncation">Mode-specific truncation</h1>
+
+<p>Of course, that’s a little primitive and won’t always yield good results.  We
+can do better than that, by truncating with respect to the current major mode.</p>
+
+<p>For instance, in Emacs Lisp we typically prefix global symbols with the name of
+the defining library, as a poor man’s namespace system.  Now, typically we know
+what file we are in, and we can see the file name and the buffer name in the
+mode line anyway, so it’s really redundant in the tag name.  Let’s remove it
+from the tag name.</p>
+
+<p>First we define a function to determine the current “namespace”, which returns
+the buffer file name, if any, unless the file name refers to <code class="highlighter-rouge">init.el</code>.  In this
+case we return the “namespace” used for functions in <code class="highlighter-rouge">init.el</code>, e.g. <code class="highlighter-rouge">lunaryorn</code>
+in this example:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">defun</span> <span class="nv">lunaryorn-current-namespace</span> <span class="p">()</span>
+  <span class="s">"Determine the namespace of the current file."</span>
+  <span class="p">(</span><span class="nv">when-let</span> <span class="p">(</span><span class="nv">filename</span> <span class="p">(</span><span class="nv">buffer-file-name</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">string=</span> <span class="p">(</span><span class="nv">file-truename</span> <span class="nv">filename</span><span class="p">)</span> <span class="p">(</span><span class="nv">file-truename</span> <span class="nv">user-init-file</span><span class="p">))</span>
+        <span class="s">"lunaryorn"</span>                       <span class="c1">; The “namespace” of my init</span>
+      <span class="p">(</span><span class="nv">file-name-base</span> <span class="nv">filename</span><span class="p">))))</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">when-let</code> is from <code class="highlighter-rouge">subr-x</code>, too, so everything said before about <code class="highlighter-rouge">if-let</code>
+applies to it as well.  Notably, on Emacs 24.3 and earlier you need to replace
+it with a nested <code class="highlighter-rouge">when</code>/<code class="highlighter-rouge">let</code> or with <code class="highlighter-rouge">-when-let</code> from <a href="https://github.com/magnars/dash.el">dash.el</a>.</p>
+
+<p>With this function, we can now extend <code class="highlighter-rouge">lunaryorn-which-func-current</code>
+accordingly:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">defun</span> <span class="nv">lunaryorn-which-func-current</span> <span class="p">()</span>
+  <span class="s">"Determine the name of the current function."</span>
+  <span class="p">(</span><span class="nv">if-let</span> <span class="p">(</span><span class="nv">current</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nb">gethash</span> <span class="p">(</span><span class="nv">selected-window</span><span class="p">)</span> <span class="nv">which-func-table</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nv">truncate-string-to-width</span>
+       <span class="p">(</span><span class="nv">pcase</span> <span class="nv">major-mode</span>
+         <span class="p">(</span><span class="o">`</span><span class="nv">emacs-lisp-mode</span>
+          <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">namespace</span> <span class="p">(</span><span class="nv">lunaryorn-current-namespace</span><span class="p">)))</span>
+            <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="nv">namespace</span>
+                     <span class="p">(</span><span class="nv">string-prefix-p</span> <span class="nv">namespace</span> <span class="nv">current</span> <span class="ss">'ignore-case</span><span class="p">))</span>
+                <span class="p">(</span><span class="nv">concat</span> <span class="s">"…"</span> <span class="p">(</span><span class="nv">substring</span> <span class="nv">current</span> <span class="p">(</span><span class="nb">length</span> <span class="nv">namespace</span><span class="p">)))</span>
+              <span class="nv">current</span><span class="p">)))</span>
+         <span class="p">(</span><span class="nv">_</span> <span class="nv">current</span><span class="p">))</span>
+       <span class="mi">20</span> <span class="no">nil</span> <span class="no">nil</span> <span class="s">"…"</span><span class="p">)</span>
+    <span class="nv">which-func-unknown</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>We use <code class="highlighter-rouge">pcase</code> to dispatch on the <code class="highlighter-rouge">major-mode</code> of the current buffer.  In
+<code class="highlighter-rouge">emacs-lisp-mode</code>, we obtain the namespace using our previously defined function
+and remove it from the tag name.  For all other cases, we just return the tag
+name without modifications.  The result is then truncated to 20 characters as
+before.</p>
+
+<figure>
+<img src="/images/truncated-which-func-mode.png" alt="Mode line with truncated which-function for Python Mode" />
+</figure>
+
+<p>That’s much better than the default.  And of course, my mode line features the
+insanely awesome <a href="https://github.com/TeMPOraL/nyan-mode">nyan cat</a>, like any other decent folk’s mode line does.</p>

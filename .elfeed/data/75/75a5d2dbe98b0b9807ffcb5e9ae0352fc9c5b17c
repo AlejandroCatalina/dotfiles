@@ -1,0 +1,64 @@
+<p>
+I don’t usually dedicate an entire post to something I’ve already done in a
+previous one, but this nugget is so useful it deserves the attention. Remember
+how you can <a href="/easily-create-github-prs-from-magit.html">create Github PRs</a> straight from Magit? Magit <code>2.1.0</code> is barely <a href="https://twitter.com/magit_emacs/status/611204423906426880">two
+weeks away</a>, and it brings so many (awesome) changes that our little snippet is
+going to break.
+</p>
+
+<p>
+Luckily for you, I’ve been using Magit’s next version for a couple of months
+now, so I have a fix all shiny and ready for you. This function is also slightly
+more robust, and fixes some corner-case issues in the other. So if you found
+that the previous function didn’t cover your use-case, you should definitely try
+the new one.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/visit-pull-request-url</span> <span class="p">()</span>
+  <span class="s">"Visit the current branch's PR on Github."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">browse-url</span>
+   <span class="p">(</span><span class="nb">format</span> <span class="s">"https://github.com/%s/pull/new/%s"</span>
+           <span class="p">(</span><span class="nv">replace-regexp-in-string</span>
+            <span class="s">"\\`.+github\\.com:\\(.+\\)\\.git\\'"</span> <span class="s">"\\1"</span>
+            <span class="p">(</span><span class="nv">magit-get</span> <span class="s">"remote"</span>
+                       <span class="p">(</span><span class="nv">magit-get-remote</span><span class="p">)</span>
+                       <span class="s">"url"</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">magit-get-remote-branch</span><span class="p">)</span>
+                    <span class="p">(</span><span class="nv">user-error</span> <span class="s">"No remote branch"</span><span class="p">))))))</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'magit</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">define-key</span> <span class="nv">magit-mode-map</span> <span class="s">"v"</span>
+     <span class="nf">#'</span><span class="nv">endless/visit-pull-request-url</span><span class="p">))</span></code></pre></figure>
+<p>
+Note that I’ve changed the keybind to <kbd>v</kbd>. In Magit <code>2.1</code>, that key is bound in
+buffer overlays, not on the mode-map, which means we can just bind it in the map
+and we’ll get a semi “do-what-I-mean” functionality.
+</p>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1">Update <span class="timestamp-wrapper"><span class="timestamp">24 Jan 2016</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+The latest Magit from Melpa deals with branches in a slightly different way, so
+the code above won’t quite work. If you run into that problem, the update below
+should work fine.
+</p>
+
+<p>
+#+BEGIN_SRC emacs-lisp
+(defun endless/visit-pull-request-url ()
+  "Visit the current branch's PR on Github."
+  (interactive)
+  (browse-url
+   (format "<a href="https://github.com/%s/pull/new/%s">https://github.com/%s/pull/new/%s</a>"
+           (replace-regexp-in-string
+            "\\`.+github\\.com:\\(.+\\)\\.git\\'" "\\1"
+            (magit-get "remote"
+                       (magit-get-push-remote)
+                       "url"))
+           (magit-get-current-branch))))
+#+END_SRC emacs-lisp
+</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/create-github-prs-from-emacs-with-magit.html?source=rss#disqus_thread">Comment on this.</a></p>

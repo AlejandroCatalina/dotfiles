@@ -1,0 +1,57 @@
+<p><em>UPDATE: This post now contains obsolete information. Please
+read the new
+<a href="https://github.com/clojure/clojurescript/wiki/Quick-Start">ClojureScript Quick Start</a>
+instead</em></p>
+
+<p>Recently a couple of people have communicated that getting up and
+running with ClojureScript is challenging. While there&#39;s a
+<a href="http://shop.oreilly.com/product/0636920025139.do">book</a> and a
+<a href="http://github.com/magomimmo/modern-cljs">number of excellent tutorials</a>,
+none emphasize what I consider an absolutely minimal setup with a tight
+feedback loop and a good debugging experience.</p>
+
+<p>This short post will get you from zero to developing source mapped
+ClojureScript with instant recompiles on file save.</p>
+
+<p>Install <a href="http://leiningen.org">Leiningen</a>.</p>
+
+<p>Goto a directory where you want your project to live and run the
+following on the command line:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein new mies hello-world
+</code></pre></div>
+<p>Switch into the newly created ClojureScript project and run the
+following:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein cljsbuild auto hello-world
+</code></pre></div>
+<p>It&#39;ll take a little while for the first build - a second for JVM start
+up time, a few seconds to compile ClojureScript, and a few seconds to
+compile the standard library. Don&#39;t worry, if you edit your source
+file subsequent compiles will be sub second.</p>
+
+<p>Open the provided <code>index.html</code> (at the root of the project directory)
+in Google Chrome. Enable source maps by clicking on the <strong>View</strong> menu and
+selecting <strong>Developer &gt; Developer Tools</strong>. In the bottom right corner of
+the <strong>Developer Tools</strong> pane you should see a gear icon. If you click this
+you will get a pane of settings, one of which is <strong>Enable JS source
+maps</strong>. Enable it.</p>
+
+<p>Refresh the browser, select <strong>View &gt; Developer Tools &gt; JavaScript
+Console</strong>. You should see that the <code>console.log</code> references
+a line in ClojureScript. If you click the line number displayed to
+the right of the log message you will be taken to that line in the
+original ClojureScript source.</p>
+
+<p>Now try editing <code>src/hello_world/core.cljs</code>. For example make your file
+look like this:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(ns hello-world.core)
+
+(defn foo [a b]
+  (+ a b))
+
+(. js/console (log &quot;Hello world!&quot; (foo 1 2)))
+</code></pre></div>
+<p>Save the file. You should see that the file recompiled in under a
+second. Refresh your browser and you should see your modifications
+logged.</p>
+
+<p>Happy hacking!</p>

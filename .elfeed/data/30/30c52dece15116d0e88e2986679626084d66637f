@@ -1,0 +1,16 @@
+<div class="date"> 9 Apr 2015</div>
+
+    <p>
+    I swore I wouldn’t put any more examples of my <i>literate devops</i>
+    idea, but when I habitually used <code>org-mode</code> during a recent
+    exploration of MySQL database instance, followed by emailing the
+    results to my teammates, I thought I would share.  <a href="http://www.howardism.org/Technical/Emacs/literate-database.html">Read more...</a>
+    </p>
+
+    <p>
+    <b>Update:</b> A section of the exported document on accessing a database
+    <a href="http://www.howardism.org/Technical/Emacs/literate-database-example.html">can be viewed here</a>, but a few of you have requested the
+    <a href="http:Technical/Emacs/literate-database-example.org.txt">original org-mode file</a>
+    Enjoy!
+    </p>
+    

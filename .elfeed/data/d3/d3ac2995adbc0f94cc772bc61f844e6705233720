@@ -1,0 +1,24 @@
+
+    <p>
+    For half the web sites I visit, I use either a tablet or <a href="http://w3m.sourceforge.net/">w3m</a>
+    (in <a href="http://www.emacswiki.org/emacs/emacs-w3m">an Emacs window</a>, of course), I’ve realized that I should make my
+    own web more accessible and flexible.
+    </p>
+
+    <p>
+    You’re viewing the results.
+    </p>
+
+    <p>
+    Everything should be simple, open, and easy. Oh, and did I mention
+    that I’m <a href="https://github.com/howardabrams/dot-files/blob/master/emacs-blog.org">publishing directly from Emacs</a>. Yeah, that is how old men
+    do.
+    </p>
+
+    <p>
+    My original blog was originally written in Markdown. Once easy to
+    write in, <code>org-mode</code> is much better. To convert or not convert them
+    all? <a href="http://www.howardism.org/sitemap.html">I’ve done these</a>, but <a href="http://www.howardism.org/old-sitemap.html">most of my original essays</a> will continue
+    to date themselves.
+    </p>
+    

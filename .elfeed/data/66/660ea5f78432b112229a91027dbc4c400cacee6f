@@ -1,0 +1,100 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+<code>ERC</code> is the leading Emacs-based <a href="http://en.wikipedia.org/wiki/IRC">IRC</a>-client; I already discussed ERC <a href="http://emacs-fu.blogspot.com/2009/06/erc-emacs-irc-client.html">before</a>. I
+have been using ERC a <i>lot</i> in recent times, as it's an essential way to
+communicate at work with team members in remote locations. There are other
+IRC-clients &ndash; most people around me seem to use either <code>irssi</code> or <code>xchat</code>,
+but these don't integrate so well with my emacs-based workflow, the easy with
+which it can be extended to do exactly what I want; in this although they have
+their own strenghts. One of the great strengths of ERC is article I give some
+examples.
+</p>
+<p>
+Apart from chatting, you can send commands (<a href="http://en.wikipedia.org/wiki/List_of_Internet_Relay_Chat_commands">long list</a>) to the IRC-server,
+for example to request information about other users, change your 'nick',
+leave the channel, and so on. As in most IRC-clients, you can send these
+commands with ERC by prefixing them with <code>/</code>, so you'd type:
+</p>
+
+
+
+<pre class="example">/nick ninjaturtle
+</pre>
+
+
+
+<p>
+to change your nickname.
+</p>
+<p>
+The nice thing about ERC is how easy it to add your own commands to this. In
+your <code>.emacs</code> (after loading ERC), you can add something like:
+</p>
+
+
+
+<pre class="src src-elisp">(<span class="org-keyword">defun</span> <span class="org-function-name">erc-cmd-MYSYSTEM</span> ()
+  <span class="org-doc">"show some information about my system"</span>
+  (<span class="org-keyword">let</span> ((str (shell-command-to-string <span class="org-string">"uname -a"</span>)))
+    (<span class="org-keyword">when</span> str (erc-send-message str))))
+</pre>
+
+
+
+<p>
+Or, add add a function called <code>erc-cmd-XXXX</code> (with the <code>XXXX</code> being the
+command name in capitals, will add command <code>XXXX</code>, which you can invoke with
+<code>/XXXX</code> or <code>/xxxx</code>). So, with the above function, I can now do something like:
+</p>
+
+
+
+<pre class="example">ERC&gt; /mysystem
+&lt;djcb&gt; Linux cthulhu 2.6.35-25-generic #44 SMP Fri Jan 21 17:40:48 UTC
+       2011 i686 GNU/Linux
+</pre>
+
+
+
+<p>
+Let's look at some other (somewhat) useful command: <code>/calc</code>; again, just a
+small example, I'm sure something can come up with something a bit more
+elegant - perhaps using emacs' built-in <code>calc</code>.
+</p>
+
+
+
+<pre class="src src-elisp">(<span class="org-keyword">defun</span> <span class="org-function-name">erc-cmd-CALC</span> (<span class="org-type">&amp;rest</span> args)
+  <span class="org-doc">"calculate value of some expression using bc"</span>
+  (<span class="org-keyword">let</span> ((expr (mapconcat 'identity args <span class="org-string">" "</span>)))
+    (<span class="org-keyword">when</span> (length expr)
+      (<span class="org-keyword">let</span> ((result (shell-command-to-string (concat <span class="org-string">"echo '"</span> expr <span class="org-string">"' | bc "</span>))))
+        (<span class="org-keyword">when</span> result (erc-send-message (concat expr <span class="org-string">" = "</span> result)))))))
+</pre>
+
+
+
+
+
+
+<pre class="example">ERC&gt; /calc 2 * (3 + 4) / 7
+&lt;djcb&gt; 2 * (3 + 4) / 7  = 2
+</pre>
+
+
+
+<p>
+Now, a small warning, just because it's <i>easy</i> to dump the output of, say,
+<a href="http://en.wikipedia.org/wiki/Cowsay">cowsay</a> in an IRC-channel using your own <code>/cowsay</code> command, does not mean it is
+a good idea &ndash; in fact, using something like that is guaranteed to get you
+kicked out fairly quickly from many channels.
+</p>
+<p>
+That being said, I'm sure many people have come up with much more clever
+things than the examples here; feel free to share your inventions in the
+comments!
+</p></div>
+</div>

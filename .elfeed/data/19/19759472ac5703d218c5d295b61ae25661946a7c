@@ -1,0 +1,40 @@
+<p>
+If you’re a frequent reader, no doubt you noticed an embedded Youtube video on a
+post <a href="/debugger-improvements-in-cider-0-10-0.html">a couple of weeks ago</a>. Youtube makes it pretty simple to embed videos, they
+give you the entire <code>iframe</code> HTML code to use, but this wouldn’t really be Emacs
+if we couldn’t make things just a little bit easier. Just add the snippet below
+to your init file, and you’re good to go.
+</p>
+
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defvar</span> <span class="nv">yt-iframe-format</span>
+  <span class="c1">;; You may want to change your width and height.</span>
+  <span class="p">(</span><span class="nv">concat</span> <span class="s">"&lt;iframe width=\"440\""</span>
+          <span class="s">" height=\"335\""</span>
+          <span class="s">" src=\"https://www.youtube.com/embed/%s\""</span>
+          <span class="s">" frameborder=\"0\""</span>
+          <span class="s">" allowfullscreen&gt;%s&lt;/iframe&gt;"</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nv">org-add-link-type</span>
+ <span class="s">"yt"</span>
+ <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">handle</span><span class="p">)</span>
+   <span class="p">(</span><span class="nv">browse-url</span>
+    <span class="p">(</span><span class="nv">concat</span> <span class="s">"https://www.youtube.com/embed/"</span>
+            <span class="nv">handle</span><span class="p">)))</span>
+ <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">path</span> <span class="nv">desc</span> <span class="nv">backend</span><span class="p">)</span>
+   <span class="p">(</span><span class="nv">cl-case</span> <span class="nv">backend</span>
+     <span class="p">(</span><span class="nv">html</span> <span class="p">(</span><span class="nb">format</span> <span class="nv">yt-iframe-format</span>
+                   <span class="nv">path</span> <span class="p">(</span><span class="nb">or</span> <span class="nv">desc</span> <span class="s">""</span><span class="p">)))</span>
+     <span class="p">(</span><span class="nv">latex</span> <span class="p">(</span><span class="nb">format</span> <span class="s">"\href{%s}{%s}"</span>
+                    <span class="nv">path</span> <span class="p">(</span><span class="nb">or</span> <span class="nv">desc</span> <span class="s">"video"</span><span class="p">))))))</span></code></pre></figure>
+<p>
+To use this, just write your org links in the following way (optionally adding a description).
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">[[yt:A3JAlWM8qRM]]</code></pre></figure>
+<p>
+When you export to HTML, this will produce that same inlined snippet that
+Youtube specifies. The advantage (over simply writing out the <code>iframe</code>) is that
+this link can be clicked in <code>org-mode</code>, and can be exported to other formats as
+well.
+</p>
+
+   <p><a href="http://endlessparentheses.com/embedding-youtube-videos-with-org-mode-links.html?source=rss#disqus_thread">Comment on this.</a></p>

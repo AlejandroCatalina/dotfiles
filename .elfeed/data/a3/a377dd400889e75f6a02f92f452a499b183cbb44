@@ -1,0 +1,70 @@
+<p>If you&#39;re a ClojureScript user
+<a href="http://github.com/cognitect/transit-cljs">transit-cljs</a> offers nearly all the
+benefits of <a href="https://github.com/edn-format/edn">EDN</a> while delivering performance comparable to native
+<a href="http://json.org">JSON</a>. And since the Transit JSON encoding is truly just JSON,
+transit-cljs also provides a better story when communicating with existing JSON
+services.</p>
+
+<h2>The Problem</h2>
+
+<p>ClojureScript launched more than 3 years ago with
+<a href="https://github.com/clojure/clojurescript/blob/master/src/cljs/cljs/reader.cljs#L291"><code>cljs.reader/read-string</code></a>
+. This allowed Clojure and ClojureScript programs to comfortably communicate
+with each other. However, even after seeing several rounds of optimizations
+<code>cljs.reader/read-string</code> still delivers poor performance compared to
+<code>JSON.parse</code>.</p>
+
+<p>Worse, most services speak JSON not EDN. You can <code>JSON.parse</code> and convert to
+ClojureScript data structures via
+<a href="https://github.com/clojure/clojurescript/blob/master/src/cljs/cljs/core.cljs#L7729"><code>cljs.core/js-&gt;clj</code></a>
+but performance is even worse than <code>cljs.reader/read-string</code>.</p>
+
+<p>transit-cljs addresses all of these issues at once.</p>
+
+<h2>JSON Reading</h2>
+
+<p>You can consume any existing JSON service in ClojureScript with transit-cljs and
+you will get ClojureScript data structures. The performance is 20-30X faster
+than combining <code>JSON.parse</code> with <code>cljs.core/js-&gt;clj</code>.</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="k">def </span><span class="nv">r</span> <span class="p">(</span><span class="nf">transit/reader</span> <span class="ss">:json</span><span class="p">))</span>
+<span class="p">(</span><span class="nb">println </span><span class="p">(</span><span class="nf">transit/read</span> <span class="nv">r</span> <span class="s">&quot;{\&quot;foo\&quot;:\&quot;bar\&quot;}&quot;</span><span class="p">))</span>
+</code></pre></div>
+<p>The only caveat is that map keys will be strings - a small price to
+pay for the performance gain.</p>
+
+<h2>JSON Writing</h2>
+
+<p>You can send JSON to any service simply by using a verbose writer:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="k">def </span><span class="nv">w</span> <span class="p">(</span><span class="nf">transit/writer</span> <span class="ss">:json-verbose</span><span class="p">))</span>
+<span class="p">(</span><span class="nb">println </span><span class="p">(</span><span class="nf">transit/write</span> <span class="nv">w</span> <span class="p">{</span><span class="s">&quot;foo&quot;</span> <span class="s">&quot;bar&quot;</span><span class="p">}))</span>
+</code></pre></div>
+<p>Again your map keys must be strings but encoding is often more than a magnitude
+faster than <a href="https://github.com/clojure/clojurescript/blob/master/src/cljs/cljs/core.cljs#L7304"><code>cljs.core/pr-str</code></a>.</p>
+
+<h2>Advantages over transit-js</h2>
+
+<p>transit-cljs offers benefits above and beyond those provided by
+transit-js. transit-js is consumed by JavaScript applications developers as a
+<a href="https://developers.google.com/closure/compiler/docs/api-tutorial3">Google Closure Compiler advanced compiled</a> artifact. But because Google Closure
+Compiler is already a part of the ClojureScript compilation pipeline,
+transit-cljs depends directly on the original unoptimized and unminified
+transit-js source code. This means far more of the transit-js implementation
+can be leveraged - for example transit-js 64 bit
+integers are <a href="http://docs.closure-library.googlecode.com/git/class_goog_math_Long.html"><code>goog.math.Long</code></a> instances and you can treat them as such with
+no issues:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">transit-fun.core</span>
+  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">cognitect.transit</span> <span class="ss">:as</span> <span class="nv">t</span><span class="p">])</span>
+  <span class="p">(</span><span class="ss">:import</span> <span class="p">[</span><span class="nv">goog.math</span> <span class="nv">Long</span><span class="p">]))</span>
+
+<span class="p">(</span><span class="k">def </span><span class="nv">r</span> <span class="p">(</span><span class="nf">t/reader</span> <span class="ss">:json</span><span class="p">))</span>
+<span class="p">(</span><span class="nf">.add</span> <span class="p">(</span><span class="nf">t/read</span> <span class="nv">r</span> <span class="s">&quot;{\&quot;~#&#39;:\&quot;:\&quot;~i9007199254740993\&quot;\&quot;}&quot;</span><span class="p">)</span> <span class="p">(</span><span class="nf">Long.fromInt</span> <span class="mi">1</span><span class="p">))</span>
+</code></pre></div>
+<h2>Beyond JSON</h2>
+
+<p>Of course the most ideal scenario is to just expose your API optionally as
+a Transit service alongside the plain JSON service as this delivers the best read
+performance for clients.</p>
+
+<p>If you are a ClojureScript user building an application that accepts
+or marshals either EDN or JSON I strongly recommend switching to
+transit-cljs for both tasks.</p>

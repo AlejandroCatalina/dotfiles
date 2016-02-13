@@ -1,0 +1,106 @@
+<p>
+Narrowing is one of those features you won’t even hear about in a more
+mundane editor, but Emacs has an entire keymap for it. While I
+wouldn’t want to be without this feature, I’m all for simplification.
+</p>
+
+<p>
+<a href="https://github.com/mwfogleman">Michael Fogleman</a> (the same justicier who took matters to his own hands on <a href="/hungry-delete-mode.html">Hungry
+Delete Mode</a>) mentioned the following gem on the <a href="/the-toggle-map-and-wizardry.html">The Toggle-Map and Wizardry</a>
+post. I took the liberty of adding a bit of functionality. To use it, you’ll
+also need the <a href="/fixing-org-in-src-block-p.html">endless/inside-org-code-block-p</a> function.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">narrow-or-widen-dwim</span> <span class="p">(</span><span class="nv">p</span><span class="p">)</span>
+  <span class="s">"Widen if buffer is narrowed, narrow-dwim otherwise.
+Dwim means: region, org-src-block, org-subtree, or defun,
+whichever applies first. Narrowing to org-src-block actually
+calls `org-edit-src-code'.
+
+With prefix P, don't widen, just narrow even if buffer is
+already narrowed."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="nv">interactive-only</span><span class="p">))</span>
+  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">and</span> <span class="p">(</span><span class="nv">buffer-narrowed-p</span><span class="p">)</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">p</span><span class="p">))</span> <span class="p">(</span><span class="nv">widen</span><span class="p">))</span>
+        <span class="p">((</span><span class="nv">region-active-p</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">narrow-to-region</span> <span class="p">(</span><span class="nv">region-beginning</span><span class="p">)</span> <span class="p">(</span><span class="nv">region-end</span><span class="p">)))</span>
+        <span class="p">((</span><span class="nv">derived-mode-p</span> <span class="ss">'org-mode</span><span class="p">)</span>
+         <span class="c1">;; `org-edit-src-code' is not a real narrowing</span>
+         <span class="c1">;; command. Remove this first conditional if you</span>
+         <span class="c1">;; don't want it.</span>
+         <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">ignore-errors</span> <span class="p">(</span><span class="nv">org-edit-src-code</span><span class="p">))</span>
+                <span class="p">(</span><span class="nv">delete-other-windows</span><span class="p">))</span>
+               <span class="p">((</span><span class="nb">ignore-errors</span> <span class="p">(</span><span class="nv">org-narrow-to-block</span><span class="p">)</span> <span class="no">t</span><span class="p">))</span>
+               <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">org-narrow-to-subtree</span><span class="p">))))</span>
+        <span class="p">((</span><span class="nv">derived-mode-p</span> <span class="ss">'latex-mode</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">LaTeX-narrow-to-environment</span><span class="p">))</span>
+        <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">narrow-to-defun</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">endless/toggle-map</span> <span class="s">"n"</span> <span class="nf">#'</span><span class="nv">narrow-or-widen-dwim</span><span class="p">)</span>
+<span class="c1">;; This line actually replaces Emacs' entire narrowing</span>
+<span class="c1">;; keymap, that's how much I like this command. Only copy it</span>
+<span class="c1">;; if that's what you want.</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">ctl-x-map</span> <span class="s">"n"</span> <span class="nf">#'</span><span class="nv">narrow-or-widen-dwim</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'LaTeX-mode-hook</span>
+          <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="p">(</span><span class="nv">define-key</span> <span class="nv">LaTeX-mode-map</span> <span class="s">"\C-xn"</span> <span class="no">nil</span><span class="p">)))</span></code></pre></figure>
+<p>
+If you’re the kind of person who knows how to use <a href="http://doc.endlessparentheses.com/Fun/narrow-to-page"><code>narrow-to-page</code></a>,
+this command might not be for you. Meanwhile, for us mortals, it more
+than fits the bill.
+</p>
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1"><a id="ID-629511b6-fc25-4a8e-914d-939d5908a801"></a>Update <span class="timestamp-wrapper"><span class="timestamp">&lt;05 Sep 2014&gt;</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline1">
+<p>
+Sacha Chua’s comment below gave me a glimpse of inspiration. 
+</p>
+
+<p>
+I’ve never liked org’s default keybind for editing a source code
+block, <kbd>C-c '</kbd>, and have been looking for a better
+one. But if you meditate on it for a minute, the effect of
+<kbd>C-c '</kbd> is a narrow command with some bells
+attached. So it fits perfectly into <code>narrow-or-widen-dwim</code> (updated
+above).
+</p>
+
+<p>
+Now that I’m no longer using <kbd>C-c '</kbd> to edit code
+blocks, I also need a better key to finish editing code blocks, and
+<kbd>C-x C-s</kbd> makes perfect sense.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'org-src</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">define-key</span> <span class="nv">org-src-mode-map</span>
+     <span class="s">"\C-x\C-s"</span> <span class="nf">#'</span><span class="nv">org-edit-src-exit</span><span class="p">))</span></code></pre></figure>
+</div>
+</div>
+<div id="outline-container-orgheadline2" class="outline-2">
+<h2 id="orgheadline2"><a id="ID-3ca97e87-2b3e-4b1e-8550-205341585b65"></a>Update <span class="timestamp-wrapper"><span class="timestamp">&lt;23 Sep 2014&gt;</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline2">
+<p>
+I’ve updated it to no longer use the <a href="http://doc.endlessparentheses.com/Fun/org-in-src-block-p"><code>org-in-src-block-p</code></a> function and
+just try calling <a href="http://doc.endlessparentheses.com/Fun/org-edit-src-code"><code>org-edit-src-code</code></a> instead. <code>org-in-src-block-p</code>
+has proven quite unreliable.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-2">
+<h2 id="orgheadline3">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;05 Dec 2015&gt;</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline3">
+<p>
+Now it should also work with any type of org-block supported by
+<a href="http://doc.endlessparentheses.com/Fun/org-narrow-to-block"><code>org-narrow-to-block</code></a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;07 Dec 2015&gt;</span></span></h2>
+<div class="outline-text-2" id="text-orgheadline4">
+<p>
+Use <code>LaTeX-mode-hook</code> instead of <code>eval-after-load</code>, as suggested by Omar in the
+comments.</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html?source=rss#disqus_thread">Comment on this.</a></p>

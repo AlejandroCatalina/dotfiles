@@ -1,0 +1,54 @@
+<p>
+I won’t repeat myself on the <a href="/Meta-Binds-Part-1%253A-Drunk-in-the-Dark.html">usefulness of prefix arguments</a>, though it
+would hardly be an overstatement. Killing 7 lines of text in two
+keystrokes is a bliss most people will never know.
+</p>
+
+<p>
+Today's post was prompted by <a href="http://emacs.stackexchange.com/q/2347/50">this question</a> on Emacs Stack Exchange. Itsjeyd has
+grown tired of using 3 keystrokes to kill a line (<kbd>C-a C-k
+C-k</kbd>) and asks for an alternative. The <a href="http://emacs.stackexchange.com/a/2348/50">straightforward answer</a> is to use
+<a href="http://doc.endlessparentheses.com/Fun/kill-whole-line"><code>kill-whole-line</code></a> instead, but then you either need another keybind,
+<kbd>C-S-backspace</kbd>, or you need to lose the regular <code>kill-line</code>
+functionality.
+</p>
+
+<p>
+<a href="http://emacs.stackexchange.com/a/2353/50">The solution</a> I've found for myself is to use prefix arguments.<br  />
+You see, killing half a line is a useful feature, but slaughtering three and a
+half lines make very little sense. So it stands to reason to have <a href="http://doc.endlessparentheses.com/Fun/kill-line"><code>kill-line</code></a>
+meticulously murder everything in its sight when given a prefix argument.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">bol-with-prefix</span> <span class="p">(</span><span class="k">function</span><span class="p">)</span>
+  <span class="s">"Define a new function which calls FUNCTION.
+Except it moves to beginning of line before calling FUNCTION when
+called with a prefix argument. The FUNCTION still receives the
+prefix argument."</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">name</span> <span class="p">(</span><span class="nb">intern</span> <span class="p">(</span><span class="nb">format</span> <span class="s">"endless/%s-BOL"</span> <span class="k">function</span><span class="p">))))</span>
+    <span class="o">`</span><span class="p">(</span><span class="k">progn</span>
+       <span class="p">(</span><span class="nb">defun</span> <span class="o">,</span><span class="nv">name</span> <span class="p">(</span><span class="nv">p</span><span class="p">)</span>
+         <span class="o">,</span><span class="p">(</span><span class="nb">format</span> 
+           <span class="s">"Call `%s', but move to BOL when called with a prefix argument."</span>
+           <span class="k">function</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+         <span class="p">(</span><span class="nb">when</span> <span class="nv">p</span>
+           <span class="p">(</span><span class="nv">forward-line</span> <span class="mi">0</span><span class="p">))</span>
+         <span class="p">(</span><span class="nv">call-interactively</span> <span class="ss">',function</span><span class="p">))</span>
+       <span class="ss">',name</span><span class="p">)))</span></code></pre></figure>
+<p>
+And we bind them, of course.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">global-set-key</span> <span class="nv">[remap</span> <span class="nv">paredit-kill]</span> <span class="p">(</span><span class="nv">bol-with-prefix</span> <span class="nv">paredit-kill</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="nv">[remap</span> <span class="nv">org-kill-line]</span> <span class="p">(</span><span class="nv">bol-with-prefix</span> <span class="nv">org-kill-line</span><span class="p">))</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="nv">[remap</span> <span class="nv">kill-line]</span> <span class="p">(</span><span class="nv">bol-with-prefix</span> <span class="nv">kill-line</span><span class="p">))</span></code></pre></figure>
+<p>
+With this little macro, <kbd>C-k</kbd> still kills from point, but
+<kbd>C-3 C-k</kbd> swallows three whole lines. As a bonus, we get the
+<code>kill-whole-line</code> behavior by doing <kbd>C-1 C-k</kbd>.
+</p>
+
+<p>
+Are there any other functions which might benefit from this macro?
+</p>
+
+   <p><a href="http://endlessparentheses.com/kill-entire-line-with-prefix-argument.html?source=rss#disqus_thread">Comment on this.</a></p>

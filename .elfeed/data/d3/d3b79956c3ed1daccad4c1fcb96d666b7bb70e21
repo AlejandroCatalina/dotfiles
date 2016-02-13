@@ -1,0 +1,47 @@
+<p>
+<a href="http://doc.endlessparentheses.com/Fun/electric-indent-mode"><code>electric-indent-mode</code></a> is enough to keep your code nicely
+aligned when all you do is type. However, once you start shifting
+blocks around, transposing lines, or slurping and barfing sexps,
+indentation is bound to go wrong.
+</p>
+
+<p>
+Today’s lesson is <a href="http://emacs.stackexchange.com/a/385/50">my answer to mgoszcz2's question</a>. Having the perfect
+auto-indent is easier than you might think. I've turned this post into a
+package. Emacsers, meet <a href="https://github.com/Malabarba/aggressive-indent-mode">aggressive-indent</a>. 
+</p>
+
+<p>
+So long as you have Melpa configured, you can install it with.
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">M-x package-install RET aggressive-indent</code></pre></figure>
+<p>
+Then simply turn it on and you’ll <b>never</b> have unindented code again. 
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">global-aggressive-indent-mode</span><span class="p">)</span></code></pre></figure>
+
+<p>
+This will activate <code>aggressive-indent-mode</code> on every non-text buffer. If you're
+a little shy, you can also turn it on only for specific major modes by using
+hooks.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'emacs-lisp-mode-hook</span> <span class="nf">#'</span><span class="nv">aggressive-indent-mode</span><span class="p">)</span></code></pre></figure>
+
+<p>
+Here’s some code to try it on. After you’ve evaluated the above, open
+a new <i>“.el”</i> file, paste the following code, and type something
+before the opening parentheses.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">this</span> <span class="nv">is</span> <span class="nv">a</span>
+      <span class="nv">test</span><span class="p">)</span></code></pre></figure>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;2014-10-20 Mon&gt;</span></span></h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Announce <a href="https://github.com/Malabarba/aggressive-indent-mode">new package</a>!
+</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/permanent-auto-indentation.html?source=rss#disqus_thread">Comment on this.</a></p>

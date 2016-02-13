@@ -1,0 +1,33 @@
+<div class="date">30 Sep 2015</div>
+
+    <p>
+    Each week, I teach an after school class at my local Middle School.
+    Today, while getting ready to present, I switched over to the
+    browser tab containing my presentation and waited for the kids to
+    take their seats.
+    </p>
+
+    <p>
+    One girl raised her hand and asked about a browser tab that showed
+    <a href="http://www.meetup.com/PDX-Emacs-Hackers/">Emacs Meetup</a>. Clearly she wouldn’t care about some old programming
+    editor, but I quickly summarized so I could get to the lesson. She
+    said she uses it to play snakes. I told her that she probably uses
+    something else, as Emacs is just some old editor. She insisted.
+    </p>
+
+    <p>
+    She quickly fired up Terminal on the Mac, typed <code>emacs</code>, and
+    promptly entered <code>M-x snake</code>... How...how...did you do...know that?
+    While I wrote a version of the snake game on my Apple ][ computer
+    when I was a kid, I didn’t know that any one had written one for
+    Emacs. Huh. Schooled in my editor by a kid.
+    </p>
+
+    <p>
+    She also typed in <code>telnet towel.blinkenlights.nl</code>.
+    </p>
+
+    <p>
+    She’s now my favorite.
+    </p>
+    

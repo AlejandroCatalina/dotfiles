@@ -1,0 +1,256 @@
+<p>In two years of maintaining Flycheck I received many wishes and feature
+requests.  I implemented many, discarded some, but I never came around to add
+the most requested feature and fix the <a href="https://github.com/flycheck/flycheck/issues/169">oldest issue still open</a>: Check a
+buffer with an arbitrary Emacs Lisp function.</p>
+
+<p>Now, after more than one year of waiting, this feature is finally there:
+Flycheck now supports “generic syntax checkers”, which call synchronous or
+asynchronous Emacs Lisp functions instead of invoking external commands.  They
+are “generic” because they are essentially a superset of normal syntax checkers:
+In fact, regular syntax checkers are now called “command syntax checkers” and
+implemented on top of this new feature, as a specific kind of generic checkers.</p>
+
+<!--more-->
+
+<p>For users of Flycheck nothing has changed other than that you’ll probably see a
+lot of new syntax checkers emerging in the next weeks and months.</p>
+
+<p>For developers, however, this opens many new interesting possibilities.  You
+have even more power to write syntax checkers for your favourite languages now:
+Even if there is no linting tool or if it’s not feasible to use an external
+tool, you can now write syntax checkers using a persistent background process or
+a running REPL instead.  You could even write lints entirely in Emacs Lisp,
+although that’s not really recommendable due to Emacs synchronous execution<sup id="fnref:1"><a href="#fn:1" class="footnote">1</a></sup>.</p>
+
+<p>For instance, Flycheck never had an OCaml syntax checker.  Checking OCaml is not
+as easy as checking C, because dependency management is more sophisticated and
+more complicated in OCaml.  Luckily, there is a tool called <a href="https://github.com/the-lambda-church/merlin">Merlin</a> which
+does all the dirty work, providing a persistent background process that caches
+the entire state of an OCaml project.  It’s mainly used for completion, but it
+can also check a buffer for errors.</p>
+
+<p>With generic syntax checkers, we can finally implement a syntax checker that
+talks to a Merlin process to check a buffer for errors<sup id="fnref:2"><a href="#fn:2" class="footnote">2</a></sup>.  This post explains
+the implementation of this syntax checker (available in the <a href="https://github.com/flycheck/flycheck-ocaml">flycheck-ocaml</a>
+extension) to introduce generic syntax checkers to you.</p>
+
+<p>Note that the Emacs Lisp code in this article is written for lexical scoping,
+and will not work with dynamical scoping.  Please keep that in mind when
+writing your own syntax checkers.</p>
+
+<h1 id="defining-a-generic-syntax-checker">Defining a generic syntax checker</h1>
+
+<p>The new function <a href="http://www.flycheck.org/en/latest/dev/api.html#el.function.flycheck-define-generic-checker">flycheck-define-generic-checker</a> defines a “generic”
+syntax checker.  A generic syntax checker looks almost like a regular syntax
+checker, except there is a <code class="highlighter-rouge">:start</code> function instead of a <code class="highlighter-rouge">:command</code> and
+<code class="highlighter-rouge">:error-patterns</code><sup id="fnref:3"><a href="#fn:3" class="footnote">3</a></sup>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nv">flycheck-define-generic-checker</span> <span class="ss">'ocaml-merlin</span>
+  <span class="s">"A syntax checker for OCaml using Merlin Mode.
+
+See URL `https://github.com/the-lambda-church/merlin'."</span>
+  <span class="ss">:start</span> <span class="nf">#'</span><span class="nv">flycheck-ocaml-merlin-start</span>
+  <span class="ss">:modes</span> <span class="o">'</span><span class="p">(</span><span class="nv">caml-mode</span> <span class="nv">tuareg-mode</span><span class="p">)</span>
+  <span class="ss">:predicate</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="nv">merlin-mode</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>Like a regular command syntax checker, a generic checker needs <code class="highlighter-rouge">:modes</code> and
+(optionally) a <code class="highlighter-rouge">:predicate</code>.  In this case we specify the common OCaml editing
+modes and an additional predicate that checks whether <code class="highlighter-rouge">merlin-mode</code>–which
+provides the background process we are going to use for syntax checking—is
+active.</p>
+
+<p>All of this is just the standard boilerplate for syntax checkers, but <code class="highlighter-rouge">:start</code>
+is a new thing.  Here the fun begins:  The value of <code class="highlighter-rouge">:start</code> is a <em>function</em> to
+start the syntax check.</p>
+
+<h1 id="starting-a-syntax-check">Starting a syntax check</h1>
+
+<p>Flycheck calls this <code class="highlighter-rouge">:start</code> function whenever it needs to check the buffer,
+just like it would invoke the <code class="highlighter-rouge">:command</code> of a command syntax checker.  The
+<code class="highlighter-rouge">:start</code> function takes two arguments:</p>
+
+<ol>
+  <li>The syntax checker being run, just in case the <code class="highlighter-rouge">:start</code> function is being
+shared among different syntax checkers.</li>
+  <li>A callback function, which shall be used to report the results of a syntax
+check back to Flycheck.</li>
+</ol>
+
+<p>The <code class="highlighter-rouge">flycheck-ocaml-merlin-start</code> function of our new syntax checker looks as
+follows:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">defun</span> <span class="nv">flycheck-ocaml-merlin-start</span> <span class="p">(</span><span class="nv">checker</span> <span class="nv">callback</span><span class="p">)</span>
+  <span class="s">"Start a Merlin syntax check with CHECKER.
+
+CALLBACK is the status callback passed by Flycheck."</span>
+  <span class="p">(</span><span class="nv">merlin-sync-to-point</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">)</span> <span class="no">t</span><span class="p">)</span>
+  <span class="c1">;; Put the current buffer into the closure environment so that we have access</span>
+  <span class="c1">;; to it later.</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">buffer</span> <span class="p">(</span><span class="nv">current-buffer</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nv">merlin-send-command-async</span>
+     <span class="ss">'errors</span>
+     <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">data</span><span class="p">)</span>
+       <span class="p">(</span><span class="nv">condition-case</span> <span class="nv">err</span>
+           <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">errors</span> <span class="p">(</span><span class="nb">mapcar</span>
+                          <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">alist</span><span class="p">)</span>
+                            <span class="p">(</span><span class="nv">flycheck-ocaml-merlin-parse-error</span> <span class="nv">alist</span> <span class="nv">checker</span>
+                                                               <span class="nv">buffer</span><span class="p">))</span>
+                          <span class="nv">data</span><span class="p">)))</span>
+             <span class="p">(</span><span class="nb">funcall</span> <span class="nv">callback</span> <span class="ss">'finished</span> <span class="p">(</span><span class="nv">delq</span> <span class="no">nil</span> <span class="nv">errors</span><span class="p">)))</span>
+         <span class="p">(</span><span class="nb">error</span> <span class="p">(</span><span class="nb">funcall</span> <span class="nv">callback</span> <span class="ss">'errored</span> <span class="p">(</span><span class="nv">error-message-string</span> <span class="nv">err</span><span class="p">)))))</span>
+     <span class="c1">;; The error callback</span>
+     <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">msg</span><span class="p">)</span> <span class="p">(</span><span class="nb">funcall</span> <span class="nv">callback</span> <span class="ss">'errored</span> <span class="nv">msg</span><span class="p">)))))</span>
+</code></pre>
+</div>
+
+<p>At the beginning we update Merlin with the current contents of the buffer.  This
+step still happens synchronously, but the subsequent error checking is entirely
+asynchronous.  <code class="highlighter-rouge">merlin-send-command-async</code> sends the <code class="highlighter-rouge">errors</code> command to the
+Merlin background process.  When finished Merlin calls either of the two
+callbacks given to this function: The first callback with the results of a
+successful check, and the second with an error message if the check failed.</p>
+
+<p>We provide two <code class="highlighter-rouge">lambda</code>s for these callbacks: The first callback parses the
+Merlin result and turns it into a proper Flycheck result, whereas the second
+callback just forwards the error message to Flycheck.</p>
+
+<p>Note that we put the current buffer into a local variable.  Since the command is
+executed asynchronously, we can’t use <code class="highlighter-rouge">(current-buffer)</code> in the Merlin callback:
+The current buffer might have changed meanwhile.  By putting it in a local
+variable we permanently store the buffer being checked in the closure
+environment.</p>
+
+<h1 id="reporting-results">Reporting results</h1>
+
+<p>Let use focus on the second callback—the error callback—first, for the sake of
+simplicity.  This callback just calls Flycheck’s own callback with two
+arguments:</p>
+
+<ol>
+  <li>The <em>status symbol</em></li>
+  <li>The <em>status metadata</em></li>
+</ol>
+
+<p>These are the two components of the <a href="http://www.flycheck.org/en/latest/dev/api.html#status-callback-protocol">“status protocol”</a> that Flycheck
+provides for generic syntax checkers to communicate with Flycheck.</p>
+
+<p>The status symbol <code class="highlighter-rouge">errored</code> tells Flycheck that an error occurred in the syntax
+check.  Its metadata is simply the corresponding error message as string.</p>
+
+<p>The other important status symbol is <code class="highlighter-rouge">finished</code>, which tells Flycheck that a
+syntax check as properly finished.  It’s metadata is a (potentially empty) list
+of <a href="http://www.flycheck.org/en/latest/dev/api.html#el.struct.flycheck-error">flycheck-error</a> objects which denote errors in the current buffer.</p>
+
+<h1 id="parsing-errors">Parsing errors</h1>
+
+<p>Before we can report errors, though, we need to parse them.  This is what we do
+in the first <code class="highlighter-rouge">merlin-send-command-async</code> callback.</p>
+
+<p>Merlin returns the list of errors as a list of alists in the <code class="highlighter-rouge">data</code> argument to
+the callback.  Each alist describes a single error in the buffer.  We map over
+all alists with <code class="highlighter-rouge">flycheck-ocaml-merlin-parse-error</code> to turn them into
+<code class="highlighter-rouge">flycheck-error</code> objects.  Eventually we pass these parsed errors to Flycheck’s
+<code class="highlighter-rouge">callback</code>, using the <code class="highlighter-rouge">finished</code> status.  This causes Flycheck to report these
+errors in the buffer, just like it does for regular command syntax checkers.</p>
+
+<p><code class="highlighter-rouge">flycheck-ocaml-merlin-parse-error</code> extracts the relevant keys from each error
+list, and creates a new <code class="highlighter-rouge">flycheck-error</code> object:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">defun</span> <span class="nv">flycheck-ocaml-merlin-parse-error</span> <span class="p">(</span><span class="nv">alist</span> <span class="nv">checker</span> <span class="nv">buffer</span><span class="p">)</span>
+  <span class="s">"Parse a Merlin error ALIST from CHECKER in BUFFER into a `flycheck-error'.
+
+Return the corresponding `flycheck-error'."</span>
+  <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">orig-message</span> <span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nv">assq</span> <span class="ss">'message</span> <span class="nv">alist</span><span class="p">)))</span>
+         <span class="p">(</span><span class="nv">start</span> <span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nv">assq</span> <span class="ss">'start</span> <span class="nv">alist</span><span class="p">)))</span>
+         <span class="p">(</span><span class="nv">line</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nv">assq</span> <span class="ss">'line</span> <span class="nv">start</span><span class="p">))</span> <span class="mi">1</span><span class="p">))</span>
+         <span class="p">(</span><span class="nv">column</span> <span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nv">assq</span> <span class="ss">'col</span> <span class="nv">start</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nb">when</span> <span class="nv">orig-message</span>
+      <span class="p">(</span><span class="nv">pcase-let*</span> <span class="p">((</span><span class="o">`</span><span class="p">(</span><span class="o">,</span><span class="nv">level</span> <span class="o">.</span> <span class="o">,</span><span class="nv">message</span><span class="p">)</span>
+                    <span class="p">(</span><span class="nv">flycheck-ocaml-merlin-parse-message</span> <span class="nv">orig-message</span><span class="p">)))</span>
+        <span class="p">(</span><span class="k">if</span> <span class="nv">level</span>
+            <span class="p">(</span><span class="nv">flycheck-error-new-at</span> <span class="nv">line</span> <span class="nv">column</span> <span class="nv">level</span> <span class="nv">message</span>
+                                   <span class="ss">:checker</span> <span class="nv">checker</span>
+                                   <span class="ss">:buffer</span> <span class="nv">buffer</span>
+                                   <span class="ss">:filename</span> <span class="p">(</span><span class="nv">buffer-file-name</span><span class="p">))</span>
+          <span class="p">(</span><span class="nv">lwarn</span> <span class="ss">'flycheck-ocaml</span> <span class="ss">:error</span>
+                 <span class="s">"Failed to parse Merlin error message %S from %S"</span>
+                 <span class="nv">orig-message</span> <span class="nv">alist</span><span class="p">)</span>
+          <span class="no">nil</span><span class="p">)))))</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">flycheck-ocaml-merlin-parse-message</code> applies a regular expression to the
+original error messages in order to extract the error level (which Merlin does
+not report otherwise) and the real error message.  It’s rather dumb and not
+particularly interesting, so I omitted it for the sake of brevity.  If you are
+interested, take a look at the Github page of <a href="https://github.com/flycheck/flycheck-ocaml">flycheck-ocaml</a>.</p>
+
+<p><code class="highlighter-rouge">flycheck-error-new-at</code> then creates and returns a new <code class="highlighter-rouge">flycheck-error</code> object
+with the information obtained from Merlin.  Note that you really need to fill
+the <em>entire</em> structure, except for those slots which are explicitly marked
+optional in the <a href="http://www.flycheck.org/en/latest/dev/api.html#el.struct.flycheck-error">documentation</a>.  Notably, Flycheck needs the
+<code class="highlighter-rouge">:checker</code>, <code class="highlighter-rouge">:buffer</code> and <code class="highlighter-rouge">:filename</code> slots to associate the error object with
+the right buffer.</p>
+
+<p>And that’s it!  With just these few lines of code we have defined a syntax
+checker that talks to a persistent background process to check the current
+buffer, and parses the results reported by the background process into a format
+understood by Flycheck.</p>
+
+<h1 id="why-did-this-take-so-long">Why did this take so long</h1>
+
+<p>If it’s that simple, why did it take so long, I hear you ask.  Well, internally
+things aren’t that simple.</p>
+
+<p>Since Emacs lacks any asynchronous features other than processes, Flycheck grew
+based on external processes until it had entirely absorbed them.  Breaking this
+close relationship with processes required a lot of refactoring, which is a
+tedious and error-prone task in a language with as weak a type system as Emacs
+Lisp.</p>
+
+<p>With the lack of asynchronous functions also comes a notorious lack of modern
+concurrency primitives in Emacs, which makes it hard to design a reasonable
+generic API for an asynchronous task.  Where I’d just have used a future or
+channel in a decent programming language, Flycheck does a lot of internal
+book-keeping of its current state via global variables.</p>
+
+<p>Consequently there are no means to properly debug concurrent code either.  A
+race condition in the new process management code that resulted from the
+refactoring took me days to debug, until I could finally isolate it with
+literally dozens of <code class="highlighter-rouge">(message "DEBUG")</code> calls all over the place.</p>
+
+<h1 id="final-words">Final words</h1>
+
+<p>Nonetheless, I’m sorry that it took so long, and I hope that what I have come up
+with compensates for the year that you have all waited.  I took quite some time
+to debug and test the new API and the refactored internals of Flycheck, so there
+should be little to no bugs left, but if you find any please do not hesitate to
+report them to the <a href="https://github.com/flycheck/flycheck/issues">issue tracker</a>.</p>
+
+<p>And if you choose to try the new API and write one or another syntax checker
+yourself: I’m really keen on your feedback!  Please tell me whether you like the
+API, whether the documentation was sufficient, whether you had any difficulties,
+and—most importantly—what you think can be improved.</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>Essentially, an Emacs Lisp linter would freeze Emacs while checking the
+  buffer, which is not particularly convenient. <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p>The same technique can be used for other languages, which Flycheck does
+  not yet sufficiently support.  For instance, there’s no support for Java
+  or Clojure in Flycheck because of the long JVM startup times.  A generic
+  syntax checker however could send a Clojure buffer of to a running Clojure
+  REPL, which is much faster than starting a new Java process. <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:3">
+      <p>Also, unlike <code class="highlighter-rouge">flycheck-define-checker</code> the syntax checker name and the
+  property values must be quoted, because <code class="highlighter-rouge">flycheck-define-generic-checker</code>
+  is really a function and not a macro. <a href="#fnref:3" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>

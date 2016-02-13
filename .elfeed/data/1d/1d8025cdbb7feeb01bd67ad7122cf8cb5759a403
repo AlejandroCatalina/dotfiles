@@ -1,0 +1,225 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  I've discussed the wonderful <code>org-mode</code> here a <a href="http://emacs-fu.blogspot.com/search/label/org-mode">number of times</a> already. It has
+  become a pretty important part of my overall workflow. One thing I am using
+  <code>org-mode</code> for, is to produce all kinds of PDF-documents that I can share with
+  other people.
+</p>
+
+</div>
+
+<div id="outline-container-1_1" class="outline-3">
+<h3 id="sec-1_1">org-mode &amp; LaTeX </h3>
+<div class="outline-text-3" id="text-1_1">
+
+
+<p>
+   In the past, I often used straight <a href="http://en.wikipedia.org/wiki/LaTeX">LaTeX</a> for such things; I wrote my thesis
+   with it, but also many other documents. There are many things I like about
+   LaTeX, one of them being that I can use emacs for writing. Still, there are
+   also a few things I do <i>not</i> particularly like. First, I think LaTeX is quite
+   heavy with formatting directives, which hinder my writing flow (e.g., when I
+   want to include an image, a table or a source code snippet). Another thing is
+   that I find the default LaTeX styles a bit <i>boring</i>. Nothing wrong with it,
+   but there just too many documents with the exact same lay-out.
+</p>
+<p>   
+   Now, back to <code>org-mode</code>. One way to use <code>org-mode</code> is as a friendly way to
+   generate LaTeX (and, consequently, PDFs). This is a big improvement! Much
+   more than LaTeX itself, <code>org-mode</code> allows to focus on the contents of the
+   document, rather than instructing LaTeX what to do. This comes at the price
+   of small bit of flexibility, but, if needed <code>org-mode</code> allows you include
+   straight LaTeX when needed &ndash; so while keeping easy things easy, hard things
+   are still possible. The latter does require a bit of experience with LaTeX a
+   though.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1_2" class="outline-3">
+<h3 id="sec-1_2">setting up XeTeX </h3>
+<div class="outline-text-3" id="text-1_2">
+
+
+<p>
+   Now, for the second issue, the way documents <b>look</b>, there are other
+   solutions, and they live on the LaTeX side of things. I'm sure many have seen
+   <a href="http://nitens.org/taraborelli/latex">The Beauty of LaTeX</a>. Using the <i>XeTeX</i> implementation of LaTeX and the
+   <code>fontspec</code> package, you can create LaTeX documents with a bit 'refreshed'
+   look.
+</p>
+<p>   
+   So, the steps to get this working with <code>org-mode</code>:
+</p>
+<ul>
+<li>install the <code>texlive-xetex</code> packages on Ubuntu and Debian (this installs a
+    <i>huge</i> set of packages)
+</li>
+<li>install the SIL fonts (I'm using <code>ttf-sil-gentium</code> and <code>ttf-sil-charis</code>, but
+    there are more)
+</li>
+<li>I'm also using DejaVu Mono (<code>ttf-dejavu</code>)
+</li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1_3" class="outline-3">
+<h3 id="sec-1_3">teaching org-mode about the new XeTeX stuff </h3>
+<div class="outline-text-3" id="text-1_3">
+
+
+<p>
+   We now need to define some LaTeX document class for <code>org-mode</code> that uses
+   <i>XeTeX</i> and some of these new fonts. Let's call the document class
+   <code>djcb-org-article</code> (as I often use the <code>djcb-</code> prefix for my own stuff), it
+   could be something like the following (add to your <code>org</code>-setup &ndash; e.g., in
+   your <code>.emacs</code>, make sure there is a <code>(require 'org)</code> before this:
+</p>
+
+
+
+<pre class="src src-emacs-lisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">'djcb-org-article' for export org documents to the LaTex 'article', using
+</span><span class="org-comment-delimiter">;; </span><span class="org-comment">XeTeX and some fancy fonts; requires XeTeX (see org-latex-to-pdf-process)
+</span>(add-to-list 'org-export-latex-classes
+  '(<span class="org-string">"djcb-org-article"</span>
+<span class="org-string">"\\documentclass[11pt,a4paper]{article}
+\\usepackage[T1]{fontenc}
+\\usepackage{fontspec}
+\\usepackage{graphicx} 
+\\defaultfontfeatures{Mapping=tex-text}
+\\setromanfont{Gentium}
+\\setromanfont [BoldFont={Gentium Basic Bold},
+                ItalicFont={Gentium Basic Italic}]{Gentium Basic}
+\\setsansfont{Charis SIL}
+\\setmonofont[Scale=0.8]{DejaVu Sans Mono}
+\\usepackage{geometry}
+\\geometry{a4paper, textwidth=6.5in, textheight=10in,
+            marginparsep=7pt, marginparwidth=.6in}
+\\pagestyle{empty}
+\\title{}
+      [NO-DEFAULT-PACKAGES]
+      [NO-PACKAGES]"</span>
+     (<span class="org-string">"\\section{%s}"</span> . <span class="org-string">"\\section*{%s}"</span>)
+     (<span class="org-string">"\\subsection{%s}"</span> . <span class="org-string">"\\subsection*{%s}"</span>)
+     (<span class="org-string">"\\subsubsection{%s}"</span> . <span class="org-string">"\\subsubsection*{%s}"</span>)
+     (<span class="org-string">"\\paragraph{%s}"</span> . <span class="org-string">"\\paragraph*{%s}"</span>)
+     (<span class="org-string">"\\subparagraph{%s}"</span> . <span class="org-string">"\\subparagraph*{%s}"</span>)))
+
+</pre>
+
+
+
+<p>
+  Of course, this can be customized to your own preference; e.g.,
+  North-Americans may not be using A4-paper.
+</p>
+<p>
+  <code>org-mode</code> takes care of the export from its own format to LaTeX, but we need
+  to tell it to use <code>xelatex</code> to process the LaTeX to PDF:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">setq</span> org-latex-to-pdf-process 
+  '(<span class="org-string">"xelatex -interaction nonstopmode %f"</span>
+     <span class="org-string">"xelatex -interaction nonstopmode %f"</span>)) <span class="org-comment-delimiter">;; </span><span class="org-comment">for multiple passes
+</span></pre>
+
+
+
+<p>  
+  That's all that's needed on the setup-side.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1_4" class="outline-3">
+<h3 id="sec-1_4">creating a document </h3>
+<div class="outline-text-3" id="text-1_4">
+
+
+<p>
+   Now, let's create a little test document, <code>test.org</code>, to show how it works:
+</p>
+
+
+
+<pre class="src src-org-mode">#+LaTeX_CLASS: djcb-org-article
+#+TITLE: My little document
+
+* Introduction
+  
+  This is my document. There are many like it, but this is mine. It's easy to
+  write without *too* _many_ /distractions/.
+  
+** Normal distribution
+
+   Probability density of the normal distribution, using familiar TeX notation
+   for formulae:
+ 
+   $$\frac{1}{\sqrt{2\pi\sigma^2}}e^{ -\frac{(x-\mu)^2}{2\sigma^2} }$$
+
+** Some table
+
+| *Greek God* | *Roman God* | *Element*      |
+|-------------+-------------+----------------|
+| Zeus        | Jupiter     | Sky and clouds |
+| Hera        | Juno        | Family         |
+| Poseidon    | Neptune     | Sea            |
+| Hades       | Pluto       | Underworld     |
+</pre>
+
+
+
+<p>   
+   We can export this to a PDF using <code>C-c C-e p</code> (or <code>C-c C-e d</code> to
+   automatically open the PDF in a PDF-viewer). This should all work nicely; if
+   it doesn't, note that when exporting, say, <code>test.org</code>, <code>org-mode</code> will create
+   a file called <code>test.tex</code>, and visit in a buffer. There's also a buffer with
+   the output from various commands, but sometimes it can be useful to run LaTeX
+   (<code>xelatex</code> in this case) on the file by hand, to find any problems. The
+   wonderful <code>org</code>-documentation about <a href="http://orgmode.org/worg/org-tutorials/org-latex-export.html">exporting to LaTeX</a> has more information.
+</p>
+
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://3.bp.blogspot.com/-4wlUMuYkass/TaSSlfKjl0I/AAAAAAAAAig/qJ54Ud0xPPI/s1600/org-docs.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="231" width="320" src="http://3.bp.blogspot.com/-4wlUMuYkass/TaSSlfKjl0I/AAAAAAAAAig/qJ54Ud0xPPI/s320/org-docs.png" /></a></div>
+
+
+
+<p>
+   I think the result is pretty nice &ndash; it stays true to the class LaTeX article
+   class, but freshens it up a bit with some news font. If you can make
+   something better &ndash; which is not unlikely &ndash; you are of course invited to
+   contribute your own!
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1_5" class="outline-3">
+<h3 id="sec-1_5">Concluding </h3>
+<div class="outline-text-3" id="text-1_5">
+
+
+<p>   
+   <code>org-mode</code> is a pretty convenient way to write nice-looking PDFs. Combined
+   with <code>xelatex</code>, they don't have to look too plain :). However, I'm aware of
+   my limitations when it comes to the coolness/aesthetic aspects, but I hope
+   others can show the way here.
+</p>
+<p>
+   Maybe <code>org-mode</code> could ship with a number of ready-made templates to make
+   it easy to make nice-looking documents, resumes, reference cards, reports,
+   meeting notes and so on.
+</p></div>
+</div>
+</div>

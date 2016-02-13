@@ -1,0 +1,83 @@
+<div class="date">1 Sep 2015</div>
+
+    <p>
+    I was asked to speak about <a href="http://howardism.org/Technical/Emacs/literate-devops.html">Literate Devops</a> at <a href="http://emacsconf2015.org/">EmacsConf 2015</a>.  Due
+    to work and family complications, I knew that I couldn’t physically
+    attend. Wait, what year is this!? We should open a can of
+    virtualization on this meatspace!  The week before, we tested out
+    the technology, and the Furies looked favorable upon me to remotely
+    attend a live conference.
+    </p>
+
+    <p>
+    On Saturday, September 29th at 9:00am, I sat at my large monitor,
+    carefully arranged into windows of note taking Emacs, conference
+    twitter feeds, the <code>#emacsconf</code> IRC channel ... and of course, the
+    live video feed. “This is good,” I thought. No struggling in
+    uncomfortable seats to power small-screened laptops. I had all
+    the coffee I wanted, and just the way I wanted it too.
+    </p>
+
+    <p>
+    The first talk, by <a href="http://nicolas-petton.fr/presentations/emacsconf2015">Nicolas Petton</a> (who was also presenting remotely
+    from France), illustrated immutable data structures and lazy
+    sequencing from <a href="http://twitter.com/howardabrams/status/637676190640156672">Clojure to Emacs Lisp</a>.
+    I thought, “This is going to be a great day!”
+    </p>
+
+    <p>
+    And then <a href="http://twitter.com/howardabrams/status/637692234226233344">it happened</a>. The power went out halfway through the second talk.
+    Using the battery and data service on my cell phone, I went to the
+    power utility’s web site. Their power outage map was covered in
+    red. Estimated time began at 12:50... then 1:30... then 3:00...
+    </p>
+
+    <p>
+    I panicked and put out a <a href="http://twitter.com/howardabrams/status/637695592404094980">plea for help</a>. I quickly cross town to
+    the first friend who responded, to give my talk perched in his
+    living room.
+    </p>
+
+    <p>
+    My demonstration went <a href="http://www.twitch.tv/emacsconf/v/13477760">well enough</a> (I start at 1:27:00), but I was
+    frazzled and the environment on my laptop was less than ideal.  I
+    received some very thoughtful compliments, however:
+    </p>
+
+    <blockquote>
+    <p>
+    Your talk on Literate DevOps with Org-Mode was fantastic, and
+    everyone was blown away by it. You had a really stressful day, but
+    you gave the talk anyway for your fellow emacers, and everyone
+    really enjoyed it. I really appreciate the effort it took to go
+    through with the talk after your power cut out. An excerpt from IRC
+    at the end of your talk:
+    </p>
+    </blockquote>
+
+    <p>
+    The virtual clapping on IRC was pretty humorous:
+    </p>
+
+    <pre class="example">
+    | 5:41 PM |  &lt;tered&gt; &lt;clap clap&gt;
+    | 5:41 PM |  — cestdiego *claps*
+    | 5:41 PM |  &lt;python476&gt; &lt;fingerclap&gt;
+    | 5:41 PM |  &lt;Caine&gt; great talk
+    | 5:41 PM |  &lt;momerath&gt; thanks Howard!!
+    | 5:41 PM |  &lt;cestdiego&gt; M-x clap
+    | 5:41 PM |  — offby1 stomps feet
+    | 5:42 PM |  — python476 flips IKEA desks
+    </pre>
+
+    <p>
+    While the entire experience was interesting and enjoyable, I just
+    wasn’t pleased, and felt my fellow Cultists in the Church of Emacs
+    deserved better, so last night, I <a href="https://youtu.be/dljNabciEGg">re-recorded myself</a>. The audio is
+    better, but it doesn’t have the questions and answers afterward.
+    </p>
+
+    <p>
+    See you all next year at EmacsConf 2016!
+    </p>
+    

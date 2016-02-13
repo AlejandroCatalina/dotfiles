@@ -1,0 +1,41 @@
+<p>Sometimes I pause before talking to someone about Clojure code. Not because I am unsure of the code, but because I am unsure of
+how to pronounce the code.  The particular code in question is
+Clojure&rsquo;s <em>assoc</em>.  I have heard it pronounced two ways. One is
+&ldquo;assosh&rdquo;, the other is &ldquo;assok&rdquo;.  So, to determine it, I decided to conduct a
+scientific poll of the Clojure community.</p>
+
+<p>I posted the poll on
+<a href="https://twitter.com/gigasquid/status/493891057906896896">twitter</a> to
+the Cojure community who follow me.  The control group poll was not viewed
+by those who do not follow me, and/or, are not on twitter.</p>
+
+<p>The results were startling.</p>
+
+<p><img src="https://c1.staticflickr.com/3/2928/14585605540_6d0ce6169f_n.jpg"></p>
+
+<ul>
+<li>assosh &ndash; 10</li>
+<li>assok  &ndash; 8</li>
+<li>assose &ndash; 2</li>
+<li>Jeremy &ndash; 1</li>
+<li>asoaksh &ndash; 1</li>
+</ul>
+
+
+<p>The community is clearly deeply divided on this important question.</p>
+
+<p>After sifting through the raw data, I remembered my statistical analysis and threw out the extremes.</p>
+
+<p><img src="https://c2.staticflickr.com/6/5559/14792182503_12aa682260_n.jpg"></p>
+
+<p>The conclusion was still a stark reality.</p>
+
+<p><em>We do not as a community know how to pronounce assoc.</em></p>
+
+<h2>Solution</h2>
+
+<p>I can only see one way forward.  We must address this as a community.
+I propose that the community documentation of <a href="http://clojuredocs.org/">Clojure Docs</a>
+and <a href="http://grimoire.arrdem.com/">Grimoire</a> modify their sites to include audio pronunciation like <a href="http://www.macmillandictionary.com/us/media/british/uk_pron/l/lla/llama/llama_British_English_pronunciation.mp3">this</a>.</p>
+
+<p>Remember, I&rsquo;m pulling for you.  We are all in this together.</p>

@@ -1,0 +1,358 @@
+<p>Well, it&rsquo;s been about a month since I initiated the <em>State of Simulation
+Testing - 2015</em> survey, and the results are in. In total, 29 people responded,
+and the results were quite informative about the state of simulation testing today.</p>
+
+<p>Since the number of respondents was on the low-side, I think the most
+appropriate summary would be a qualitative summary. For raw data, I encourage
+you to peruse the <a href="https://docs.google.com/spreadsheets/d/1Ksv5qltwlOoKmjD0UUvnT0e6mPNfMsPmVmcc_GNwD-k/edit?usp=sharing">raw responses</a>
+(names and companies redacted).</p>
+
+<h2>General Demographics</h2>
+
+<p>In the survey, I asked a number of demographic questions. There weren&rsquo;t many
+surprises, but it won&rsquo;t hurt to go over the responses:</p>
+
+<h3>In what capacity do you work?</h3>
+
+<table class="table table-striped" ><thead>
+<tr>
+<th>Capacity</th>
+<th>Count</th>
+<th>Percent</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>At a company</td>
+<td>19</td>
+<td>66%</td>
+</tr>
+<tr>
+<td>At a consulting company</td>
+<td>5</td>
+<td>17%</td>
+</tr>
+<tr>
+<td>Self-employed</td>
+<td>5</td>
+<td>17%</td>
+</tr>
+</tbody></table>
+
+<h3>What industry do you/your clients work in?</h3>
+
+<table class="table table-striped" ><thead>
+<tr>
+<th>Industry</th>
+<th>Count</th>
+<th>Percent</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>E-Commerce</td>
+<td>7</td>
+<td>23%</td>
+</tr>
+<tr>
+<td>Financial Services</td>
+<td>6</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>Healthcare</td>
+<td>3</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>Professional Services</td>
+<td>2</td>
+<td>7%</td>
+</tr>
+<tr>
+<td>Apartment Rentals</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Automotive</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Charity</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Education</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Business-process Outsourcing</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>IT / Data analytics</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Media applications</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Music</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Online entertainment</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Software Development</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>Technology</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+</tbody></table>
+
+<p>A lot of E-Commerce and Financial applications, as I had expected, but I was
+surprised by the myriad of other places people are applying the technique.</p>
+
+<h3>How big is your company?</h3>
+
+<table class="table table-striped" ><thead>
+<tr>
+<th>Size</th>
+<th>Count</th>
+<th>Percent</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>1-5 employees</td>
+<td>10</td>
+<td>34%</td>
+</tr>
+<tr>
+<td>6-25 employees</td>
+<td>7</td>
+<td>24%</td>
+</tr>
+<tr>
+<td>25-100 employees</td>
+<td>4</td>
+<td>14%</td>
+</tr>
+<tr>
+<td>100-500 employees</td>
+<td>2</td>
+<td>7%</td>
+</tr>
+<tr>
+<td>500+ employees</td>
+<td>6</td>
+<td>21%</td>
+</tr>
+</tbody></table>
+
+<p>Results here were a surprise to me. I had expected predominately large
+organizations, but in fact the most predominant response was &ldquo;1-5 employees&rdquo;.</p>
+
+<h3>How would you categorize your company?</h3>
+
+<table class="table table-striped" ><thead>
+<tr>
+<th>Category</th>
+<th>Count</th>
+<th>Percent</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>Startup</td>
+<td>13</td>
+<td>45%</td>
+</tr>
+<tr>
+<td>Small-to-medium Sized Business</td>
+<td>11</td>
+<td>38%</td>
+</tr>
+<tr>
+<td>Large Enterprise</td>
+<td>5</td>
+<td>17%</td>
+</tr>
+</tbody></table>
+
+<p>A little unexpected. I had thought large enterprise might be the biggest
+category, but in fact companies of all sorts are using
+simulation testing.</p>
+
+<h3>What is at risk if your systems fail to operate correctly?</h3>
+
+<table class="table table-striped" ><thead>
+<tr>
+<th>At risk</th>
+<th>Count</th>
+<th>Percent</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>We stand to lose customers</td>
+<td>14</td>
+<td>48%</td>
+</tr>
+<tr>
+<td>We stand to lose revenue</td>
+<td>9</td>
+<td>31%</td>
+</tr>
+<tr>
+<td>We could face legal action</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>We stand to lose developer/business time</td>
+<td>3</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>There would be no substantial impact</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+<tr>
+<td>All of the above</td>
+<td>1</td>
+<td>3%</td>
+</tr>
+</tbody></table>
+
+<p>As I expected, losing customers/revenue occupies the majority of the responses
+(nearly 80%). Elaborations ranged from direct revenue loss, to less direct,
+intangible loss. Some interesting quotes:</p>
+
+<ul>
+<li>&ldquo;We are a self-coaching tool [&hellip;] if we&rsquo;re down or buggy [then] folks [will]
+lose confidence in our tool and associate that with our approach and
+concept.&rdquo;</li>
+<li>&ldquo;If there was any more than a 5 minute outage, we could lose a large contract
+and subsequently a large portion of our business.&rdquo;</li>
+<li>&ldquo;Our customers&#39; inventory flow would be incorrect, either too much or not
+enough inventory moving between trading partners.&rdquo;</li>
+</ul>
+
+<h3>Other General Facts</h3>
+
+<ul>
+<li>72% of all systems under test were Clojure systems.</li>
+<li>Most respondents learned about simulation testing via Cognitect&rsquo;s efforts (not surprising).</li>
+<li>Most companies were introduced to simulation testing by a developer or team lead.</li>
+<li>Nearly every company considering simulation testing performs <em>at least</em> unit
+testing, if not integration, and other internal QA. Not a big surprise, given
+simulation testing is somewhat of a more rigorous form of testing. I wouldn&rsquo;t
+think a company not testing at all would considering going with simulation
+testing.</li>
+</ul>
+
+<h2>Who&rsquo;s using it?</h2>
+
+<p>Of those the 29 responses, 21 have considered simulation testing (positively),
+5 have implemented one, and 1 considered, but rejected. 2 respondents had not
+yet considered simulation testing internally.</p>
+
+<h3>Why yes?</h3>
+
+<p>Of the 5 respondents who already have simulation tests, these were some of the
+most <em>serious</em> customers. In fact, of one respondent I happen to know
+personally, I can almost certainly <em>guarantee</em> they&rsquo;d make national (possibly
+international) news if they had a serious failure.</p>
+
+<p>These respondents are also different in that they&rsquo;re generally larger (25-500
+employees), and generally classified their risks as either loss of customers or
+revenue. Interestingly, only one of these customers uses Simulant (and the one
+that does, uses a fork of it). I can only presume this is because a)
+&ldquo;simulation testing&rdquo; as a concept is not entirely novel, and b) because these
+established businesses needed to mitigate risks within their system before the
+advent of Simulant.</p>
+
+<h3>Why no?</h3>
+
+<p>The single respondent whose company decided against simulation testing, did so
+primarily because it &ldquo;seemed like a lot of investment to try the approach.&rdquo;
+This foreshadows &ldquo;What Could Be Better&rdquo;, but I can only presume this was
+because of the lack of maturity around tooling and lack of success-stories.</p>
+
+<h3>Why maybe?</h3>
+
+<p>The most common thread through respondents positively considering simulation
+testing was the existence of mission critical systems that were complicated and
+hard to test. Less common, but still prevalent was a general curiosity about
+the technique.</p>
+
+<p>The most interesting response to me, by far, was a respondent who reported
+their system was an event-sourced system, that they could (relatively)
+trivially re-feed into a simulation test. I want to work on <em>that</em> system!</p>
+
+<h3>Not Considered</h3>
+
+<p>Only 2 respondents had yet to consider simulation testing. These two companies
+were both on the small side (&lt; 25), and noted a lack of familiarity with the
+technique/benefits.</p>
+
+<h2>What could be better?</h2>
+
+<p>Rounding out the survey, I asked two general questions:</p>
+
+<ul>
+<li><em>What could make simulation testing easier to implement or use</em>, and</li>
+<li><em>Do you have any general comments regarding simulation testing</em>.</li>
+</ul>
+
+<p>The responses to these questions are probably the most informative. Through
+nearly every response ran one common theme: <em>we need more resources</em>. Being as
+obscure a technique as it is, simulation testing lacks a lot of things
+techniques like TDD have going for them. This is supported by responses to &ldquo;How
+would you rate your team&rsquo;s skills&hellip;&rdquo;, with 75% of respondents familiar with
+only the basics of simulation testing, or not at all.</p>
+
+<p>respondents identified a lack of:</p>
+
+<ul>
+<li>A body of knowledge &ndash; think blog articles, tutorials, videos, books, etc.</li>
+<li>Helpful tools &ndash; think libraries, templates, and well-known best practices.</li>
+<li>Public success stories &ndash; A tool in some ways. Let me explain: a few
+respondents noted the difficulty of making a business-case for simulation
+testing, primarily based on the lack of public success stories. It&rsquo;s one thing
+to sell a fancy new technique on its own merits, it&rsquo;s another thing entirely to
+do it without any big companies putting their name behind it.</li>
+</ul>
+
+<h2>Summary</h2>
+
+<p>In general, I&rsquo;m really happy with how the survey turned out. I had been
+prepared for maybe 5-10 results, but 30, boy, that&rsquo;s actually a workable number
+of responses. I&rsquo;m also really happy with the depth of the responses I
+received&ndash;nearly everyone elaborated on why they made certain choices and how
+simulation testing could be better.</p>
+
+<p>Going forward this year, simulation testing is going to be my primary focus. In
+fact, I&rsquo;m building <em>Homegrown Labs</em> (my company) around it. If you want to
+learn more about simulation testing, I encourage you to sign up for my mailing
+list below. In the near future, I&rsquo;ll be blogging about techniques,
+open-sourcing useful tools, and talking about how you can convince your boss to
+let you make take the plunge into simulation testing.</p>

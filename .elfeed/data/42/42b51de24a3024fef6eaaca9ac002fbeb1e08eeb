@@ -1,0 +1,156 @@
+<div class="outline-2" id="outline-container-1">
+<div class="outline-text-2" id="text-1">
+The mode-line is the emacs 'status bar', the bar just above the minibuffer
+  that shows various pieces of information, such as the buffer name, the major
+  mode, maybe the current line number, some indicators for active minor modes,
+  and so on. As I'm looking at it, it starts with <code>1&lt;U:**-</code> (which is:
+  input-method: <code>latin-1-alt-postfix</code>, buffer-coding-system: <code>utf8-unix</code>,
+  line-ending: unix-style, buffer is writable and buffer is modified – the
+  tooltips help).
+<br />
+As with just about <i>anything</i> in emacs, the mode-line can be customized just
+  the way you like. I give some example below, not because I think it is
+  necessarily the <i>best</i> way, but just to give you a bit of an example to
+  start with when making your own best-mode-line-ever.
+<br />
+I'm not going through all the details of the example, but let me highlight a
+  few things that make it a bit easier to understand.
+<br />
+First of all, the mode-line can be customized by setting the variable
+  <code>mode-line-format</code>; this variable becomes buffer-local automatically when
+  changed, so if you want to set it for <i>all</i> buffers, you'll need to use
+  <code>setq-default</code> in your <code>.emacs</code> (or equivalent). The format is quite similar
+  to the one for <code>frame-title-format</code>, which we discussed in <a href="http://emacs-fu.blogspot.com/2011/01/setting-frame-title.html">setting the frame title</a> a while back.
+<br />
+<code>mode-line-format</code> is a <i>list</i> of items which are evaluated, and put
+  together as a string which then ends up as the mode-line contents. These
+  properties can be any string. The following types of items can be used:
+<br />
+<ul>
+<li>First, normal strings are just shown as-is;
+
+</li>
+<li>Then, there are some special format parameters which will be replaced with
+    their value in the mode-line, from the Emacs-documentation:
+</li>
+</ul>
+<pre class="example">  %b -- print buffer name.      %f -- print visited file name.
+  %F -- print frame name.
+  %* -- print %, * or hyphen.   %+ -- print *, % or hyphen.
+        %&amp; is like %*, but ignore read-only-ness.
+        % means buffer is read-only and * means it is modified.
+        For a modified read-only buffer, %* gives % and %+ gives *.
+  %s -- print process status.   %l -- print the current line number.
+  %c -- print the current column number (this makes editing slower).
+        To make the column number update correctly in all cases,
+        `column-number-mode' must be non-nil.
+  %i -- print the size of the buffer.
+  %I -- like %i, but use k, M, G, etc., to abbreviate.
+  %p -- print percent of buffer above top of window, or Top, Bot or All.
+  %P -- print percent of buffer above bottom of window, perhaps plus Top,
+        or print Bottom or All.
+  %n -- print Narrow if appropriate.
+  %t -- visited file is text or binary (if OS supports this distinction).
+  %z -- print mnemonics of keyboard, terminal, and buffer coding systems.
+  %Z -- like %z, but including the end-of-line format.
+  %e -- print error message about full memory.
+  %@ -- print @ or hyphen.  @ means that default-directory is on a
+        remote machine.
+  %[ -- print one [ for each recursive editing level.  %] similar.
+  %% -- print %.   %- -- print infinitely many dashes.
+Decimal digits after the % specify field width to which to pad.
+</pre>
+<ul>
+<li>Forms of the type <code>(:eval ...)</code> are evaluated each time the mode-line is
+    drawn (just like the '%'-parameters) ; so, if you have a value that
+    changes of the course your emacs session, you should use <code>(:eval ...)</code>.
+
+For example, for your emacs-uptime you could use <code>(:eval (emacs-uptime     "%hh"))</code>; while the emacs-PID does not change, so simply you could simply
+    use  <code>(format "PID:%d")</code>.
+<br />
+
+The format parameter mentioned above are of evaluated each time as
+    well. Note that you have to be a bit careful with evaluations - don't do
+    too heavy operations there, and be careful the updates don't recurse.
+<br />
+
+</li>
+<li>There are many others which I won't go into now - please check the Elisp
+    reference. It's a rather baroque format…
+</li>
+</ul>
+Now, let's put this all together in an example (tested with emacs 23 and
+  24). As I said, this is for demonstration purposes only; but hopefully it
+  gives you some inspiration. A lot of the 'magic' (colors, tooltips, faces)
+  happens with the <code>propertize</code> function; again, the Elisp documentation can
+  tell you a lot more about that. I'm (ab)using the various <code>font-lock</code>-faces to
+  have colors that blend in nicely with your current theme.
+<br />
+And it has a limitation still, namely that it does not react to mouse clicks;
+  how to that, I will discuss in some future article.<br />
+<br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://3.bp.blogspot.com/-G61SgIkKlnA/TlazomhrDJI/AAAAAAAAAjg/j39mNphvNNY/s1600/modeline.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" src="http://3.bp.blogspot.com/-G61SgIkKlnA/TlazomhrDJI/AAAAAAAAAjg/j39mNphvNNY/s1600/modeline.png" /></a></div>
+<br />
+<br />
+<pre class="src src-elisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">use </span><span class="org-comment"><span class="org-keyword">setq</span></span><span class="org-comment">-default to set it for /all/ modes</span>
+(<span class="org-keyword">setq</span> mode-line-format
+  (list
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">the buffer name; the file name as a tool tip</span>
+    '(<span class="org-builtin">:eval</span> (propertize <span class="org-string">"%b "</span> 'face 'font-lock-keyword-face
+        'help-echo (buffer-file-name)))
+
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">line and column</span>
+    <span class="org-string">"("</span> <span class="org-comment-delimiter">;; </span><span class="org-comment">'%02' to set to 2 chars at least; prevents flickering</span>
+      (propertize <span class="org-string">"%02l"</span> 'face 'font-lock-type-face) <span class="org-string">","</span>
+      (propertize <span class="org-string">"%02c"</span> 'face 'font-lock-type-face) 
+    <span class="org-string">") "</span>
+
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">relative position, size of file</span>
+    <span class="org-string">"["</span>
+    (propertize <span class="org-string">"%p"</span> 'face 'font-lock-constant-face) <span class="org-comment-delimiter">;; </span><span class="org-comment">% above top</span>
+    <span class="org-string">"/"</span>
+    (propertize <span class="org-string">"%I"</span> 'face 'font-lock-constant-face) <span class="org-comment-delimiter">;; </span><span class="org-comment">size</span>
+    <span class="org-string">"] "</span>
+
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">the current major mode for the buffer.</span>
+    <span class="org-string">"["</span>
+
+    '(<span class="org-builtin">:eval</span> (propertize <span class="org-string">"%m"</span> 'face 'font-lock-string-face
+              'help-echo buffer-file-coding-system))
+    <span class="org-string">"] "</span>
+
+
+    <span class="org-string">"["</span> <span class="org-comment-delimiter">;; </span><span class="org-comment">insert vs overwrite mode, input-method in a tooltip</span>
+    '(<span class="org-builtin">:eval</span> (propertize (<span class="org-keyword">if</span> overwrite-mode <span class="org-string">"Ovr"</span> <span class="org-string">"Ins"</span>)
+              'face 'font-lock-preprocessor-face
+              'help-echo (concat <span class="org-string">"Buffer is in "</span>
+                           (<span class="org-keyword">if</span> overwrite-mode <span class="org-string">"overwrite"</span> <span class="org-string">"insert"</span>) <span class="org-string">" mode"</span>)))
+
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">was this buffer modified since the last save?</span>
+    '(<span class="org-builtin">:eval</span> (<span class="org-keyword">when</span> (buffer-modified-p)
+              (concat <span class="org-string">","</span>  (propertize <span class="org-string">"Mod"</span>
+                             'face 'font-lock-warning-face
+                             'help-echo <span class="org-string">"Buffer has been modified"</span>))))
+
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">is this buffer read-only?</span>
+    '(<span class="org-builtin">:eval</span> (<span class="org-keyword">when</span> buffer-read-only
+              (concat <span class="org-string">","</span>  (propertize <span class="org-string">"RO"</span>
+                             'face 'font-lock-type-face
+                             'help-echo <span class="org-string">"Buffer is read-only"</span>))))  
+    <span class="org-string">"] "</span>
+
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">add the time, with the date and the emacs uptime in the tooltip</span>
+    '(<span class="org-builtin">:eval</span> (propertize (format-time-string <span class="org-string">"%H:%M"</span>)
+              'help-echo
+              (concat (format-time-string <span class="org-string">"%c; "</span>)
+                      (emacs-uptime <span class="org-string">"Uptime:%hh"</span>))))
+    <span class="org-string">" --"</span>
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">i don't want to see minor-modes; but if you want, uncomment this:</span>
+    <span class="org-comment-delimiter">;; </span><span class="org-comment">minor-mode-alist  ;; list of minor modes</span>
+    <span class="org-string">"%-"</span> <span class="org-comment-delimiter">;; </span><span class="org-comment">fill with '-'</span>
+    ))
+</pre>
+Have fun playing with this!
+</div>
+</div>

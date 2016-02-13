@@ -1,0 +1,71 @@
+<p>
+<a href="http://doc.endlessparentheses.com/Fun/capitalize-word"><code>capitalize-word</code></a> and <a href="http://doc.endlessparentheses.com/Fun/downcase-word"><code>downcase-word</code></a> are godsends. Like many other
+commands, they've spoiled me to the point that I can no longer write
+prose without Emacs. There's just one peeve that bothers me quite often.
+</p>
+
+<p>
+Let's say I want to join the following two sentences, and point is at the “B”.
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">Languages are fleeting. But Emacs is forever.</code></pre></figure>
+<p>
+You could do <kbd>DEL DEL , M-l</kbd>, but that's so long! When I
+<code>downcase</code> the word “But”, it's perfectly obvious that I'll want to get rid of
+that full stop, so why can't <kbd>M-l</kbd> do that for me?
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">global-set-key</span> <span class="s">"\M-c"</span> <span class="ss">'endless/capitalize</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="s">"\M-l"</span> <span class="ss">'endless/downcase</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="s">"\M-u"</span> <span class="ss">'endless/upcase</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/convert-punctuation</span> <span class="p">(</span><span class="nv">rg</span> <span class="nv">rp</span><span class="p">)</span>
+  <span class="s">"Look for regexp RG around point, and replace with RP.
+Only applies to text-mode."</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">f</span> <span class="s">"\\(%s\\)\\(%s\\)"</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">space</span> <span class="s">"?:[[:blank:]\n\r]*"</span><span class="p">))</span>
+    <span class="c1">;; We obviously don't want to do this in prog-mode.</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nv">derived-mode-p</span> <span class="ss">'text-mode</span><span class="p">)</span>
+             <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">looking-at</span> <span class="p">(</span><span class="nb">format</span> <span class="nv">f</span> <span class="nv">space</span> <span class="nv">rg</span><span class="p">))</span>
+                 <span class="p">(</span><span class="nv">looking-back</span> <span class="p">(</span><span class="nb">format</span> <span class="nv">f</span> <span class="nv">rg</span> <span class="nv">space</span><span class="p">))))</span>
+        <span class="p">(</span><span class="nv">replace-match</span> <span class="nv">rp</span> <span class="no">nil</span> <span class="no">nil</span> <span class="no">nil</span> <span class="mi">1</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/capitalize</span> <span class="p">()</span>
+  <span class="s">"Capitalize region or word.
+Also converts commas to full stops, and kills
+extraneous space at beginning of line."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">endless/convert-punctuation</span> <span class="s">","</span> <span class="s">"."</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">use-region-p</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">call-interactively</span> <span class="ss">'capitalize-region</span><span class="p">)</span>
+    <span class="c1">;; A single space at the start of a line:</span>
+    <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nv">looking-at</span> <span class="s">"^\\s-\\b"</span><span class="p">)</span>
+      <span class="c1">;; get rid of it!</span>
+      <span class="p">(</span><span class="nv">delete-char</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">call-interactively</span> <span class="ss">'subword-capitalize</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/downcase</span> <span class="p">()</span>
+  <span class="s">"Downcase region or word.
+Also converts full stops to commas."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">endless/convert-punctuation</span> <span class="s">"\\."</span> <span class="s">","</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">use-region-p</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">call-interactively</span> <span class="ss">'downcase-region</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">call-interactively</span> <span class="ss">'subword-downcase</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/upcase</span> <span class="p">()</span>
+  <span class="s">"Upcase region or word."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">use-region-p</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">call-interactively</span> <span class="ss">'upcase-region</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">call-interactively</span> <span class="ss">'subword-upcase</span><span class="p">)))</span></code></pre></figure>
+<p>
+The snippet above will automatically convert between commas and full-stops when
+you're (un)capitalizing prose. It comes up on every single writing session for
+me.
+</p>
+
+<p>
+Now I can just hit <kbd>M-l</kbd> and get
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">Languages are fleeting, but Emacs is forever.</code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/super-smart-capitalization.html?source=rss#disqus_thread">Comment on this.</a></p>

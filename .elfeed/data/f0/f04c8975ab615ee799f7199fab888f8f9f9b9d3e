@@ -1,0 +1,122 @@
+<p>For a long time, I wrote Datomic-based applications in a style where a <code>conn</code>
+value was globally available in my core &ldquo;db&rdquo; namespace. It just seamed easy; no
+futzing about connecting to a URI (<code>connect</code>) or creating a database
+(<code>create-database</code>) just to get started interacting with a database from the
+REPL.</p>
+
+<p>It looks a little something like this:</p>
+<pre class="highlight clojure"><span class="p">(</span><span class="nf">ns</span><span class="w"> </span><span class="n">my.app.db</span><span class="w">
+  </span><span class="p">(</span><span class="no">:require</span><span class="w"> </span><span class="p">[</span><span class="n">datomic.api</span><span class="w"> </span><span class="no">:as</span><span class="w"> </span><span class="n">d/</span><span class="p">)</span><span class="w">
+
+</span><span class="p">(</span><span class="k">def</span><span class="w"> </span><span class="n">uri</span><span class="w"> </span><span class="s">"..."</span><span class="p">)</span><span class="w">
+
+</span><span class="p">(</span><span class="k">def</span><span class="w"> </span><span class="n">conn</span><span class="w">
+  </span><span class="p">(</span><span class="nf">d/connect</span><span class="w"> </span><span class="n">uri</span><span class="p">))</span><span class="w">
+
+</span><span class="c1">;; and you're on with your day
+</span></pre>
+<p>After toiling with this approach for some time, I&rsquo;ve come to realize this is an
+anti-pattern, for one big reason:</p>
+
+<p><strong>Early connections bloat application launch time</strong></p>
+
+<h2>Costs</h2>
+
+<p>Connecting to a database in Datomic realizes a number of costs:</p>
+
+<ul>
+<li>Your peer must handshake with and connect to storage (time).</li>
+<li>Your peer draws portions of the index into local memory (time).</li>
+<li>To connect, you must have an existing database.</li>
+<li>Your application launch <em>immediately</em> consumes a peer slot.</li>
+<li>You&rsquo;ll be tempted to bake-in bootstrapping/schema-migrations to your
+connection logic (more time).</li>
+</ul>
+
+<p>All of this adds up; applications, more specifically, your REPL, will take
+longer to launch, and decrease Clojure&rsquo;s already tenuous launch times.</p>
+
+<h2>Doing it right</h2>
+
+<p>The solution is simple, both conceptually and in practice: <strong>defer connecting to
+and setting up a Datomic database until it is actually needed.</strong></p>
+
+<p>In web applications, this means setting up a connection <em>at service launch</em>,
+rather than <em>process launch</em>. I generally call this function <code>bootstrap!</code>, and
+within it I wrap up all aspects of database connection and initialization.</p>
+
+<p>The following sample creates a database, connects to it, and transacts all of
+the relevant schema (using <a href="https://github.com/rkneufeld/conformity/">conformity</a>):</p>
+<pre class="highlight clojure"><span class="p">(</span><span class="k">defn</span><span class="w"> </span><span class="n">bootstrap!</span><span class="w">
+  </span><span class="s">"Bootstrap schema into the database."</span><span class="w">
+  </span><span class="p">[</span><span class="n">uri</span><span class="p">]</span><span class="w">
+  </span><span class="c1">;; Create the database
+</span><span class="w">  </span><span class="p">(</span><span class="nf">d/create-database</span><span class="w"> </span><span class="n">uri</span><span class="p">)</span><span class="w"> </span><span class="c1">;; an idempotent call
+</span><span class="w">  </span><span class="c1">;; Connect to it
+</span><span class="w">  </span><span class="p">(</span><span class="k">let</span><span class="w"> </span><span class="p">[</span><span class="n">conn</span><span class="w"> </span><span class="p">(</span><span class="nf">d/connect</span><span class="w"> </span><span class="n">uri</span><span class="p">)]</span><span class="w">
+    </span><span class="c1">;; and transact our application's schema...
+</span><span class="w">    </span><span class="p">(</span><span class="nb">doseq</span><span class="w"> </span><span class="p">[</span><span class="n">rsc</span><span class="w"> </span><span class="p">[</span><span class="s">"bouncy-castle.edn"</span><span class="p">]]</span><span class="w">
+      </span><span class="p">(</span><span class="k">let</span><span class="w"> </span><span class="p">[</span><span class="n">norms</span><span class="w"> </span><span class="p">(</span><span class="nf">c/load-schema-rsc</span><span class="w"> </span><span class="n">rsc</span><span class="p">)]</span><span class="w">
+        </span><span class="p">(</span><span class="nf">c/ensure-conforms</span><span class="w"> </span><span class="n">conn</span><span class="w"> </span><span class="n">norms</span><span class="p">)))))</span><span class="w">
+</span></pre>
+<p>Once you have such a function in hand, wrap it up in the code that launches
+your application. (Ensuring, of course, that launching a REPL doesn&rsquo;t actually
+<em>fully</em> launch your application.)</p>
+
+<p>Stuart Sierra&rsquo;s <a href="https://github.com/stuartsierra/component">component</a> makes this rather easy, but it&rsquo;s just as
+well to do this closer to your application&rsquo;s lifecycle:</p>
+<pre class="highlight clojure"><span class="c1">;; By defining a component...
+</span><span class="p">(</span><span class="nf">defrecord</span><span class="w"> </span><span class="n">DatomicDatabase</span><span class="w"> </span><span class="p">[</span><span class="n">uri</span><span class="p">]</span><span class="w">
+  </span><span class="n">component/Lifecycle</span><span class="w">
+  </span><span class="p">(</span><span class="nf">start</span><span class="w"> </span><span class="p">[</span><span class="n">component</span><span class="p">]</span><span class="w">
+    </span><span class="p">(</span><span class="nf">bootstrap!</span><span class="w"> </span><span class="n">uri</span><span class="p">)</span><span class="w">
+    </span><span class="p">(</span><span class="k">let</span><span class="w"> </span><span class="p">[</span><span class="n">conn</span><span class="w"> </span><span class="p">(</span><span class="nf">d/connect</span><span class="w"> </span><span class="n">uri</span><span class="p">)]</span><span class="w">
+      </span><span class="p">(</span><span class="nb">assoc</span><span class="w"> </span><span class="n">component</span><span class="w"> </span><span class="no">:conn</span><span class="w"> </span><span class="n">conn</span><span class="p">))</span><span class="w">
+
+  </span><span class="p">(</span><span class="nf">stop</span><span class="w"> </span><span class="p">[</span><span class="n">component</span><span class="p">]</span><span class="w">
+   </span><span class="p">(</span><span class="nb">dissoc</span><span class="w"> </span><span class="n">component</span><span class="w"> </span><span class="no">:conn</span><span class="p">))))</span><span class="w">
+
+</span><span class="c1">;; Or, more directly (a Pedestal example)...
+</span><span class="p">(</span><span class="k">defn</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="p">[</span><span class="n">service</span><span class="p">]</span><span class="w">
+  </span><span class="p">(</span><span class="nf">db/bootstrap!</span><span class="w"> </span><span class="n">db/uri</span><span class="p">)</span><span class="w">
+  </span><span class="p">(</span><span class="nf">alter-var-root</span><span class="w"> </span><span class="o">#</span><span class="ss">'server</span><span class="w"> </span><span class="p">(</span><span class="k">fn</span><span class="w"> </span><span class="p">[</span><span class="n">_</span><span class="p">]</span><span class="w"> </span><span class="p">(</span><span class="nf">http/create-server</span><span class="w"> </span><span class="n">service</span><span class="p">)))</span><span class="w">
+  </span><span class="p">(</span><span class="nf">http/start</span><span class="w"> </span><span class="n">server</span><span class="p">))</span><span class="w">
+</span></pre>
+<h2>A Conn in Every House</h2>
+
+<p>Once your application is up and running, the last thing you need to worry about
+is providing an active connection to your application.</p>
+
+<p>Despite my warnings, you shouldn&rsquo;t be afraid to code your APIs to Datomic URIs (rather
+than connections). Although <code>connect</code> is a relatively expensive call, it is
+only expensive <strong>once</strong>. Datomic caches connections internally, thus each
+successive call to <code>connect</code> is essentially inert.</p>
+
+<p>That said, I find the above a little ugly, so I opt instead to inject a <code>conn</code>
+variable via middleware. The following Pedestal interceptor injects a <code>conn</code>
+and most-recent database value into every request:</p>
+<pre class="highlight clojure"><span class="p">(</span><span class="nf">defbefore</span><span class="w"> </span><span class="n">insert-db</span><span class="w"> </span><span class="p">[</span><span class="n">context</span><span class="p">]</span><span class="w">
+  </span><span class="p">(</span><span class="k">let</span><span class="w"> </span><span class="p">[</span><span class="n">conn</span><span class="w"> </span><span class="p">(</span><span class="nf">d/connect</span><span class="w"> </span><span class="n">uri</span><span class="p">)]</span><span class="w">
+    </span><span class="p">(</span><span class="nb">assoc</span><span class="w"> </span><span class="n">context</span><span class="w">
+           </span><span class="no">:conn</span><span class="w"> </span><span class="n">conn</span><span class="w">
+           </span><span class="no">:db</span><span class="w"> </span><span class="p">(</span><span class="nf">d/db</span><span class="w"> </span><span class="n">conn</span><span class="p">))))</span><span class="w">
+</span></pre>
+<h3>And the REPL&hellip;</h3>
+
+<p>I&rsquo;ve side-stepped one last important detail. While my REPLs launch quickly, I
+don&rsquo;t have direct access to a <code>conn</code>. Unfortunately, for this, I don&rsquo;t yet have
+an ideal solution.</p>
+
+<p>For the time being, I get around this by defining a comment block (as below)
+ that defines a <code>conn</code> var in my database namespace. Whenever I launch a REPL,
+I invoke this <code>def</code>, and gain access to a more immediate <code>conn</code> than connecting
+ad hoc.</p>
+<pre class="highlight clojure"><span class="p">(</span><span class="nb">comment</span><span class="w">
+  </span><span class="p">(</span><span class="k">def</span><span class="w"> </span><span class="n">conn</span><span class="w">
+    </span><span class="p">(</span><span class="nb">doto</span><span class="w"> </span><span class="n">uri</span><span class="w">
+      </span><span class="n">bootstrap!</span><span class="w">
+      </span><span class="n">d/connect</span><span class="p">)))</span><span class="w">
+</span></pre>
+<p><strong>How about yourself? Have you noticed connecting to a Datomic database bogging
+down your REPL launches? How do you pass around connections in your own
+applications?</strong></p>

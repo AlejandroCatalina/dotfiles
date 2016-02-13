@@ -1,0 +1,17 @@
+<div class="date">21 Mar 2015</div>
+
+    <p>
+    On the Macintosh, the Finder can trigger a script due to any change
+    of a file in a directory (Apple calls these <b>Folder Actions</b>). I was
+    tempted to try and learn enough of this so I could <code>rsync</code> all local
+    file changes to a system in the lab....
+    </p>
+
+    <p>
+    Seemed easier for me to just modify Emacs.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Emacs/save-hooks.html">Read more...</a>
+    </p>
+    

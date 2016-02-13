@@ -1,0 +1,16 @@
+<div class="date"> 6 Jan 2016</div>
+
+    <p>
+    If you haven&rsquo;t used <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Imenu.html">imenu</a> in Emacs, you should try it. It gives you
+    a way to select all <i>top-level items</i> of a file... functions and
+    constants in source code or headers in an org-mode file.
+    </p>
+
+    <p>
+    I have a couple of suggestions to make the interface a bit nicer:
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Emacs/imenu.html">Read more...</a>
+    </p>
+    

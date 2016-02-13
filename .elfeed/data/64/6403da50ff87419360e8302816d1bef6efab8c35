@@ -1,0 +1,71 @@
+<p>In this post I’ll introduce you to two modes that bring some typographic editing
+features to Emacs: <a href="https://github.com/jorgenschaefer/typoel">Typo Mode</a> and Tildify Mode.  These modes help you use
+typographic quotes, punctuation and spaces.</p>
+
+<!--more-->
+
+<h1 id="typo-mode">Typo Mode</h1>
+
+<p><a href="https://github.com/jorgenschaefer/typoel">Typo Mode</a> is a 3rd party package that supports typographic quotes and
+punctuation.  It comes in two flavours.  <code class="highlighter-rouge">typo-global-mode</code> is a global minor
+mode which provides shortcuts for many special unicode characters under <kbd>C-c
+8</kbd>, complementing the built-in <kbd>C-x 8</kbd> keymap.</p>
+
+<p><code class="highlighter-rouge">typo-mode</code> itself is more interesting.  This minor mode changes the behaviour
+of some keys like <kbd>"</kbd>, <kbd>.</kbd> or <kbd>-</kbd> to cycle among
+typographic variants of the corresponding character or to compose repeated
+occurrences into a single typographic character.</p>
+
+<p>For example, <kbd>"</kbd> inserts <code class="highlighter-rouge">“</code> (<em>left double quotation mark</em>).
+Subsequent pressing of <kbd>"</kbd> cycles among <code class="highlighter-rouge">"</code> (<em>quotation mark</em>), <code class="highlighter-rouge">“</code>,
+<code class="highlighter-rouge">”</code> (<em>right double quotation mark</em>), <code class="highlighter-rouge">‘</code> (<em>left single quotation mark</em>), and <code class="highlighter-rouge">’</code>
+(<em>right single quotation mark</em>).  The initial character is context-aware: After
+a left double quote the first character becomes <code class="highlighter-rouge">‘</code>, a single quotation mark,
+that is.  Likewise, after an opening single quotation mark the first character
+is <code class="highlighter-rouge">’</code>, i.e. the closing single quotation mark.</p>
+
+<p>Typo Mode supports different languages with different quotation rules.  The
+above shows the quotation rules of the English languages; Typo Mode also
+supports Czech, German, French, Finnish, Russian and Italian.  Changing the
+language with <code class="highlighter-rouge">M-x typo-change-language</code> changes both the initial character and
+the subsequent cycling characters.  For instance, in German language cycling
+starts at <code class="highlighter-rouge">„</code> (<em>low double comma quotation mark</em>) which is the opening quotation
+character in German language.</p>
+
+<p>In a similar way <kbd>-</kbd> cycles through different variants of hyphens and
+dashes.  <kbd>.</kbd> continues to insert a normal dot, but inserting three dots
+in a row will insert a unicode ellipsis <code class="highlighter-rouge">…</code>.</p>
+
+<p>To enable Typo Mode add it to the hooks of the modes you’d like to use Typo Mode
+in:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'text-mode-hook</span> <span class="nf">#'</span><span class="nv">typo-mode</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>If you use <a href="https://github.com/syl20bnr/spacemacs">Spacemacs</a> enable the <a href="https://github.com/syl20bnr/spacemacs/tree/develop/layers/typography">Typography layer</a>.</p>
+
+<h1 id="tildify-mode">Tildify Mode</h1>
+
+<p>Tildify Mode is a built-in mode in Emacs 25 and upwards that automatically
+inserts <a href="https://en.wikipedia.org/wiki/Non-breaking_space">non-breaking spaces</a> when appropriate.  A non-breaking space
+is like a normal whitespace but inhibits word wrapping.  It is typically used
+after single letters where a line breaking would be confusing and distracting.
+For instance, it’s bad style to have a line break after “I”, because a single
+letter at the end of a line is too easily overlooked.</p>
+
+<p>A good word processor or a type setting system such as LaTeX normally handles
+non-breaking spaces automatically, but the layout engines of browser or plain
+text viewers are not that sophisticated and require explicit non-breaking spaces
+to achieve a good text layout.  Tildify Mode helps you by inserting non-breaking
+spaces at obvious places such as single letter words.</p>
+
+<p>Like Typo Mode you can enable Tildify Mode by adding it to appropriate hooks,
+e.g.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nv">version&lt;=</span> <span class="s">"25"</span> <span class="nv">emacs-version</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'text-mode-hook</span> <span class="nf">#'</span><span class="nv">tildify-mode</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>Tildify Mode is also part of the Typography layer of Spacemacs.</p>

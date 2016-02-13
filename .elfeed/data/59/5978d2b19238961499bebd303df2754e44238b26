@@ -1,0 +1,84 @@
+<p>
+Over the last couple of weeks, I’ve been working on a Clojure debugger for <a href="https://github.com/clojure-emacs/cider">Cider</a>
+that is strongly inspired by Edebug. Stepping trough code of any form and
+injecting values into running code are the features available in this first
+release.
+</p>
+
+<p>
+This little project started shortly after I my first practical delve into
+Clojure. I was impressed at how well Cider integrated Clojure into Emacs, it
+almost felt like writing Elisp! When <a href="https://twitter.com/bbatsov/status/574112622167068672">Bozhidar mentioned</a> that they were in need
+of a debugger, I figured that would be as a good a chance as any to practice some
+Clojure. Since my praise for Edebug <a href="/debugging-emacs-lisp-part-1-earn-your-independence.html">is no secret</a> around here, it should come as
+no surprise that I’d model <code>cider-debug</code> after it (albeit, a bit more limited).
+</p>
+
+<p>
+I should also mention the <a href="https://github.com/razum2um/clj-debugger">clj-debugger</a> plugin, which we don’t use anymore but
+was a great help while writing this feature.
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Usage</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+First, if you’re still using <code>cider</code> 0.8, you’ll need to upgrade to the latest
+stable version <a href="http://stable.melpa.org/#/cider"><code>cider</code> 0.9</a>, which is available on Melpa. Additionally, ensure
+your “~/.lein/profiles.clj” file is consistent with that.
+</p>
+<figure class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">{</span><span class="no">:user</span><span class="w"> </span><span class="p">{</span><span class="no">:plugins</span><span class="w"> </span><span class="p">[[</span><span class="n">cider/cider-nrepl</span><span class="w"> </span><span class="s">"0.9.0"</span><span class="p">]]}}</span></code></pre></figure>
+
+<p>
+Once that is done, using <code>cider-debug</code> could hardly be more straightforward.
+Just instrument an expression with <kbd>C-u C-M-x</kbd>, and you’ll be taken through the
+code step-by-step. There, you can move on with <kbd>n</kbd>, quit with <kbd>q</kbd>, or inject
+values with <kbd>i</kbd>. Note that if you instrument a <code>defn</code> the debugger will not
+start immediately, instead, you’ll be taken to the debugger each time the
+function is executed.
+</p>
+
+<p>
+This sort of thing is easier to explain with a gif.
+</p>
+
+
+<div class="figure">
+<p><a href="/images/cider-debug.gif"><img src="/images/cider-debug.gif" alt="cider-debug.gif" /></a>
+</p>
+</div>
+
+<p>
+We’d very much appreciate the feedback of any Clojurists out there. <a href="https://github.com/clojure-emacs/cider/issues">File an
+issue</a> if you spot something, or just share your thoughts with us on <a href="http://twitter.com/AMalabarba">Twitter</a> or
+<a href="https://gitter.im/clojure-emacs/cider">Gitter</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Update <span class="timestamp-wrapper"><span class="timestamp">&lt;2015-06-16 Tue&gt;</span></span></h2>
+<div class="outline-text-2" id="text-2">
+<p>
+That screen-cast above is a little outdated now. Since it was recorded, the
+debugger has acquired <a href="https://github.com/clojure-emacs/cider#cider-debug">even more features</a>:
+</p>
+<ul class="org-ul">
+<li>listing local variables,
+</li>
+<li>evaluating code in the current lexical scope,
+</li>
+<li>injecting values into the code,
+</li>
+<li>a move-out command similar to Edebug.
+</li>
+</ul>
+
+<p>
+I’ll make another post eventually, but it’s perfectly intuitive and easy to use.
+So give it a try yourself if you use cider.
+</p>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/cider-debug-a-visual-interactive-debugger-for-clojure.html?source=rss#disqus_thread">Comment on this.</a></p>

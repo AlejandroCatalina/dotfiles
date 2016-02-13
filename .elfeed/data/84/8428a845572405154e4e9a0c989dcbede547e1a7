@@ -1,0 +1,113 @@
+<p>As with many things in the realm of Computer, some choices involve big
+tradeoffs. One of these is choosing to write software with a dynamic
+programming language. Having built some interesting and impactful user
+facing applications for many interesting companies over the years I
+can say with confidence that I personally enjoy and in many cases
+prefer the flexibility afforded by dynamic typing. However unlike some
+worshippers at the altar of Dynamism I don my <strong>Cap of Discernment
++1</strong> and admit:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">                             Not everything is awesome.
+                                  - Rich Hickey
+</code></pre></div>
+<p>Well engineered non-trivial systems written in dynamic languages
+embrace runtime assertions especially near public interfaces. For
+example here&#39;s a snippet of code from React.js that does exactly
+that:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js">  <span class="nx">_renderValidatedComponent</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="cm">/* ... */</span>
+    <span class="nx">invariant</span><span class="p">(</span>
+      <span class="nx">renderedComponent</span> <span class="o">===</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">renderedComponent</span> <span class="o">===</span> <span class="kc">false</span> <span class="o">||</span>
+      <span class="nx">ReactElement</span><span class="p">.</span><span class="nx">isValidElement</span><span class="p">(</span><span class="nx">renderedComponent</span><span class="p">),</span>
+      <span class="s1">&#39;%s.render(): A valid ReactComponent must be returned. You may have &#39;</span> <span class="o">+</span>
+        <span class="s1">&#39;returned undefined, an array or some other invalid object.&#39;</span><span class="p">,</span>
+      <span class="nx">inst</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">displayName</span> <span class="o">||</span> <span class="s1">&#39;ReactCompositeComponent&#39;</span>
+    <span class="p">);</span>
+    <span class="k">return</span> <span class="nx">renderedComponent</span><span class="p">;</span>
+  <span class="p">},</span>
+</code></pre></div>
+<p>Embracing assertions means a significantly more pleasant
+experience for newcomer and expert alike. While the learned can wax
+poetic for days about the utility of strong types for program design,
+the immediate benefit of stronger types is simply catching errors
+sooner and closer to the source of the problem! <em>Well placed</em> runtime
+assertions deliver precisely the same benefit.</p>
+
+<p>As the above React.js assertion alludes, asserting function arguments
+and return values yields the most bang for the buck.</p>
+
+<p>ClojureScript like Clojure has direct support for this pattern in the
+form of <code>:pre</code> and <code>:post</code> conditions. This is yet another
+<a href="http://en.wikipedia.org/wiki/Design_by_contract">old good idea</a>.</p>
+
+<p>Here&#39;s an example from Om 0.8.0. The <code>get-props</code> helper validates
+that its argument is a valid Om component:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">get-props</span>
+  <span class="s">&quot;Given an owning Pure node return the Om props. Analogous to React</span>
+<span class="s">   component props.&quot;</span>
+  <span class="p">([</span><span class="nv">x</span><span class="p">]</span>
+   <span class="p">{</span><span class="ss">:pre</span> <span class="p">[(</span><span class="nf">component?</span> <span class="nv">x</span><span class="p">)]}</span>
+   <span class="p">(</span><span class="nb">aget </span><span class="p">(</span><span class="nf">.-props</span> <span class="nv">x</span><span class="p">)</span> <span class="s">&quot;__om_cursor&quot;</span><span class="p">))</span>
+  <span class="p">([</span><span class="nv">x</span> <span class="nv">korks</span><span class="p">]</span>
+   <span class="p">{</span><span class="ss">:pre</span> <span class="p">[(</span><span class="nf">component?</span> <span class="nv">x</span><span class="p">)]}</span>
+   <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">korks</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nf">sequential?</span> <span class="nv">korks</span><span class="p">)</span> <span class="nv">korks</span> <span class="p">[</span><span class="nv">korks</span><span class="p">])]</span>
+     <span class="p">(</span><span class="nf">cond-&gt;</span> <span class="p">(</span><span class="nb">aget </span><span class="p">(</span><span class="nf">.-props</span> <span class="nv">x</span><span class="p">)</span> <span class="s">&quot;__om_cursor&quot;</span><span class="p">)</span>
+       <span class="p">(</span><span class="nb">seq </span><span class="nv">korks</span><span class="p">)</span> <span class="p">(</span><span class="nf">get-in</span> <span class="nv">korks</span><span class="p">)))))</span>
+</code></pre></div>
+<p><code>:pre</code> takes a vector of arbitrary predicate expressions, they must all
+return a truthy value otherwise the program will crash.</p>
+
+<p><code>:post</code> conditions are similarly useful. For example it&#39;s a common
+pattern to declare a protocol that other users can extend. This permits
+the design of pluggable systems - the idea is little different from
+Java interfaces, Go interfaces, Objective-C protocols, Haskell
+typeclasses etc.</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defprotocol </span><span class="nv">IReturnEven</span>
+  <span class="p">(</span><span class="nf">-return-even</span> <span class="p">[</span><span class="nv">x</span><span class="p">]))</span>
+</code></pre></div>
+<p>One useful pattern to pair with this - provide a common entry point:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">return-even</span> <span class="p">[</span><span class="nv">x</span><span class="p">]</span>
+  <span class="p">(</span><span class="nf">-return-even</span> <span class="nv">x</span><span class="p">)</span>
+</code></pre></div>
+<p>The benefit of the common entry point is that implementers can focus
+on their logic and the common entry point can provide shared assertion
+checking:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">defn </span><span class="nv">return-even</span> <span class="p">[</span><span class="nv">x</span><span class="p">]</span>
+  <span class="p">{</span><span class="ss">:pre</span>  <span class="p">[(</span><span class="nf">number?</span> <span class="nv">x</span><span class="p">)]</span> 
+   <span class="ss">:post</span> <span class="nv">even?</span><span class="p">}</span>
+  <span class="p">(</span><span class="nf">-return-even</span> <span class="nv">x</span><span class="p">)</span>
+</code></pre></div>
+<p>Now people that want to extend your system will get early errors when
+their implementations fail to pass the assertion.</p>
+
+<p>Of course you may need to place an assertion in some arbitrary
+location in your program. In ClojureScript <code>assert</code> satisifies this
+role. In fact <code>:pre</code> and <code>:post</code> are just sugar for automatically
+generating <code>assert</code>s.</p>
+
+<h2>Elision</h2>
+<div class="highlight"><pre><code class="language-text" data-lang="text">      LISP programmers know the value of everything and the cost of nothing. 
+                                 - Alan Perlis
+</code></pre></div>
+<p>The problem with good invariant checking is that it often comes with a
+runtime cost. React.js actually elides <code>invariant</code> from production
+builds (<strong>Update:</strong> Scott Feeney
+<a href="https://twitter.com/graue/status/553833079865749504">clarified this</a>,
+React.js does not elide the logic, just the strings). If you&#39;re a
+JavaScript developer this is yet another reason why a build step might
+not be a bad idea.</p>
+
+<p>All ClojureScript developers again have a leg up - simply provide
+<code>:elide-asserts true</code> to your production build config and be on your
+merry way.</p>
+
+<h2>Conclusion</h2>
+
+<p><code>:pre</code> and <code>:post</code> conditions are a simple way to provide faster
+failures for simpler reasoning about dynamic programs. They also work
+quite nicely as an extended form of documentation about the intent of
+the program.</p>
+
+<p>As always it&#39;s important to use this feature with moderation, don&#39;t
+forget to don your own <strong>Cap of Discernment +1</strong>.</p>
+
+<p>Happy hacking!</p>

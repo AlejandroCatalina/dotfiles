@@ -1,0 +1,85 @@
+<p><em>UPDATE: This post now contains obsolete information. Please
+read the new
+<a href="https://github.com/clojure/clojurescript/wiki/Quick-Start">ClojureScript Quick Start</a>
+instead</em></p>
+
+<p>My
+<a href="http://swannodette.github.io/2014/12/31/the-old-way-the-new-way">previous post</a>
+demonstrated a very manual series of steps for getting a sensible
+ClojureScript REPL setup going.</p>
+
+<p>This post covers the <em>easy</em> way using the shiny 0.0-2665 release of
+ClojureScript. The only thing you need to go through this is to have
+<a href="http://nodejs.org/">Node.js</a> and
+<a href="http://utopia.knoware.nl/%7Ehlub/uck/rlwrap/">rlwrap</a> (under OS X
+easily installed with <a href="http://brew.sh">brew</a>) installed:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">lein new mies hello-world
+cd hello-world
+</code></pre></div>
+<p>We want the REPL to load as fast as possible so compile
+ClojureScript once and for all:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./scripts/compile_cljsc
+</code></pre></div>
+<p>Before we start our REPL let&#39;s add a definition to the
+<code>hello-world.core</code> namespace. Use your favorite text editor
+to make it look like the following:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">hello-world.core</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nf">enable-console-print!</span><span class="p">)</span>
+
+<span class="c1">;; ADD THIS</span>
+<span class="p">(</span><span class="kd">defn </span><span class="nv">foo</span> <span class="p">[</span><span class="nv">a</span> <span class="nv">b</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nb">println </span><span class="s">&quot;Hello world!&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Now let&#39;s start a REPL:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./scripts/repl
+</code></pre></div>
+<p>It will take a few seconds the first time as we compile the standard
+library. It should be very fast to start on subsequent runs.</p>
+
+<p>Once we have a REPL up and running let&#39;s import something and try it:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">ClojureScript:cljs.user&gt; (require &#39;[hello-world.core :refer [foo]])
+Hello world!
+ClojureScript:cljs.user&gt; (foo 1 2)
+3
+</code></pre></div>
+<p>Unlike Node.js out of the box we can import namespaces again and
+ClojureScript will recompile and reload:</p>
+
+<p>Edit the <code>hello-world.core</code> namespace again with your text editor:</p>
+<div class="highlight"><pre><code class="language-clj" data-lang="clj"><span class="p">(</span><span class="kd">ns </span><span class="nv">hello-world.core</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nf">enable-console-print!</span><span class="p">)</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">foo</span> <span class="p">[</span><span class="nv">a</span> <span class="nv">b</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+
+<span class="c1">;; ADD THIS</span>
+<span class="p">(</span><span class="kd">defn </span><span class="nv">bar</span> <span class="p">[</span><span class="nv">a</span> <span class="nv">b</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">* </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nb">println </span><span class="s">&quot;Hello world!&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Just press the up arrow at the REPL to get back to the previous
+require statement and edit it to include <code>:reload</code>:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">ClojureScript:cljs.user&gt; (require &#39;[hello-world.core :refer [foo]] :reload)
+Hello world!
+ClojureScript:cljs.user&gt; hello-world.core
+#js {:foo #&lt;function foo(a,b){
+return (a + b);
+}&gt;, :bar #&lt;function bar(a,b){
+return (a + b);
+}&gt;}
+</code></pre></div>
+<p>There&#39;s our new definition as expected!</p>
+
+<p>For the experienced ClojureScript developers I highly recommend poking
+around at the provided scripts. As you&#39;ll see with some investigation
+the Node.js REPL and the dev build use the same output directory. This
+means if you already have a build you can start a REPL pretty much
+instantly by setting the REPLs <code>:output-dir</code> and <code>:cache-analysis</code>
+values to be the same as your build.</p>
+
+<p>Happy hacking!</p>

@@ -1,0 +1,33 @@
+<p>
+Now that you’ve started your journey on the Typography Express by <a href="/prettify-your-quotation-marks.html">using round
+double quotes</a>, take a seat and extend that to your apostrophes as well. This
+snippet binds a round apostrophe to the <kbd>'</kbd> key, but also inserts a pair of
+single round quotes with a prefix.
+</p>
+
+<p>
+Finally, like the previous one, it also falls back on <a href="http://doc.endlessparentheses.com/Fun/self-insert-command"><code>self-insert-command</code></a>
+inside a code block.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-key</span> <span class="nv">org-mode-map</span> <span class="s">"'"</span> <span class="nf">#'</span><span class="nv">endless/apostrophe</span><span class="p">)</span>
+<span class="c1">;; (eval-after-load 'markdown-mode</span>
+<span class="c1">;;   '(define-key markdown-mode-map "'"</span>
+<span class="c1">;;      #'endless/apostrophe))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/apostrophe</span> <span class="p">(</span><span class="nv">opening</span><span class="p">)</span>
+  <span class="s">"Insert ’ in prose or `self-insert-command' in code.
+With prefix argument OPENING, insert ‘’ instead and
+leave point in the middle.
+Inside a code-block, just call `self-insert-command'."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nv">derived-mode-p</span> <span class="ss">'org-mode</span><span class="p">)</span>
+           <span class="p">(</span><span class="nv">org-in-block-p</span> <span class="o">'</span><span class="p">(</span><span class="s">"src"</span> <span class="s">"latex"</span> <span class="s">"html"</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nv">call-interactively</span> <span class="nf">#'</span><span class="nv">self-insert-command</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">looking-at</span> <span class="s">"['’][=_/\\*]?"</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">match-end</span> <span class="mi">0</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">null</span> <span class="nv">opening</span><span class="p">)</span>
+          <span class="p">(</span><span class="nv">insert</span> <span class="s">"’"</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">insert</span> <span class="s">"‘’"</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">-1</span><span class="p">)))))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/prettify-you-apostrophes.html?source=rss#disqus_thread">Comment on this.</a></p>

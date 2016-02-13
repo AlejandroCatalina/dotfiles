@@ -1,0 +1,487 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  Instant messaging (IM) is one of the great time sinks of our age. Emacs-users,
+  social butterflies as we are, of course want to take part in that --
+  preferrably from the comfort of our own environment.
+</p>
+<p>
+  There are various ways to use services like <i>MS Live Messenger</i>, <i>Facebook   Chat</i>, <i>GTalk</i>, <i>Yahoo</i> etc. from within emacs &ndash; the one I use is called
+  <a href="http://www.bitlbee.org/">BitlBee</a>. BitlBee is a program that presents all the various forms of IM as
+  IRC-channels. In other words, while BitlBee knows all the details about
+  communicating with these networks, all <b>you</b> need is an IRC-client to connect
+  to BitlBee. This IRC-client does not <i>have</i> to be Emacs-based - any client can
+  be used - but I am using <a href="http://emacs-fu.blogspot.com/search/label/erc">ERC</a>. Note, the below assumes you are somewhat
+  familiar with it.
+</p>
+<p>
+  So, let's see how we can set up BitlBee on our system; there are public
+  BitlBee-servers available online, but in the case of IM, I wouldn't
+  necessarily want to trust them with my account data&hellip; so I'm using my own.
+</p>
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1">Setting up Bitlbee</h3>
+<div class="outline-text-3" id="text-1-1">
+
+
+<p>
+   So, how can we set this up? First, install BitlBee &ndash; many distributions have
+   ready-made packages, otherwise you can <a href="http://www.bitlbee.org/main.php/download.html">build from source</a>. In the examples
+   below, I am assuming you are using <b>Bitlbee version 3</b> or higher; if you use
+   a different version, the details will vary a bit.
+</p>
+<p>
+   You can either run Bitlbee as a system-wide daemon, or just use it on your
+   own. I am doing the former (for the latter, <a href="http://www.emacswiki.org/emacs/bitlbee.el">bitlbee.el</a> is useful).
+</p>
+<p>
+   To connect ERC to the Bitlbee daemon, you can use something like the
+   following:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">i-wanna-be-social</span> ()
+  <span class="org-doc">"Connect to IM networks using bitlbee."</span>
+  (interactive)
+  (erc <span class="org-builtin">:server</span> <span class="org-string">"localhost"</span> <span class="org-builtin">:port</span> 6667 <span class="org-builtin">:nick</span> <span class="org-string">"user"</span>))
+</pre>
+
+
+<p>
+I'm sure you can come up with a better nick than <code>user</code>&hellip; Anyhow, with this
+function in your <code>~/.emacs</code>, we can connect to bitlbee with:
+</p>
+
+
+
+<pre class="example">M-x i-wanna-be-social RET
+</pre>
+
+
+<p>
+  This should connect us to BitlBee; when all goes well, this will look
+  something like this:
+</p>
+
+
+
+<pre class="example">*** You have joined channel &amp;bitlbee
+*** mindcrime has changed mode for &amp;bitlbee to +t
+*** Users on &amp;bitlbee: @user @root
+*** Topic for &amp;bitlbee: Welcome to the control channel. Type help for help
+    information.
+&lt;root&gt; Welcome to the BitlBee gateway!
+&lt;root&gt;
+&lt;root&gt; If you've never used BitlBee before, please do read the help
+  information using the help command. Lots of FAQs are answered there.
+&lt;root&gt; If you already have an account on this server, just use the identify
+  command to identify yourself.
+&lt;root&gt; The nick is (probably) not registered
+*** &amp;bitlbee modes: +t
+&lt;ERC&gt;
+</pre>
+
+
+<p>
+  Now, this first time, you will need to <b>register</b> yourself (this is only
+  needed once); use the same nick (<code>user</code> in the example) that you used before:
+</p>
+
+
+
+<pre class="example">&lt;user&gt; register user secretpassword
+&lt;root&gt; Account successfully created
+</pre>
+
+
+<p>
+  We're registered! This means, that bitlbee knows about you, and will save your
+  settings.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2">Re-entering bitlbee</h3>
+<div class="outline-text-3" id="text-1-2">
+
+
+<p>
+   Just to complete the bitlbee-connecting part: the next time you want to use
+   <code>bitlbee</code>, use <code>i-wanna-be-social</code> as before. However, now you need to
+   <code>identify</code> yourself (rather than <code>register</code>):
+</p>
+
+
+
+<pre class="example">&lt;user&gt; identify user secretpassword
+&lt;root&gt; Password accepted, settings and accounts loaded
+</pre>
+
+
+<p>
+   This can be automated by adding something like the following to your config:
+</p>
+
+
+
+<pre class="src src-elisp">(<span class="org-keyword">defun</span> <span class="org-function-name">bitlbee-identify</span> ()
+  (<span class="org-keyword">when</span> (and (string= <span class="org-string">"localhost"</span> erc-session-server)
+          (string= <span class="org-string">"&amp;bitlbee"</span> (buffer-name)))
+    (erc-message <span class="org-string">"PRIVMSG"</span> (format <span class="org-string">"%s identify user secretpassword"</span>
+                             (erc-default-target)
+                             djcb-bitlbee-password))))
+
+(<span class="org-keyword">add-hook</span> 'erc-join-hook 'bitlbee-identify)
+</pre>
+
+
+<p>
+  Modify <code>user</code> and <code>secretpassword</code> as desired. If you don't want write out
+  your passwords in your emacs config files, take a look at <a href="http://emacs-fu.blogspot.com/2011/02/keeping-your-secrets-secret.html">keeping your secrets secret</a>.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-3" class="outline-3">
+<h3 id="sec-1-3">Adding accounts</h3>
+<div class="outline-text-3" id="text-1-3">
+
+
+<p>
+  Now, let's add some IM-accounts (just some examples here; also see <a href="http://wiki.bitlbee.org/quickstart">Bitlbee Quickstart</a>. Note, add any point during this, you can see your accounts with
+  the command:
+</p>
+
+
+
+<pre class="example">&lt;user&gt; account list
+</pre>
+
+
+<p>
+  and using the numbers (or the accounts 'tag') you can switch an account <code>on</code>
+  (and <code>off</code>):
+</p>
+
+
+
+<pre class="example">&lt;user&gt; account 0 on
+</pre>
+
+
+<p>
+  There are many other commands &ndash; use <code>help</code> command the consult the built-in
+  documentation.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4" class="outline-3">
+<h3 id="sec-1-4">Connecting to IM networks</h3>
+<div class="outline-text-3" id="text-1-4">
+
+
+<p>
+   To connect to IM networks, you have to add the accounts to BitlBee. It will
+   save them, so you only need to do that once. Let's do it - in each case,
+   replace user and password with whatever you use for those.
+</p>
+<p>
+   You can see your combined logged-in buddy list using <code>M-x erc-channel-names</code>
+   (or <code>C-c C-n</code>). Or use the <code>blist</code> command (see <code>help blist</code>).
+</p>
+<p>
+   After adding an account, it's a good idea to issue the <code>save</code> command, to
+   ensure that bitlbee saves it.
+</p>
+
+</div>
+
+<div id="outline-container-1-4-1" class="outline-4">
+<h4 id="sec-1-4-1">Jabber</h4>
+<div class="outline-text-4" id="text-1-4-1">
+
+
+
+
+
+<pre class="example">&lt;user&gt; account add jabber foobar@jabber.org mypassword
+&lt;root&gt; Account successfully added with tag jabber
+&lt;user&gt; account jabber on
+&lt;root&gt; jabber - Logging in: Connecting
+&lt;root&gt; jabber - Logging in: Connected to server, logging in
+&lt;root&gt; jabber - Logging in: Converting stream to TLS
+&lt;root&gt; jabber - Logging in: Connected to server, logging in
+&lt;root&gt; jabber - Logging in: Authentication finished
+&lt;root&gt; jabber - Logging in: Authenticated, requesting buddy list
+&lt;root&gt; jabber - Logging in: Logged in
+</pre>
+
+
+<p>
+    (and of course, you can use other servers beside <code>jabber.org</code>)
+</p>
+
+</div>
+
+</div>
+
+<div id="outline-container-1-4-2" class="outline-4">
+<h4 id="sec-1-4-2">GoogleTalk</h4>
+<div class="outline-text-4" id="text-1-4-2">
+
+
+<p>
+    GoogleTalk (<code>gtalk</code>) is implemented using XMPP (jabber), and it's
+    recommended to use <code>oauth</code> for authentication. Note, the <code>foobar</code> below is
+    just a placeholder (for a password); bitlbee wants us to put <i>something</i>
+    there, but since we'll be using <code>oauth</code>, it's not actually used.
+</p>
+
+
+
+<pre class="example">&lt;user&gt; account add jabber myaccount@gmail.com foobar
+&lt;root&gt; Account successfully added with tag gtalk
+&lt;user&gt; account gtalk set oauth on
+&lt;root&gt; oauth = `on'
+&lt;user&gt; account gtalk set nick_source full_name
+&lt;root&gt; nick_source = `full_name'
+&lt;user&gt; account gtalk on
+&lt;root&gt; gtalk - Logging in: Starting OAuth authentication
+</pre>
+
+
+<p>
+    Now, a second window will open with a URL:
+</p>
+
+
+
+<pre class="example">&lt;jabber_oauth&gt; Open this URL in your browser to authenticate:
+https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.\
+com/auth/googletalk&amp;response_type=code&amp;redirect_uri=urn:ietf:wg:oauth:2.0:oob&amp;client_i\
+d=78312399893489.apps.googleusercontent.com
+
+&lt;jabber_oauth&gt; Respond to this message with the returned authorization
+token.
+</pre>
+
+
+<p>
+    Follow this URL in your browser, and it will take you to some Google page
+    for authentication. When that is completed, you will receive some string
+    cookie, which you paste back into the newly opened window.
+</p>
+
+
+
+<pre class="example">&lt;user&gt; 4/sIns904fdlkP5nudjCF4mBHF7Go_-E0g8
+*** jabber_oauth is AWAY: Offline
+</pre>
+
+
+<p>
+    Et voilà! We're connected to Gtalk (don't worry about the <code>Offline</code>-warning).
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4-3" class="outline-4">
+<h4 id="sec-1-4-3">Facebook</h4>
+<div class="outline-text-4" id="text-1-4-3">
+
+
+<p>
+    Apart from being a social website, Facebook can also be used for IM. You can
+    do this through the website, or you can use its jabber interface. It works
+    very similar to <code>gtalk</code>; only important thing is that you get yourself a
+    <a href="https://www.facebook.com/help/search/?q=username">Facebook username</a>:
+</p>
+
+
+
+<pre class="example">&lt;user&gt; account add jabber myusername0@chat.facebook.com
+&lt;root&gt; Account successfully added with tag fb
+&lt;root&gt; You can now use the /OPER command to enter the password
+&lt;root&gt; Alternatively, enable OAuth if the account supports it: account
+  fb set oauth on
+&lt;user&gt; account fb set oauth on
+&lt;root&gt; oauth = `on'
+&lt;user&gt; account gtalk set nick_source full_name
+&lt;root&gt; nick_source = `full_name'
+&lt;user&gt; account fb on
+&lt;root&gt; fb - Logging in: Starting OAuth authentication
+</pre>
+
+
+<p>
+    Then, go through the <code>oath</code>-authentication steps (see the discussion about
+    adding Gtalk accounts above).
+</p>
+<p>
+    Once authenticated, you'll get something like this:
+</p>
+
+
+
+<pre class="example">&lt;root&gt; fb - Logging in: Requesting OAuth access token
+&lt;root&gt; fb - Logging in: Connecting
+&lt;root&gt; fb - Logging in: Connected to server, logging in
+&lt;root&gt; fb - Logging in: Converting stream to TLS
+&lt;root&gt; fb - Logging in: Connected to server, logging in
+&lt;root&gt; fb - Logging in: Authentication finished
+&lt;root&gt; fb - Logging in: Server claims your JID is
+  `-748234518@chat.facebook.com' instead of
+  `myusername0@chat.facebook.com'. This mismatch may cause problems with
+  groupchats and possibly other things.
+&lt;root&gt; fb - Logging in: Authenticated, requesting buddy list
+&lt;root&gt; fb - Logging in: Logged in
+</pre>
+
+
+<p>
+    It's to now act upon the warning, so, we log out, change the user name and
+    long back in:
+</p>
+
+
+
+<pre class="example">&lt;user&gt; account fb off
+&lt;root&gt; fb - Signing off..
+&lt;user&gt; account fb set username -748234518@chat.facebook.com
+&lt;root&gt; username = `-748234518@chat.facebook.com'
+&lt;user&gt; account fb on
+</pre>
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-4-4" class="outline-4">
+<h4 id="sec-1-4-4">MSN / Live Messenger</h4>
+<div class="outline-text-4" id="text-1-4-4">
+
+
+<p>
+    MSN uses its own protocol (although apparently they're also supporting XMPP
+    ("jabber") now). Suppose you have an account there, user
+    <code>partygirl89@hotmail.com</code> with password <code>iamcute</code>:
+</p>
+
+
+
+<pre class="example">&lt;user&gt; account add msn partygirl89@hotmail.com iamcute
+&lt;root&gt; Account successfully added
+&lt;user&gt; account msn on
+&lt;root&gt; msn - Logging in: Connecting
+&lt;root&gt; msn - Logging in: Connected to server, waiting for reply
+&lt;root&gt; msn - Logging in: Transferring to other server
+&lt;root&gt; msn - Logging in: Connected to server, waiting for reply
+&lt;root&gt; msn - Logging in: Authenticated, getting buddy list
+&lt;root&gt; msn - Login error: Error reported by MSN server: Invalid
+       (non-existent) handle                                      [12:17]
+&lt;root&gt; msn - Logging in: Logged in
+</pre>
+
+
+<p>
+    The 'Error reported' does not seem to matter.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4-5" class="outline-4">
+<h4 id="sec-1-4-5">Other accounts</h4>
+<div class="outline-text-4" id="text-1-4-5">
+
+
+<p>
+    It's similarly easy to setup <a href="http://wiki.bitlbee.org/HowtoTwitter">Twitter-accounts</a> and <a href="http://wiki.bitlbee.org/HowtoIdentica">Identi.ca-accounts</a>; I've
+    stopped using those though, as it turned out to be a little too easy for
+    some typing in the wrong window to end op as a tweet&hellip; The risk is less
+    with <a href="http://www.emacswiki.org/emacs/TwitteringMode">twittering-mode</a> and <a href="http://www.emacswiki.org/emacs/Identica-mode">identica-mode</a>.
+</p>
+<p>
+    For ICQ/Yahoo/AIM see below &ndash; replace the username/password with your
+    own.
+</p>
+<ul>
+<li id="sec-1-4-5-1">ICQ<br/>
+
+
+
+<pre class="example">&lt;user&gt; account add oscar ICQ-ID PASSWORD login.icq.com
+&lt;root&gt; ...
+</pre>
+
+
+</li>
+</ul>
+<ul>
+<li id="sec-1-4-5-2">AIM<br/>
+
+
+
+<pre class="example">&lt;user&gt; account add oscar AIM-NICK PASSWORD login.aol.oscar.com
+&lt;root&gt; ...
+</pre>
+
+
+</li>
+</ul>
+<ul>
+<li id="sec-1-4-5-3">Yahoo!<br/>
+
+
+
+<pre class="example">&lt;user&gt; account add yahoo YAHOO-NICK PASSWORD
+&lt;root&gt; ...
+</pre>
+
+
+<p>
+     And I'm not even talking about combining bitlbee and Skype &ndash; yes, that is
+     possible, too.
+</p>
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-1-5" class="outline-3">
+<h3 id="sec-1-5">Chatting</h3>
+<div class="outline-text-3" id="text-1-5">
+
+
+<p>
+   Now, chatting is easy, following the normal ERC conventions (and
+   settings). When people talk to you, a window opens (or a frame &ndash; see
+   <code>erc-auto-query</code>. And you can initiate conversations with people by using
+   <code>/msg nick</code>, with <code>nick</code> of course being the nickname of the person you want
+   to talk to.
+</p>
+<p>
+   ERC/Bitlbee also work together nicely with <a href="http://emacs-fu.blogspot.com/2011/12/sauron-keeping-eye-on-whats-going-on.html">Sauron</a>, the emacs event tracker.
+</p>
+<p>
+   Have fun! I have only scratched the surface here - you now have the full
+   arsenal of Elisp and <a href="http://emacs-fu.blogspot.com/2009/06/erc-emacs-irc-client.html">ERC power</a> available for your chatting.
+</p></div>
+</div>
+</div>

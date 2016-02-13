@@ -1,0 +1,24 @@
+<div class="date">26 Nov 2014</div>
+
+    <p>
+    Maintaining servers falls into two phases: First, bang head until
+    server works; second, capture effort into some automation tool like
+    Puppet or Chef. Recently, I’ve been playing around with making the
+    first phase closer to the second.
+    For lack of a better word, I’m calling it <i>literate devops</i>.   <a href="http://www.howardism.org/Technical/Emacs/literate-devops.html">Read more...</a>
+    </p>
+
+    <p>
+    <b>Update 1:</b> I finally got around to troubleshooting <a href="http://www.howardism.org/Technical/Emacs/literate-devops.html#sec-2-1">using Tramp</a>
+    references to execute code blocks on remote servers (even those
+    behind firewards).
+    </p>
+
+    <p>
+    <b>Update 2:</b> Need another complete example? Check out my <a href="http://www.howardism.org/Technical/Emacs/linux-iptables.html">notes
+    onsetting up IP Tables</a> (and <a href="http:Technical/Emacs/linux-iptables.org.txt">this org-mode</a> file), where part of the
+    file can be executed in the editor in order to see how my machines
+    are configured, and the other part is a script that can be tangled
+    to a machine and executed to reset to the firewall rules.
+    </p>
+    

@@ -1,0 +1,85 @@
+<blockquote>
+  <p>Please reproduce this issue in <code class="highlighter-rouge">emacs -Q</code>.</p>
+</blockquote>
+
+<p>This is a sentence you will often read when you report bugs in Emacs packages;
+it’s usually a quick reply from a developer and goes with no further explanation
+or even the slightest clue on what you’re actually supposed to do.  If you ever
+found yourself in that situation then this post is for you: I’ll explain what it
+means to “reproduce a bug in <code class="highlighter-rouge">emacs -Q</code>”, how to do that properly, and why
+developers ask you for this.</p>
+
+<!--more-->
+
+<h1 id="how-do-you-reproduce-a-bug-in-emacs--q">How do you reproduce a bug in emacs -Q?</h1>
+
+<p><code class="highlighter-rouge">emacs -Q</code> provides a “pure” Emacs session which loads no packages and
+absolutely no configuration files<sup id="fnref:1"><a href="#fn:1" class="footnote">1</a></sup>.</p>
+
+<p>To start one open a terminal window and type <code class="highlighter-rouge">emacs -Q</code>.  On OS X use the
+slightly more convoluted command <code class="highlighter-rouge">open --new -a Emacs.app --args -Q</code> to start a
+fresh GUI Emacs.  You get a bare-bones Emacs that looks like this:</p>
+
+<figure>
+<img src="/images/emacs-Q.png" alt="Bare-bones emacs -Q" />
+<figcaption>A bare-bones <code>emacs -Q</code></figcaption>
+</figure>
+
+<p>Now initialise Emacs’ package system with <code class="highlighter-rouge">M-x package-initialize</code>.  Normally
+this happens in your init file but since <code class="highlighter-rouge">emacs -Q</code> doesn’t load it you need to
+do that explicitly.  If you omit this step you can’t access your installed
+packages in <code class="highlighter-rouge">emacs -Q</code> so it’s a pretty important one.</p>
+
+<p>On OS X you should also run <code class="highlighter-rouge">M-x exec-path-from-shell-initialize</code> now, provided
+that you installed <a href="https://github.com/purcell/exec-path-from-shell">exec-path-from-shell</a> in your Emacs.  This ensures that
+your <code class="highlighter-rouge">$PATH</code> in Emacs is correct, i.e. that you have access to the same
+executables as in your terminal.</p>
+
+<p>Finally enable the buggy package by following its setup instructions.
+Essentially you should now manually execute the commands that you copied to your
+init file when you installed the package in your Emacs.  For instance, if you’d
+like to reproduce a bug in <a href="http://www.flycheck.org">Flycheck</a> you should not type <code class="highlighter-rouge">M-x
+global-flycheck-mode</code> to enable Flycheck.</p>
+
+<p>Now you’re ready to reproduce the bug, simply by following the same steps that
+triggered the bug in your normal Emacs session.  For instance, if you’d like to
+show a broken syntax checker in Flycheck visit the same file that triggered the
+bug in your normal Emacs session.</p>
+
+<p>While following these steps please take notes about the commands that you run,
+the keys that you type and the things that you do to reproduce the bug, and
+include these notes in your bug report.</p>
+
+<h1 id="why-do-developers-ask-for-this">Why do developers ask for this?</h1>
+
+<p>As package developers we ask you to reproduce a bug in this session because
+it’s an essential first step to pin down the bug.</p>
+
+<p>Emacs provides absolutely <em>no isolation</em> between all the packages that are
+loaded in your normal Emacs session.  This is blessing and curse at the same
+time: It allows you to customise almost everything in Emacs but a single faulty
+package can break down your entire Emacs session.  We can’t tell if the bug that
+you reported to us is really a bug in our own package or if there is another
+buggy or misbehaving package in your Emacs configuration that breaks our
+package.</p>
+
+<p>If you can reproduce a bug in <code class="highlighter-rouge">emacs -Q</code> you give us an important clue: The bug
+is in our own code and we only need to look at our own code to find it.  That is
+much simpler than looking at your <em>entire</em> Emacs configuration and all of the
+other packages that you have installed.  What’s more you also enable us to
+reproduce the bug <em>ourselves</em> with just our package and a pure Emacs session,
+and if we can reproduce a bug <a href="http://geoff.greer.fm/2015/08/15/how-to-write-good-bug-reports/">we are halfway to fixing it</a>.</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>There is also <code class="highlighter-rouge">emacs -q</code> which will make Emacs ignore your init file
+(e.g. <code class="highlighter-rouge">~/.emacs</code> or <code class="highlighter-rouge">~/.emacs.d/init.el</code>) and packages that you installed
+with the built-in packages, but still load code from the global Emacs site
+which usually includes Emacs extensions that you installed with the
+system’s package manager (e.g. <code class="highlighter-rouge">apt-get</code>).  As such this option is
+insufficient to reproduce bugs because there may still be packages that
+infer. <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>

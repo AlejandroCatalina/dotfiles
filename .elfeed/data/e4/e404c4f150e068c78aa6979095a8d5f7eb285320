@@ -1,0 +1,22 @@
+<div class="date">20 July 2014</div>
+
+    <p>
+    Now that my company is starting to use Gerrit, I decided to
+    resurrect some old essays on Git usage.
+    </p>
+
+    <p>
+    Good Git practice encourages developers to create a history of
+    <i>useful</i> commits. This essay is a ‘recipe’ for squashing
+    multiple... uh... less than helpful commits into a single commit using
+    the Git&rsquo;s interactive rebase command.
+    </p>
+
+    <p>
+    This is a good technique if you start to use the <a href="http://www.howardism.org/Technical/Git/gerrit-workflow.html">Gerrit Review system</a>.
+    </p>
+
+    <p>
+    <a href="http://www.howardism.org/Technical/Git/squashing-commits.html">Read more...</a>
+    </p>
+    

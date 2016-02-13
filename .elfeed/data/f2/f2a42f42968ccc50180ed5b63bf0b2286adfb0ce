@@ -1,0 +1,22 @@
+
+
+
+<pre class="code c literal-block">
+<span class="cm">/* PLEASE DO NOT DELETE THIS COMMENTED-OUT VERSION!
+   This is the old version of expand-file-name, before it was thoroughly
+   rewritten for Emacs 10.31.  We leave this version here commented-out,
+   because the code is very complex and likely to have subtle bugs.  If
+   bugs _are_ found, it might be of interest to look at the old code and
+   see what did it do in the relevant situation.
+
+   Don't remove this code: it's true that it will be accessible
+   from the repository, but a few years from deletion, people will
+   forget it is there.  */</span>
+</pre>
+<p>Let me check, just how old is Emacs 10.31?  According to
+<a class="reference external" href="https://www.jwz.org/doc/emacs-timeline.html">the Emacs timeline</a> Emacs 13.0x was the first public release -
+in 1985.  Feel free to study <a class="reference external" href="http://git.savannah.gnu.org/cgit/emacs.git/tree/src/fileio.c?id=1dcf9a5d2a727913bc53c68756bdaf6db5573671#n1447">the over 30 years old sources</a>, simply
+because they’re significantly more readable than what’s making up
+<tt class="docutils literal"><span class="pre">expand-file-name</span></tt> these days.</p>
+<p>Oh and yes, there’s of course been fools who tried removing this.
+The comment itself was added <a class="reference external" href="http://git.savannah.gnu.org/cgit/emacs.git/commit/?id=4887597a1c52b8277eabeb4d9484c75b1bc9429d">in 2001</a> after such an incident.</p>

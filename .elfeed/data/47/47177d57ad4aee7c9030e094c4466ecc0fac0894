@@ -1,0 +1,9 @@
+<p>Many Emacs users keep a single Emacs instance running for quite a while.
+I&#8217;ve had instances running for over a month. How do I know this? Unsurprisingly,
+there&#8217;s a built-in command for that:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>M-x emacs-uptime</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now it&#8217;s time to start bragging to your vim-using friends!</p>

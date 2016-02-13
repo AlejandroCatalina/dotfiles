@@ -1,0 +1,64 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  I saw the <a href="http://emacsworld.blogspot.fi/2012/06/numbering-lines-and-lists-in-emacs.html?utm_source=feedburner&amp;utm_medium=feed&amp;utm_campaign=Feed:+GotEmacs+(Got+Emacs?)">Got Emacs? posting</a> showing off the new emacs-24
+  <code>rectangle-number-lines</code> command, to number a bunch of lines in buffer,
+  i.e..:
+</p>
+
+
+
+<pre class="example">foo
+bar
+cuux
+</pre>
+
+
+<p>
+  becomes:
+</p>
+
+
+
+<pre class="example">1 foo
+2 bar
+3 cuux
+</pre>
+
+
+<p>
+  Very cool! An alternative is to use <code>cua-mode</code>, mark the column for the
+  numbers with <code>cua-set-rectangle-mark</code> (<code>C-RET</code>), and then use <code>M-x   cua-sequence-rectangle</code> (which takes you throught the steps, and has a lot of
+  flexibility.
+</p>
+<p>
+  But let's look at yet another way: using <code>replace-regexp</code>. If we select (mark)
+  the list once more, we can do <code>M-x replace-regexp RET ^ RET \#. RET</code> Note that
+  the <code>#</code> is a special meta-character that represents <i>the number of   replacements already made</i>. This has the somewhat clumsy side-effect that your
+  list be numbered, starting at 0 rather than 1, so you should add a
+  dummy-element at the beginning. Clearly, <code>replace-regexp</code> is inferior for
+  simply adding some line numbers &ndash; however, it has the flexibility to do some
+  smarter things.
+</p>
+<p>
+  Smarter things? Yes! <code>replace-regexp</code> allows you to use arbitrary
+  Lisp-expressions in the replace strings. So, let's suppose that we want to use
+  <i>letters</i> instead of numbers for our lines. Easy &ndash; again, select (mark) your
+  lines, <code>M-x replace-regexp RET ^ RET \,(format "%c. " (+ ?a \#)) RET</code>  and we get:
+</p>
+
+
+
+<pre class="example">a. foo
+b. bar
+c. cuux
+</pre>
+
+
+<p>
+  Admittedly, not the most world-shattering thing, but it does show the powers
+  hidden in something as common as <code>replace-regexp</code>.
+</p></div>
+</div>

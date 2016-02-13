@@ -1,0 +1,207 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1">background</h3>
+<div class="outline-text-3" id="text-1-1">
+
+
+<p>
+   I've haven't written too much here lately. This is because I have spent most
+   of my emacs hacking time on <code>mu4e</code>, an emacs e-mail client. It's only
+   slightly over six months old since its first release, but it has progressed
+   rather quickly! So, I think it is time to give it an introduction to a wider
+   audience. In future posts, I'll go into more detail.
+</p>
+<p>   
+   E-mail is a very important means of communication for me; and for purposes of
+   integration, it prefer to do my e-mail with emacs. For a long time, I used
+   <code>mutt</code> with emacs as the editor; a few years back I switched to <a href="http://www.gohome.org/wl/">Wanderlust</a>,
+   and wrote <a href="http://emacs-fu.blogspot.fi/search/label/wanderlust">a few articles</a> about it.
+</p>
+<p>   
+   There's a lot to like about Wanderlust: it's very featureful, and allows for
+   a lot of customization. Still, there were a few things I was not fully happy
+   with; the most important one was the speed of some operations; another
+   annoyance was the fact that I got rather frequent cache-corruptions when
+   using newer emacs versions.
+</p>
+<p>   
+   So, what was I to do? Well, a few years back, I had written an e-mail
+   indexer/searcher, called <a href="http://www.djcbsoftware.nl/code/mu">mu</a>. It takes the messages in a maildir-folder, and
+   allows you to query them. I wondered if I could use <code>mu</code> as the backend for
+   an emacs-based e-mail client. So, I fired up emacs, started writing some code
+   and some later I had a first version of&hellip; <code>mu4e</code>.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2">how does it work?</h3>
+<div class="outline-text-3" id="text-1-2">
+
+
+<p>
+   <code>mu4e</code> is an emacs front-end for <code>mu</code>; when you start it, <code>mu4e</code> connects to a
+   <code>mu</code> server process (started on-demand). It accepts simple commands, and
+   responds with emacs <i>s-expressions</i>, in asynchronous fashion. In practice, all
+   the heavy work is done in this server process, and emacs shows the results
+   when it is ready (usually almost instantly). Emacs does not need to <i>wait</i> for
+   the backend, and things stay snappy, even with tens of thousands (or more)
+   e-mail messages. The only operation that may still require some waiting is
+   <i>sending mail</i>, since that uses the emacs built-in <code>smtpmail</code>, which blocks
+   during its operation.
+</p>
+<p>
+   <code>mu</code> expects your e-mail messages to be stored in a <a href="http://en.wikipedia.org/wiki/Maildir">maildir</a> (a
+   one-file-per-message system); you can get these mails there through tools
+   like <a href="http://offlineimap.org/">offlineimap</a> or <a href="http://www.fetchmail.info/">fetchmail</a>. <code>mu</code> periodically indexes the messages, and
+   stores the results in a <a href="http://xapian.org/">Xapian</a> database. A lot of what <code>mu4e</code> does is
+   querying this database &ndash; so for example, what you see as 'my inbox folder'
+   in the <code>mu4e</code>-frontend, is in fact just the result of a <i>query</i> of all
+   message that happen to live in that folder. You can query for many things –
+   message sender, subject, date, words in the body and more.
+</p>
+<p>   
+   <code>mu4e</code> does not just query messages; it can also move messages between
+   folders, delete them, modify their flags and so on (and afterwards update the
+   database). All 'state' is in the file system, and the database is just a quick
+   way to get to it; if you delete the database and then re-index, nothing is
+   lost, and changes made with other tools (e.g. <code>mutt</code>) are picked up by <code>mu</code> as
+   well.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-3" class="outline-3">
+<h3 id="sec-1-3">trying mu4e</h3>
+<div class="outline-text-3" id="text-1-3">
+
+
+<p>   
+   Some Linux distributions ship <code>mu4e</code>, but not necessarily a very recent
+   version; and because <code>mu4e</code> is developing quickly, you may want to use the
+   <a href="http://code.google.com/p/mu0/downloads/list">latest official release</a>, or (if you are more adventurous) check out the <a href="https://github.com/djcb/mu">git repository</a>. You'll need GNU/Emacs 23 or 24, GLib, GMime &gt;= 2.4 and Xapian.
+</p>
+<p>
+   After installing <code>mu4e</code>, you can check the <a href="http://www.djcbsoftware.nl/code/mu/mu4e/index.html">mu4e manual</a>, which should be
+   fairly complete. In fact, one of the goals of <code>mu4e</code> is to make it easy to
+   set up; for that reason, the documentation includes complete examples of how
+   to <a href="http://www.djcbsoftware.nl/code/mu/mu4e/Example-configuration.html#Example-configuration">set things up</a>. The <a href="http://www.djcbsoftware.nl/code/mu/mu4e/Getting-started.html#Getting-started">Getting started</a> chapter should get you up to speed
+   quickly.
+</p>
+<p>
+   So, give it a try if you're interested; the <code>mu=/=mu4e</code> project is very open
+   to suggestions (and even bugs reports!), so feel free to put them here or
+   subscribe to the <a href="https://groups.google.com/forum/?fromgroups#!forum/mu-discuss">mu mailing list</a>.
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4" class="outline-3">
+<h3 id="sec-1-4">a small tour</h3>
+<div class="outline-text-3" id="text-1-4">
+
+
+<p>
+   I'll end this with a number of screenshots, to give you a rough idea of how
+   things look.
+</p>
+
+</div>
+
+<div id="outline-container-1-4-1" class="outline-4">
+<h4 id="sec-1-4-1">The main screen</h4>
+<div class="outline-text-4" id="text-1-4-1">
+
+
+<p>
+    When you start <code>mu4e</code> (<code>M-x mu4e</code>), you're taken to the main screen, which
+    list the things you can do. The entries should speak for themselves. Note
+    that you can define you're own bookmarks. In general, <code>mu4e</code> tries to make
+    things as easy as possible, and provide auto-completions where possible.
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://1.bp.blogspot.com/-irKZO6VAZbU/UDKPojIeGCI/AAAAAAAAAvA/vCValpxOFnE/s1600/mu4emain.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="387" width="400" src="http://1.bp.blogspot.com/-irKZO6VAZbU/UDKPojIeGCI/AAAAAAAAAvA/vCValpxOFnE/s400/mu4emain.png" /></a></div>
+
+
+
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4-2" class="outline-4">
+<h4 id="sec-1-4-2">The headers / view split-screen</h4>
+<div class="outline-text-4" id="text-1-4-2">
+
+
+<p>
+    The results of your queries are shown as a list of headers; if you click one
+    of the headers, <code>mu4e</code> splits the screen horizontally (optionally, you can
+    split the screen vertically, or only show the message view). You can
+    customize the headers shown, re-order them and so on.
+</p>
+<p>    
+    The message view supports html message, inline images, and has a mechanism
+    to associate user-functions with messages and attachments (such as 'view in
+    browser' or 'pipe through command'); see the manual for some examples.
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://3.bp.blogspot.com/-bdlADBA62Qw/UDKPzJFOddI/AAAAAAAAAvM/mcIH1Q-x_rk/s1600/mu4eheaders.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="387" width="400" src="http://3.bp.blogspot.com/-bdlADBA62Qw/UDKPzJFOddI/AAAAAAAAAvM/mcIH1Q-x_rk/s400/mu4eheaders.png" /></a></div>
+
+
+
+</p>
+</div>
+
+</div>
+
+<div id="outline-container-1-4-3" class="outline-4">
+<h4 id="sec-1-4-3">The message composition view</h4>
+<div class="outline-text-4" id="text-1-4-3">
+
+
+<p>
+    Obviously, you can reply to messages, forward them, or compose a new
+    message. For writing and sending messages, <code>mu4e</code> reuses emacs' built-in
+    <code>message-mode</code>. There's support for auto-completing addresses (based on the
+    e-mails you've sent/received before).
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://1.bp.blogspot.com/-g9ApEUZjVM0/UDKP6VmrcZI/AAAAAAAAAvY/EyWCQGioKKo/s1600/mu4ecompose.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="292" width="400" src="http://1.bp.blogspot.com/-g9ApEUZjVM0/UDKP6VmrcZI/AAAAAAAAAvY/EyWCQGioKKo/s400/mu4ecompose.png" /></a></div>
+
+
+
+</p>
+<p>    
+    There's even (experimental) support for writing you're messages using
+    <code>org-mode</code>, and then sending them as rich-text (html) messages.
+</p>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-1-5" class="outline-3">
+<h3 id="sec-1-5">parting thoughts</h3>
+<div class="outline-text-3" id="text-1-5">
+
+
+<p>
+   So, this was a short introduction to <code>mu4e</code>, barely scratching the surface,
+   but hopefully conveying the main ideas. The manual discusses things in much
+   more detail, and I'll write more about it in the future.
+</p>
+<p>   
+   <code>mu4e</code> is still a young project, but, for what's it worth, I've been using it
+   full-time for over six months, and a growing number of people are doing the
+   same. So, if you're interested, give it try and let us know you think!
+</p>
+<p>  
+   Have fun!
+</p>
+</div>
+</div>
+</div>

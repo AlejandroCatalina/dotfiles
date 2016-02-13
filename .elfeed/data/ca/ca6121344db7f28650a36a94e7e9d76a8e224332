@@ -1,0 +1,48 @@
+<p>
+A gentleman (or woman) by the name of baam_waak <a href="http://www.reddit.com/r/emacs/comments/29duxk/require_or_install_package/">recently asked</a> on
+<a href="http://www.reddit.com/r/emacs/">/r/emacs</a> how can one make sure a package gets installed in case
+<a href="http://malabarba.github.io/emacs-online-documentation/Fun/require"><code>require</code></a>ing it fails. Sadly, this predicament has no perfect
+solution, for you require features, not packages. Fortunately, it has
+plenty of solutions that are good enough, since features commonly
+share the name of their package.
+</p>
+
+<p>
+Motivated by the question, I saw it fit to add this
+functionality to <a href="https://github.com/Malabarba/paradox/">paradox's arsenal</a>.
+</p>
+
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">paradox-require</span> <span class="p">(</span><span class="nv">feature</span> <span class="k">&amp;optional</span> <span class="nv">filename</span> <span class="nv">noerror</span> <span class="nc">package</span> <span class="nv">refresh</span><span class="p">)</span>
+  <span class="s">"A replacement for `require' which also installs the feature if it is absent.
+- If FEATURE is present, `require' it and return t.
+
+- If FEATURE is not present, install PACKAGE with `package-install'.
+If PACKAGE is nil, assume FEATURE is the package name.
+After installation, `require' FEATURE.
+
+FILENAME is passed to `require'.
+
+If NOERROR is non-nil, don't complain if the feature couldn't be
+installed, just return nil.
+
+By default, the current package database (stored in
+`package-archive-contents') is only updated if it is empty.
+Passing a non-nil REFRESH argument forces this update."</span>
+  <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nb">require</span> <span class="nv">feature</span> <span class="nv">filename</span> <span class="no">t</span><span class="p">)</span>
+      <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nc">package</span> <span class="p">(</span><span class="nb">or</span> <span class="nc">package</span>
+                         <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">stringp</span> <span class="nv">feature</span><span class="p">)</span>
+                             <span class="p">(</span><span class="nb">intern</span> <span class="nv">feature</span><span class="p">)</span>
+                           <span class="nv">feature</span><span class="p">))))</span>
+        <span class="p">(</span><span class="nb">require</span> <span class="ss">'package</span><span class="p">)</span>
+        <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nb">and</span> <span class="nv">package-archive-contents</span> <span class="p">(</span><span class="nb">null</span> <span class="nv">refresh</span><span class="p">))</span>
+          <span class="p">(</span><span class="nv">package-refresh-contents</span><span class="p">))</span>
+        <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nv">condition-case</span> <span class="nv">e</span>
+                 <span class="p">(</span><span class="nv">package-install</span> <span class="nc">package</span><span class="p">)</span>
+               <span class="p">(</span><span class="nb">error</span> <span class="p">(</span><span class="k">if</span> <span class="nv">noerror</span> <span class="no">nil</span> <span class="p">(</span><span class="nb">error</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">e</span><span class="p">)))))</span>
+             <span class="p">(</span><span class="nb">require</span> <span class="nv">feature</span> <span class="nv">filename</span> <span class="nv">noerror</span><span class="p">)))))</span></code></pre></figure>
+
+<p>
+Just use <code>(paradox-require 'dash)</code> instead of <code>(require 'dash)</code> and
+the package will be installed if necessary.</p>
+
+   <p><a href="http://endlessparentheses.com/require-feature-or-install-package.html?source=rss#disqus_thread">Comment on this.</a></p>

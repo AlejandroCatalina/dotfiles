@@ -1,0 +1,36 @@
+<p>
+Typography is a long and blurry road, of which I know very little.
+There are, still, some simple lessons that take you a long a way.
+Round (Unicode) quotation marks is one of them.
+</p>
+
+<p>
+LaTeX already does that for you, but many other prose environments
+don’t. This snippet inserts “round” quotes for you, bind it to your
+text-modes.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">define-key</span> <span class="nv">org-mode-map</span> <span class="s">"\""</span> <span class="nf">#'</span><span class="nv">endless/round-quotes</span><span class="p">)</span>
+<span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'markdown-mode</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">define-key</span> <span class="nv">markdown-mode-map</span> <span class="s">"\""</span>
+     <span class="nf">#'</span><span class="nv">endless/round-quotes</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/round-quotes</span> <span class="p">(</span><span class="nv">italicize</span><span class="p">)</span>
+  <span class="s">"Insert “” and leave point in the middle.
+With prefix argument ITALICIZE, insert /“”/ instead
+\(meant for org-mode).
+Inside a code-block, just call `self-insert-command'."</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">"P"</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nv">derived-mode-p</span> <span class="ss">'org-mode</span><span class="p">)</span>
+           <span class="p">(</span><span class="nv">org-in-block-p</span> <span class="o">'</span><span class="p">(</span><span class="s">"src"</span> <span class="s">"latex"</span> <span class="s">"html"</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nv">call-interactively</span> <span class="nf">#'</span><span class="nv">self-insert-command</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">looking-at</span> <span class="s">"”[/=_\\*]?"</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">match-end</span> <span class="mi">0</span><span class="p">))</span>
+      <span class="p">(</span><span class="nb">when</span> <span class="nv">italicize</span>
+        <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">derived-mode-p</span> <span class="ss">'markdown-mode</span><span class="p">)</span>
+            <span class="p">(</span><span class="nv">insert</span> <span class="s">"__"</span><span class="p">)</span>
+          <span class="p">(</span><span class="nv">insert</span> <span class="s">"//"</span><span class="p">))</span>
+        <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">-1</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">insert</span> <span class="s">"“”"</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">forward-char</span> <span class="mi">-1</span><span class="p">))))</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/prettify-your-quotation-marks.html?source=rss#disqus_thread">Comment on this.</a></p>

@@ -1,0 +1,28 @@
+<p><em>UPDATE: This post now contains obsolete information. Please
+read the new
+<a href="https://github.com/clojure/clojurescript/wiki/Quick-Start">ClojureScript Quick Start</a>
+instead</em></p>
+
+<p><a href="https://github.com/plexus/chestnut">Chestnut</a> is one of the coolest
+bits of ClojureScript tech I&#39;ve encountered in a very long time. Rather
+than wax poetic I&#39;m just going to show a short video of Chestnut in
+action. In the following you&#39;ll see several novel things including a very
+stable ClojureScript REPL based on WebSockets - always ready to go even
+if you kill the web server, refresh the web page, or have a JS exception
+on the page. You&#39;ll also see live updating of the running application
+without corrupting the application state in the style of
+<a href="http://elm-lang.org">Elm</a>:</p>
+
+<div style="text-align: center;">
+<iframe width="560" height="315"
+src="//www.youtube.com/embed/gI3fJKmvgq4" frameborder="0"
+allowfullscreen></iframe>
+</div>
+
+<p>Big shout outs to <a href="https://twitter.com/bhauman">Bruce Hauman</a> for
+<a href="https://github.com/bhauman/lein-figwheel">Figwheel</a>, <a href="https://github.com/tomjakubowski">Tom
+Jakubowski</a> for
+<a href="https://github.com/tomjakubowski/weasel">Weasel</a> and <a href="https://twitter.com/plexus">Arne
+Brasseur</a> for putting it all together.</p>
+
+<p>Happy hacking!</p>

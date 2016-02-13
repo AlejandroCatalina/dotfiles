@@ -1,0 +1,48 @@
+
+
+
+<p>Mailcap files are commonly used to tell your MUA how to open
+attachments.  In Emacs this mechanism is used by Gnus, but outside of
+it as well, like in Org’s “Open exported file” export option.  I
+wasn’t amused about it picking <tt class="docutils literal">gv</tt> of all the things to open PDF
+files, so I’ve edited <tt class="docutils literal"><span class="pre">~/.mailcap</span></tt> and expected that to solve the
+problem once and for all.  Except it didn’t.</p>
+<pre class="code elisp literal-block">
+<span class="p">(</span><span class="k">defvar</span> <span class="nv">mailcap-parsed-p</span> <span class="no">nil</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">mailcap-parse-mailcaps</span> <span class="p">(</span><span class="kp">&amp;optional</span> <span class="nv">path</span> <span class="nv">force</span><span class="p">)</span>
+  <span class="s">"Parse out all the mailcaps specified in a path string PATH.
+Components of PATH are separated by the </span><span class="ss">`path-separator'</span><span class="s"> character
+appropriate for this system.  If FORCE, re-parse even if already
+parsed.  If PATH is omitted, use the value of environment variable
+MAILCAPS if set; otherwise (on Unix) use the path from RFC 1524, plus
+/usr/local/etc/mailcap."</span>
+  <span class="p">(</span><span class="k">interactive</span> <span class="p">(</span><span class="nf">list</span> <span class="no">nil</span> <span class="no">t</span><span class="p">))</span>
+  <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="k">or</span> <span class="p">(</span><span class="nv">not</span> <span class="nv">mailcap-parsed-p</span><span class="p">)</span>
+            <span class="nv">force</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">cond</span>
+     <span class="p">(</span><span class="nv">path</span> <span class="no">nil</span><span class="p">)</span>
+     <span class="p">((</span><span class="nv">getenv</span> <span class="s">"MAILCAPS"</span><span class="p">)</span> <span class="p">(</span><span class="k">setq</span> <span class="nv">path</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">"MAILCAPS"</span><span class="p">)))</span>
+     <span class="p">((</span><span class="nf">memq</span> <span class="nv">system-type</span> <span class="nv">mailcap-poor-system-types</span><span class="p">)</span>
+      <span class="p">(</span><span class="k">setq</span> <span class="nv">path</span> <span class="o">'</span><span class="p">(</span><span class="s">"~/.mailcap"</span> <span class="s">"~/mail.cap"</span> <span class="s">"~/etc/mail.cap"</span><span class="p">)))</span>
+     <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="k">setq</span> <span class="nv">path</span>
+              <span class="c1">;; This is per RFC 1524, specifically</span>
+              <span class="c1">;; with /usr before /usr/local.</span>
+              <span class="o">'</span><span class="p">(</span><span class="s">"~/.mailcap"</span> <span class="s">"/etc/mailcap"</span> <span class="s">"/usr/etc/mailcap"</span>
+                <span class="s">"/usr/local/etc/mailcap"</span><span class="p">))))</span>
+    <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">fnames</span> <span class="p">(</span><span class="nf">reverse</span>
+                   <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nf">stringp</span> <span class="nv">path</span><span class="p">)</span>
+                       <span class="p">(</span><span class="nv">split-string</span> <span class="nv">path</span> <span class="nv">path-separator</span> <span class="no">t</span><span class="p">)</span>
+                     <span class="nv">path</span><span class="p">)))</span>
+          <span class="nv">fname</span><span class="p">)</span>
+      <span class="p">(</span><span class="k">while</span> <span class="nv">fnames</span>
+        <span class="p">(</span><span class="k">setq</span> <span class="nv">fname</span> <span class="p">(</span><span class="nf">car</span> <span class="nv">fnames</span><span class="p">))</span>
+        <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="k">and</span> <span class="p">(</span><span class="nf">file-readable-p</span> <span class="nv">fname</span><span class="p">)</span>
+                 <span class="p">(</span><span class="nf">file-regular-p</span> <span class="nv">fname</span><span class="p">))</span>
+            <span class="p">(</span><span class="nv">mailcap-parse-mailcap</span> <span class="nv">fname</span><span class="p">))</span>
+        <span class="p">(</span><span class="k">setq</span> <span class="nv">fnames</span> <span class="p">(</span><span class="nf">cdr</span> <span class="nv">fnames</span><span class="p">))))</span>
+      <span class="p">(</span><span class="k">setq</span> <span class="nv">mailcap-parsed-p</span> <span class="no">t</span><span class="p">)))</span>
+</pre>
+<p><a class="reference external" href="http://git.savannah.gnu.org/cgit/emacs.git/tree/lisp/gnus/mailcap.el?id=608b15d59d08ff7054fdc5458d1d2ae54dd043e2#n384">Laaaaars</a>.  Why would you cache the parse result, but never ever
+invalidate it?  It’s not like it’s <a class="reference external" href="http://martinfowler.com/bliki/TwoHardThings.html">hard</a> or <a class="reference external" href="http://emacshorrors.com/posts/unexpected-security-features.html">not been done before</a>.</p>
+<p>Merry <a class="reference external" href="https://www.stallman.org/grav-mass.html">Grav-Mass</a>!</p>

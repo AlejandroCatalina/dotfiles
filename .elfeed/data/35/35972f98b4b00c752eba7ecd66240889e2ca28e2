@@ -1,0 +1,47 @@
+<p>
+<a href="https://github.com/Malabarba/Nameless">Nameless</a> is an Emacs package for hiding namespace prefixes in elisp code. It
+is a short and simple minor-mode that changes the display, without changing the
+contents of the buffer. Using it is as simple as turning it on, there’s no need
+to change your package in any way. 
+</p>
+
+
+<div class="figure">
+<p><a href="/images/nameless-on.png"><img src="/images/nameless-on.png" alt="nameless-on.png" /></a>
+</p>
+</div>
+
+<p>
+<a href="/introducing-names-practical-namespaces-for-emacs-lisp.html">Nine months</a> ago I introduced <a href="https://github.com/Malabarba/names">Names</a>, a package that allows you to write elisp
+code inside a namespace. Since then, I’ve used it on two of my packages without
+issues (as have several other Emacs hackers) and it’s been delightful. I’ve been
+hacking elisp for several years now, but stripping away all those namespace
+prefixes really makes it more pleasurable to write and read code. 
+</p>
+
+<p>
+Still, there’s no denying that it’s a bit heavy-handed. It’s quite a large
+library that your package has to depend on, and it changes the way you write the
+file itself, which means it messes with anything from <code>grep</code> to <code>find-function</code>.
+Nameless, on the other hand, hooks onto <code>font-lock-mode</code> and changes the way
+symbols are displayed. This means it doesn’t interfere with any other tools you
+might use for code management or navigation. At the end of the day, it tries a
+lot less and therefore does a lot more.
+</p>
+
+<p>
+Nameless is available from <a href="https://elpa.gnu.org/packages/nameless.html">GNU Elpa</a>. To give it a try, just <kbd>M-x</kbd>
+<code>package-install</code> it, and turn on the minor-mode wherever you want.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'emacs-lisp-mode-hook</span>
+          <span class="nf">#'</span><span class="nv">nameless-mode-from-hook</span><span class="p">)</span>
+<span class="p">(</span><span class="k">setq</span> <span class="nv">nameless-global-aliases</span>
+      <span class="o">'</span><span class="p">((</span><span class="s">"fl"</span> <span class="o">.</span> <span class="s">"font-lock"</span><span class="p">)</span>
+        <span class="p">(</span><span class="s">"s"</span> <span class="o">.</span> <span class="s">"seq"</span><span class="p">)</span>
+        <span class="p">(</span><span class="s">"me"</span> <span class="o">.</span> <span class="s">"macroexp"</span><span class="p">)</span>
+        <span class="p">(</span><span class="s">"c"</span> <span class="o">.</span> <span class="s">"cider"</span><span class="p">)</span>
+        <span class="p">(</span><span class="s">"q"</span> <span class="o">.</span> <span class="s">"queue"</span><span class="p">)))</span></code></pre></figure>
+<p>
+See the <a href="https://github.com/Malabarba/Nameless">Readme</a> for more information.</p>
+
+   <p><a href="http://endlessparentheses.com/nameless-less-is-more.html?source=rss#disqus_thread">Comment on this.</a></p>

@@ -1,0 +1,146 @@
+<div id="outline-container-1" class="outline-2">
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+If you want to keep your secrets secret, it is a good idea to <i>encrypt</i> your
+data; I usually do that for files with passwords for various services, banking
+data, and so on. Since version 23, Emacs includes a package called <a href="http://epg.sourceforge.jp/">EasyPG</a> (an
+interface to <a href="http://www.gnupg.org/">GnuPG</a>) which makes this seamless &ndash; just make sure that you have
+<a href="http://www.gnupg.org/">GnuPG</a> installed.
+</p>
+<p>
+It's easy to use EasyPG &ndash; the only thing you need to do is adding the <code>.gpg</code>
+-extension to your files, and EasyPG will automatically encrypt/decrypt them
+when writing/reading. So, for example, to create an encrypted <code>org-mode</code>-file,
+simply visit (<code>C-x C-f</code>) a file with a name like <code>myfile.org.gpg</code>; emacs opens
+this in Org-Mode (just like any <code>.org</code>-file). When you want to save the file,
+emacs will ask you for a password, and with this same password, you can open
+it again. Don't forget that password!
+</p>
+
+
+</div>
+
+<div id="outline-container-1_1" class="outline-3">
+<h3 id="sec-1_1">account data </h3>
+<div class="outline-text-3" id="text-1_1">
+
+
+<p>
+You can store <i>any</i> kind of secret data in your encrypted files. One type I
+find particularly useful is to store <i>account data</i> (user names, passwords)
+for various services there. For example, I use the <a href="http://blog.nethazard.net/identica-mode-for-emacs/">emacs identi.ca-mode client</a>, which gets its account data through variables <code>identica-username</code> and
+<code>identica-password</code>.
+</p>
+<p>
+I do not want to put this information in my main <code>.emacs</code> file for safety
+reasons, but instead, put it an encrypted file, together with the account data
+for other services (mail, twitter etc.). Emacs' <code>require</code> does not understand
+encrypted files, but <code>load-library</code> does. To deal with that, I have two files,
+<code>secrets.el</code> and <code>secrets.el.gpg</code> (in my <code>load-path</code>):
+</p>
+
+
+
+<pre class="src src-emacs-lisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">secrets.el
+</span>(load-library <span class="org-string">"secrets.el.gpg"</span>)
+(<span class="org-keyword">provide</span> '<span class="org-constant">secrets</span>)
+</pre>
+
+
+
+<p>
+and
+</p>
+
+
+
+<pre class="src src-emacs-lisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">secrets.el.gpg
+</span>(<span class="org-keyword">setq</span> identica-username <span class="org-string">"djcb"</span>
+      identica-password <span class="org-string">"$ekr3t"</span>)
+<span class="org-comment-delimiter">;; </span><span class="org-comment">... other passwords ...
+</span></pre>
+
+
+
+<p>
+Now, in my <code>.emacs</code> I have a function for various services, like:
+</p>
+
+
+
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">start-identica</span> ()
+  (interactive)
+  (<span class="org-keyword">require</span> '<span class="org-constant">secrets</span>)
+  (identica-friends-timeline))
+</pre>
+
+
+
+<p>
+This will prompt me for the password, but only if I use anything that requires
+the secret data, and <b>only once</b> per session.
+</p>
+
+<p>
+<b>Update</b>: as Richard notes in the comments, you can also use <tt>require</tt> by
+   explicitly specifying the filename (parameter two). That might actually be easier --
+   thanks Richard!
+</p>
+
+</div>
+
+</div>
+
+<div id="outline-container-1_2" class="outline-3">
+<h3 id="sec-1_2">using public keys </h3>
+<div class="outline-text-3" id="text-1_2">
+
+
+<p>
+By default, EasyPG performs <a href="http://en.wikipedia.org/wiki/Symmetric_encryption">symmetric encryption</a>; if you want to use <a href="http://en.wikipedia.org/wiki/Public-key_cryptography">public key encryption</a> instead (useful when you want to share the encrypted files with
+others), you can use:
+</p>
+
+
+
+<pre class="src src-emacs-lisp"><span class="org-comment-delimiter">;; </span><span class="org-comment">'silent to use symmetric encryption
+</span><span class="org-comment-delimiter">;; </span><span class="org-comment">nil to ask for users unless specified
+</span><span class="org-comment-delimiter">;; </span><span class="org-comment">t to always ask for a user
+</span>(<span class="org-keyword">setq</span> epa-file-select-keys t) 
+</pre>
+
+
+
+<p>
+The 'users' in this snippet are the people in your GnuPG-keyring &ndash; EasyPG
+lists your keyring inhabitants, allowing for easy selection. You can also
+specify the people who can decrypt your file by putting something like the
+following at the beginning of the file you want to encrypt.
+</p>
+
+
+
+<pre class="src src-text"># -*- epa-file-encrypt-to: ("foo@bar.org") -*-
+</pre>
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1_3" class="outline-3">
+<h3 id="sec-1_3">so </h3>
+<div class="outline-text-3" id="text-1_3">
+
+
+<p>
+EasyPG brings more functionality for encryption, decryption, signing, managing
+your keyring and so on, but I haven't used that much yet. Anyhow, the
+automatic support for reading/writing file is really nice.
+</p>
+</div>
+</div>
+</div>

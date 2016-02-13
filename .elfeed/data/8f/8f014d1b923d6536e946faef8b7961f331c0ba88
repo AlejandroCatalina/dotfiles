@@ -1,0 +1,71 @@
+<p>
+As you grow accustomed to fine-tuning your Emacs experience, it’s not unusual to
+start using local variables in your files. These are specified as comment lines
+at the end of the file, and are extremely practical in a number of scenarios. Here’s
+a very simple org file.
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">* Some headline
+Ramblings no one cares about.
+* Another headline
+Thoughtfully rescinded.
+
+# Local Variables:
+# fill-column: 666
+# End:</code></pre></figure>
+<p>
+The only problem is that <code>org-mode</code> thinks that everything after a headline is
+part of its contents, which is clearly not the case here. One example where this
+is bad is when you want to shuffle the headlines around with <kbd>M-↓</kbd> or <kbd>M-↑</kbd>, and
+you end up with something like this.
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">* Another headline
+Thoughtfully rescinded.
+
+# Local Variables:
+# fill-column: 666
+# End:
+* Some headline
+Ramblings no one cares about.</code></pre></figure>
+
+<p>
+I asked about that on <a href="http://emacs.stackexchange.com/q/2236/50">Emacs.StackExchange</a> and got a very simple solution: just
+add a “dummy” level-1 headline before the local variable specification.
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">* Some headline
+Ramblings no one cares about.
+* Another headline
+Thoughtfully rescinded.
+
+* COMMENT Footer 
+# Local Variables:
+# fill-column: 42
+# End:</code></pre></figure>
+<p>
+Now you can move, archive, and refile all your headlines as you wish, without
+fear of destroying your precious variables. You can even <a href="/fine-tuning-subtree-visibility-in-org-mode.html">fine-tune the
+visibility</a> to <code>folded</code>, so that the footer is always folded, and you won’t have
+to see those variables at all.
+</p>
+
+<p>
+But this wouldn’t be our weekly Endless Parentheses if I didn’t give you some
+code to practice your elisp. The following command is just like <a href="http://doc.endlessparentheses.com/Fun/end-of-buffer"><code>end-of-buffer</code></a>,
+except it places point before the footer. If invoked again, it will move to the
+real end of buffer.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/org-eob</span> <span class="p">()</span>
+  <span class="s">"Move to end of content, then end of buffer."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">use-region-p</span><span class="p">)</span>
+    <span class="p">(</span><span class="nv">push-mark</span><span class="p">))</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">looking-at-p</span> <span class="s">"\n\\* COMMENT Footer"</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-min</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">search-forward</span> <span class="s">"\n* COMMENT Footer"</span>
+                        <span class="no">nil</span> <span class="ss">'noerror</span><span class="p">)</span>
+        <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">match-beginning</span> <span class="mi">0</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">goto-char</span> <span class="p">(</span><span class="nv">point-max</span><span class="p">)))))</span>
+<span class="p">(</span><span class="nv">define-key</span> <span class="nv">org-mode-map</span> <span class="nv">[remap</span> <span class="nv">end-of-buffer]</span>
+  <span class="nf">#'</span><span class="nv">endless/org-eob</span><span class="p">)</span></code></pre></figure>
+
+   <p><a href="http://endlessparentheses.com/org-mode-subtrees-and-file-local-variables.html?source=rss#disqus_thread">Comment on this.</a></p>

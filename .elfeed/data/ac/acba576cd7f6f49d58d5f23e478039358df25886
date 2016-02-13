@@ -1,0 +1,39 @@
+<p>
+I’m an occasional user of some of the Emacs chat clients. Erc and jabber are
+both powerful packages, and it’s great to be able to use Slack, Gitter, and
+Google Chat from the cosy comfort of my Emacs frame. If I have one complain,
+though, it’s that neither of them has a functionality for keeping track of what
+part of the conversation I’ve already read.
+</p>
+
+<p>
+Of course, this is Emacs. And the solution is but a hack away.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/mark-read</span> <span class="p">()</span>
+  <span class="s">"Mark buffer as read up to current line."</span>
+  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">inhibit-read-only</span> <span class="no">t</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">put-text-property</span>
+     <span class="p">(</span><span class="nv">point-min</span><span class="p">)</span> <span class="p">(</span><span class="nv">line-beginning-position</span><span class="p">)</span>
+     <span class="ss">'face</span>       <span class="ss">'font-lock-comment-face</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">endless/bury-buffer</span> <span class="p">()</span>
+  <span class="s">"Bury buffer and maybe close its window."</span>
+  <span class="p">(</span><span class="nv">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">endless/mark-read</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">bury-buffer</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">when</span> <span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nv">window-list</span> <span class="no">nil</span> <span class="ss">'nomini</span><span class="p">))</span>
+    <span class="p">(</span><span class="nv">delete-window</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'jabber</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">define-key</span> <span class="nv">jabber-chat-mode-map</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"&lt;escape&gt;"</span><span class="p">)</span>
+     <span class="nf">#'</span><span class="nv">endless/bury-buffer</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nv">eval-after-load</span> <span class="ss">'erc</span>
+  <span class="o">'</span><span class="p">(</span><span class="nv">define-key</span> <span class="nv">erc-mode-map</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">"&lt;escape&gt;"</span><span class="p">)</span>
+     <span class="nf">#'</span><span class="nv">endless/bury-buffer</span><span class="p">))</span></code></pre></figure>
+<p>
+Whenever you’re done reading a conversation, just hit <kbd>Esc</kbd>. The buffer will be
+buried, and next time you open it again everything you had read before will be
+marked in grey.</p>
+
+   <p><a href="http://endlessparentheses.com/marking-emacs-chat-buffers-as-read.html?source=rss#disqus_thread">Comment on this.</a></p>

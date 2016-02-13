@@ -1,0 +1,53 @@
+<p>With Christmas almost here, it’s time for me to present my gift to you, my
+fellow Emacs users: A brand new shiny release of Flycheck, now at version 0.22.
+At the surface little has changed, but under the hood Flycheck made a big step
+towards a 1.0 release, and provides even more features to write your own syntax
+checkers.</p>
+
+<p>The <a href="http://www.flycheck.org/2014/12/23/flycheck-0.22.html">release announcement</a> and the <a href="http://www.flycheck.org/changes.html#dec-23-2014">changelog</a> have all the details, but in
+this post I’d like to give you a short idea of what I think are the most
+important features of this new release.</p>
+
+<!--more-->
+
+<h1 id="use-functions-for-syntax-checking">Use functions for syntax checking</h1>
+
+<p>The coolest feature in this release are “generic syntax checkers”.  I already
+<a href="/2014/12/03/generic-syntax-checkers-in-flycheck.html">wrote about them before</a>,
+so let’s get to the point: They let you use arbitrary functions to check
+buffers.  Sounds trivial, but let’s use do cool new things.</p>
+
+<p>Flycheck can now support languages that were hard or impossible to support
+before (<a href="https://github.com/flycheck/flycheck-ocaml">OCaml</a> or <a href="https://github.com/clojure-emacs/squiggly-clojure">Clojure</a>), have checkers
+written in pure Emacs Lisp as in <a href="https://github.com/purcell/flycheck-package">flycheck-package</a>, an Emacs Lisp package
+linter for Flycheck, or use special modes to improve syntax checking as in
+<a href="https://github.com/Sarcasm/flycheck-irony/">flycheck-irony</a>, which uses a background service based on libclang to check
+C/C++ faster and better than the built-in C/C++ checkers.</p>
+
+<h1 id="test-your-syntax-checkers">Test your syntax checkers</h1>
+
+<p>One of Flycheck’s great strengths is the high quality of its code, which is
+supported by a large test suite.  The code that drives this test suite is now
+available for you as well:  The new <code class="highlighter-rouge">flycheck-ert</code> library is now part of all
+Flycheck packages, and provides helpers and utilities to write unit tests for
+Flycheck syntax checkers.</p>
+
+<h1 id="verify-your-setup">Verify your setup</h1>
+
+<p>Another important feature of a totally different kind is the new
+<code class="highlighter-rouge">flycheck-verify-setup</code> command: It’s designed to help Flycheck users to find
+errors in their setup.  It’ll show you which syntax checkers are available for
+the current buffer, and provide helpful hints if a syntax checker doesn’t work.</p>
+
+<h1 id="and-more">And more</h1>
+
+<p>There have been many more changes under the hood.  A notable one are error IDs:
+Syntax checkers can now attach IDs to errors to identify them.  This feature is
+currently not used a lot throughout Flycheck, but it’s an important step towards
+future extensions such as <a href="https://github.com/flycheck/flycheck/issues/530">automatically fixing errors</a>.</p>
+
+<p>And of course, there’s a new syntax checker, and many new options, improvements
+and one or another bug fix.</p>
+
+<p>I hope that you’ll enjoy the new release, and I wish you a merry Christmas, and
+a happy new year.</p>

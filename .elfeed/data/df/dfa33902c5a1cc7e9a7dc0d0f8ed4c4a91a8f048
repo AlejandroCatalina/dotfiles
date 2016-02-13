@@ -1,0 +1,88 @@
+<style>
+table {
+    margin-left: 45px;
+    font-family: courier;
+    font-size: 8px;
+    line-height: 1em !important;
+    margin-bottom: 50px;
+}
+.group0 {
+    color: #000
+}
+.group1 {
+    color: #f00
+}
+.group2 {
+    color: #0f0
+}
+.group3 {
+    color: #00f
+}
+.group4 {
+    color: #ff0
+}
+.group5 {
+    color: #0ff
+}
+</style>
+
+<p><strong>UPDATE</strong>: I got too enthusiastic from the last post, this 10,000 not
+100,000 go blocks.</p>
+
+<p>10,000 independent go blocks all running at the same time.</p>
+
+<table id="big-table" cellpadding="0" cellspacing="0"></table>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(ns blog.processes.core
+  (:require [cljs.core.async :as async
+             :refer [&lt;! &gt;! chan put! timeout]]
+            [blog.utils.dom :refer [by-id set-html! set-class!]])
+  (:require-macros [cljs.core.async.macros :refer [go]]))
+
+(def width 100)
+(def height 100)
+
+(defn gen-ui []
+  (let [arr (array)]
+    (loop [y 0]
+      (when (&lt; y height)
+        (.push arr  &quot;&lt;tr&gt;&quot;)
+        (loop [x 0]
+          (when (&lt; x width)
+            (.push arr (str &quot;&lt;td id=&#39;cell-&quot;) (+ x (* y width)) &quot;&#39;&gt;0&lt;/td&gt;&quot;)
+            (recur (inc x))))
+        (.push arr &quot;&lt;/tr&gt;&quot;)
+        (recur (inc y))))
+    (set-html! (by-id &quot;big-table&quot;) (.join arr &quot;&quot;))))
+
+(gen-ui)
+
+(def group (atom 0))
+
+(defn render! [queue]
+  (let [g (str &quot;group&quot; @group)]
+    (doseq [[idx v] queue]
+      (let [cell (by-id (str &quot;cell-&quot; idx))]
+        (set-html! cell v)
+        (set-class! cell g)))
+    (swap! group (fn [g] (mod (inc g) 5)))))
+
+(defn render-loop [rate]
+  (let [in (chan 1000)]
+    (go (loop [refresh (timeout rate) queue []]
+          (let [[v c] (alts! [refresh in])]
+            (condp = c
+              refresh (do (render! queue)
+                        (&lt;! (timeout 0))
+                        (recur (timeout rate) []))
+              in (recur refresh (conj queue v))))))
+    in))
+
+(let [render (render-loop 40)]
+  (loop [i 0]
+    (when (&lt; i (* width height))
+      (go (while true
+            (&lt;! (timeout (+ 1000 (rand-int 10000))))
+            (&gt;! render [(rand-int 10000) (rand-int 10)])))
+      (recur (inc i)))))
+</code></pre></div>
+<script type="text/javascript" src="/assets/js/proc.js"></script>

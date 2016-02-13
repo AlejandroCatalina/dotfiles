@@ -1,0 +1,60 @@
+<p>People often ask how am I navigating efficiently Emacs windows and
+buffers. I have the feeling they expect me to share with them some
+secrets that would turbo-charge common commands like <code>C-s</code>, <code>M-f</code>,
+<code>C-x o</code>, etc.  I don&#8217;t, however, use those commands that much. Ever
+since I saw that vim&#8217;s
+<a href="https://github.com/easymotion/vim-easymotion">EasyMotion</a> has been
+ported to Emacs, I&#8217;ve been using that port - namely
+<a href="https://github.com/winterTTr/ace-jump-mode">ace-jump-mode</a>.</p>
+
+<p>Basically, it allows you to navigate to every visible portion of your
+Emacs (buffers &amp; windows) with only a handful of keystrokes (usually
+one two activate it and one or two to get where you want to go). You
+can see it in action in this
+<a href="http://emacsrocks.com/e10.html">excellent video</a>. <code>ace-jump</code> served
+me well for years, but I&#8217;ve had a few gripes with it that were never
+addressed (multi-char targets, CamelCase support, etc). I would have
+implemented those myself, if the project was maintained at all, but
+alas - that&#8217;s not the case. Seems I wasn&#8217;t the only one who was
+frustrated with <code>ace-jump</code>, as the prolific
+<a href="http://oremacs.com/">Oleh Krehel</a> reimplemented it pretty much from
+scratch for the purposes of his excellent
+<a href="https://github.com/abo-abo/ace-window">ace-window</a> library. Once I
+got wind of this, I managed to persuade Oleh to start distributing his
+rewrite as a standalone project, which he dubbed
+<a href="https://github.com/abo-abo/avy">avy</a>.</p>
+
+<p><code>Avy</code> features everything <code>ace-jump</code> does and more. Apart from the
+many extra features, its codebase is way cleaner and readable and Oleh
+is a fantastic and very responsive maintainer. So, as far as I&#8217;m
+concerned <code>ace-jump</code> is now a dead project and pretty much everyone
+who&#8217;s using it should try out <code>avy</code> instead. Their usage and interface
+are pretty similar, so the learning curve is non-existing. By the way,
+here&#8217;s <code>avy</code> in action:</p>
+
+<p><img src="https://raw.githubusercontent.com/wiki/nloyola/avy/images/avy-goto-char.png"></p>
+
+<p>And what about my usage of <code>avy</code>? Nothing fancy here - I just bind the
+commands I consider most important to handy keystrokes.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">&quot;C-c j&quot;</span><span class="p">)</span> <span class="ss">&#39;avy-goto-word-or-subword-1</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">&quot;s-.&quot;</span><span class="p">)</span> <span class="ss">&#39;avy-goto-word-or-subword-1</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">&quot;s-w&quot;</span><span class="p">)</span> <span class="ss">&#39;ace-window</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>avy-goto-word-or-subword-1</code> is aware of CamelCase words and I do a
+lot of programming in languages that use those extensively.</p>
+
+<p><code>avy</code> has one more thing going for it - it&#8217;s part of the default Emacs
+package repo <a href="https://elpa.gnu.org/packages/">GNU ELPA</a>, which means
+that you can install it right away without having to setup any
+third-party repositories (which you&#8217;ll probably need sooner or later).</p>
+
+<p><code>avy</code> and <code>ace-window</code> are naturally part of
+<a href="https://github.com/bbatsov/prelude">Prelude</a>.</p>
+
+<p>P.S. Oleh, one of those days you should rename <code>ace-window</code> to <code>avy-window</code>. :-)</p>

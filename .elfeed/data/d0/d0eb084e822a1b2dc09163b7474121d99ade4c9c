@@ -1,0 +1,46 @@
+<p>A long time ago I wrote about
+<a href="http://emacsredux.com/blog/2013/11/12/a-crazy-productivity-boost-remap-return-to-control/">remapping Return to Control in OS X</a>.
+This was the best productivity boost for my Emacs experience ever!</p>
+
+<p>Recently I&#8217;ve bought a Windows ultrabook (wanted something as light as
+MacBook Air, but more powerful and versatile) and I&#8217;m doing most of my
+work there in a Xubuntu VM. The first thing I did while setting up Xubuntu
+was to figure out how to do the aforementioned remapping.</p>
+
+<p>In my original post some people suggested the tool
+<a href="https://github.com/alols/xcape">xcape</a>, so I took a look at it.  The
+tool can certainly use some documentation improvements (and pre-built
+packages), but it gets the job done. After you&#8217;ve installed it you
+just need to add the following to your login shell&#8217;s init file
+(e.g. <code>.bash_profile</code>) and you&#8217;re in business:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>xmodmap -e "remove Control = Control_R"
+</span><span class='line'>xmodmap -e "keycode 0x69 = Return"
+</span><span class='line'>xmodmap -e "keycode 0x24 = Control_R"
+</span><span class='line'>xmodmap -e "add Control = Control_R"
+</span><span class='line'>
+</span><span class='line'>xcape -t 10000 -e "Control_R=Return"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Obviously the first time around you should source <code>.bash_profile</code>
+after updating it:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ . .bash_profile</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is definitely a lot more work than just clicking in the GUI of
+the wonderful <a href="https://pqrs.org/osx/karabiner/">Karabiner</a>, but it yields
+the desired results and that&#8217;s what&#8217;s important at the end of the day.</p>
+
+<p>Now if only there was a way to achieve the same result in Windows&#8230;</p>
+
+<p>P.S. <code>vim</code> users will love <code>xcape</code>. Its default behaviour is to
+generate the <code>Escape</code> key when <code>Left Control</code> is pressed and released on
+its own.</p>

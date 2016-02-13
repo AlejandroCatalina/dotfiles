@@ -1,0 +1,48 @@
+<p>
+<a href="https://github.com/Malabarba/aggressive-indent-mode/"><code>aggressive-indent</code></a> is quite something. I’ve only just released it and it seems
+to have been very well received. As such, it’s only fair that I invest a bit more
+time into it.
+</p>
+
+<p>
+<a href="/permanent-auto-indentation.html">The original version</a> was really just a hack that was born as <a href="http://emacs.stackexchange.com/a/385/50">an answer on
+Emacs.SE</a>. It worked phenomenally well on <code>emacs-lisp-mode</code> (to my delight), but
+it lagged a bit on <code>c</code>-like modes.
+</p>
+
+<p>
+The new version, which is already on Melpa, is much smarter and more optimised.
+It should work quite well on any mode where automatic indentation makes sense
+(python users, <a href="https://github.com/Malabarba/aggressive-indent-mode/issues/9">voice your suggestions</a>).
+</p>
+
+<p>
+As a bonus, here’s a stupendous screencast, <a href="https://github.com/Malabarba/aggressive-indent-mode/pull/8">courtesy of Tu Do</a>!
+</p>
+
+
+<div class="figure">
+<p><img src="https://github.com/Malabarba/aggressive-indent-mode/raw/master/lisp-example.gif" alt="lisp-example.gif" />
+</p>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Usage</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Instructions are still the same! So long as you have Melpa configured, you can
+install it with.
+</p>
+<figure class="highlight"><pre><code class="language-text" data-lang="text">M-x package-install RET aggressive-indent</code></pre></figure>
+<p>
+Then simply turn it on and you’ll <b>never</b> have unindented code again.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">global-aggressive-indent-mode</span><span class="p">)</span></code></pre></figure>
+<p>
+You can also turn it on locally with.
+</p>
+<figure class="highlight"><pre><code class="language-cl" data-lang="cl"><span class="p">(</span><span class="nv">add-hook</span> <span class="ss">'emacs-lisp-mode-hook</span> <span class="nf">#'</span><span class="nv">aggressive-indent-mode</span><span class="p">)</span></code></pre></figure>
+</div>
+</div>
+
+   <p><a href="http://endlessparentheses.com/aggressive-indent-just-got-better.html?source=rss#disqus_thread">Comment on this.</a></p>

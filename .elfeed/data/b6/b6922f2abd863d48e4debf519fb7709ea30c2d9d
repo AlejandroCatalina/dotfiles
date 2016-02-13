@@ -1,0 +1,172 @@
+<p>There are many features that set Clojure apart from other programming
+languages but two pretty remarkable ones that don&#39;t get much airplay
+are <a href="http://clojure.org/vars">vars</a> and
+<a href="http://clojure.org/metadata">metadata</a>. I suspect the reason is
+two-fold: there are more obvious benefits and these features don&#39;t have
+analogous counterparts in popular programming languages rendering them
+illegible to many people.</p>
+
+<p>However once you have them their absence in other programming languages
+quickly becomes frustrating. Hopefully this post will make their
+utility more readily apparent, and for those of you that already use
+Clojure, you may be interested to hear that there&#39;s now support for
+certain forms of var usage in ClojureScript 0.0-2496. More on that
+later.</p>
+
+<h2>Metadata</h2>
+
+<p>Metadata in Clojure is beautifully simple - it&#39;s data <em>about</em> data. All
+persistent collections in Clojure support metadata. They allow you to
+arbitrarily annotate values leaving the value otherwise unchanged:</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="kd">ns </span><span class="nv">my.cool.program</span><span class="p">)</span>
+
+<span class="p">(</span><span class="k">def </span><span class="nv">xs</span> <span class="p">(</span><span class="nb">with-meta </span><span class="p">[</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">]</span> <span class="p">{</span><span class="ss">::created</span> <span class="o">#</span><span class="nv">inst</span> <span class="s">&quot;2014-12-18T00:20:51.337-00:00&quot;</span><span class="p">})</span>
+
+<span class="p">(</span><span class="nb">println </span><span class="p">(</span><span class="nb">map inc </span><span class="nv">xs</span><span class="p">))</span> <span class="c1">;; =&gt; (2 3 4)</span>
+
+<span class="p">(</span><span class="nb">println </span><span class="p">(</span><span class="nb">meta </span><span class="nv">xs</span><span class="p">))</span> <span class="c1">;; =&gt; {::created #inst &quot;2014-12-18T00:20:51.337-00:00&quot;}</span>
+</code></pre></div>
+<p>Most languages force you to store this information elsewhere. Some
+languages like JavaScript support adding arbitrary properties to
+existing objects but then you find yourself fretting over the very
+real possibility of name clashes and unintended visibility (i.e. during
+enumeration).</p>
+
+<p>While adding the above annotation is deliciously devoid of ceremony,
+how does this solve the name clash issue? <code>::created</code> is a
+<em>namespaced</em> keyword. The compiler will actually interpret it as
+<code>:my.cool.program/created</code>. Namespaces are a first class construct for
+representing a logical grouping of values and functions (in other
+languages think package or module). They are a scoping mechanism.</p>
+
+<p>Let&#39;s make this more concrete.</p>
+
+<p>Suppose you write your own program with your own namespace and you
+want to use my <code>xs</code> value. One way to import it and annotate it might
+look like so:</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="kd">ns </span><span class="nv">your.cool.program</span>
+  <span class="p">(</span><span class="ss">:require</span> <span class="p">[</span><span class="nv">my.cool.program</span> <span class="ss">:refer</span> <span class="p">[</span><span class="nv">xs</span><span class="p">]]))</span>
+
+<span class="p">(</span><span class="k">def </span><span class="nv">ys</span> <span class="p">(</span><span class="nf">vary-meta</span> <span class="nv">xs</span> <span class="nb">assoc </span><span class="ss">::created</span> <span class="o">#</span><span class="nv">inst</span> <span class="s">&quot;2014-12-18T00:50:29.859-00:00&quot;</span><span class="p">))</span>
+</code></pre></div>
+<p>Oops!</p>
+
+<p>Or ... maybe not?</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="nb">meta </span><span class="nv">ys</span><span class="p">)</span> <span class="c1">;; {:my.cool.program/created #inst &quot;2014-12-18T00:20:51.337-00:00&quot;</span>
+          <span class="c1">;;  :your.cool.program/created #inst &quot;2014-12-18T00:50:29.859-00:00&quot;}</span>
+</code></pre></div>
+<h2>Vars</h2>
+
+<p>Whenever you make a top level <code>def</code> in Clojure you are introducing a
+var into a namespace. Normally you just use the <em>value</em> that a var is
+bound to:</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="kd">ns </span><span class="nv">foo.bar</span><span class="p">)</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">add</span> <span class="p">[</span><span class="nv">a</span> <span class="nv">b</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">add</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="c1">;; =&gt; 3</span>
+</code></pre></div>
+<p>However you can also get the <em>reified</em> var like so:</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="k">var </span><span class="nv">add</span><span class="p">)</span> <span class="c1">;; =&gt; #&#39;add</span>
+</code></pre></div>
+<p>Huh.</p>
+
+<p>Doesn&#39;t seem very useful.</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="nb">meta </span><span class="p">(</span><span class="k">var </span><span class="nv">add</span><span class="p">))</span>
+<span class="c1">;; =&gt; {:ns #&lt;Namespace foo.bar&gt;, :name add, :arglists ([a b])</span>
+<span class="c1">;;     :file &quot;foo/bar.clj&quot;, :column 1, :line 3}</span>
+</code></pre></div>
+<p>Boom.</p>
+
+<p>Vars are a powerful direct reflective tool - a considerable
+amount of existing Clojure tooling relies on vars to meaningfully reason
+about Clojure programs without having to play the tedious parser/AST
+game.</p>
+
+<p>So it&#39;s little surprise that Clojure testing frameworks (including the
+standard <strong>clojure.test</strong>) use vars to reflect on namespaces to extract
+tests and run them.</p>
+
+<h2>Vars for ClojureScript</h2>
+
+<p>When Rich Hickey first announced ClojureScript in 2011 one somewhat
+controversial decision was the omission of reified vars and
+namespaces. This omission was driven by the real world pressure to
+deliver compact code to browser based clients.</p>
+
+<p>ClojureScript generates code optimized for the Google Closure
+Compiler - by following certain conventions Closure can perform
+aggressive minification and dead code elimination. However
+the conventions are quite strict - Closure namespaces are represented
+as JavaScript objects where all properties are known at compile time:</p>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">goog</span><span class="p">.</span><span class="nx">provide</span><span class="p">(</span><span class="s2">&quot;my.cool.program&quot;</span><span class="p">);</span>
+
+<span class="nx">my</span><span class="p">.</span><span class="nx">cool</span><span class="p">.</span><span class="nx">program</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">a</span> <span class="o">+</span> <span class="nx">b</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>This convention more or less throws out the possibility of reified vars
+and namespaces, at least not without incurring inefficiencies across
+many axes.</p>
+
+<p>The first class nature of vars and namespaces seems impossibly at odds
+with the compilation strategy.</p>
+
+<p>Or is it?</p>
+
+<p>Upon closer inspection a surprisingly large amount of Clojure
+var usage is in fact of the <em>static</em> variety - &quot;Give me the docstring
+for this var&quot;, or &quot;Give me all the vars in the namespace foo.bar.baz&quot;.</p>
+
+<p>It turns out that can we provide a simple mechanism that delivers var
+power without full reification.</p>
+
+<p>Starting with ClojureScript 0.0-2496 the following works fine:</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="kd">ns </span><span class="nv">my.cool.program</span><span class="p">)</span>
+
+<span class="p">(</span><span class="kd">defn </span><span class="nv">foo</span> <span class="p">[</span><span class="nv">a</span> <span class="nv">b</span><span class="p">]</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nb">meta </span><span class="p">(</span><span class="k">var </span><span class="nv">foo</span><span class="p">))</span>
+<span class="c1">;; =&gt; {:ns #&lt;Namespace my.cool.program&gt;, :name foo, :arglists ([a b])</span>
+<span class="c1">;;     :file &quot;my/cool/program.cljs&quot;, :column 1, :line 3}</span>
+</code></pre></div>
+<p>Wow. What just happened?</p>
+
+<p>The ClojureScript compiler now has explicit handling of the <code>var</code>
+special form. When it encounters a var expression it emits a <code>Var</code>
+instance which has all the <em>compile time</em> metadata you&#39;ve come to know
+and love in Clojure.</p>
+
+<p>The new <strong>cljs.test</strong> namespace is built on this functionality and anyone
+else can do the same.</p>
+
+<p>Couple this arrival with an evolving stable and simplified
+<a href="https://github.com/clojure/clojurescript/blob/master/src/clj/cljs/analyzer/api.clj">API</a>,
+ClojureScript now delivers fantastic facilities for user programs to
+reflect on static information known to the compiler to enable
+powerful forms of metaprogramming. All this without
+sacrificing a compilation model that enables reasonably compact and
+efficient JavaScript.</p>
+
+<p>The following is the actual macro to filter out every test in a given
+namespace, establish a reporting environment, and run them all. At 14
+lines of code this is a pretty solid return on investment:</p>
+<div class="highlight"><pre><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="kd">defmacro </span><span class="nv">test-all-vars</span>
+  <span class="s">&quot;Calls test-vars on every var with :test metadata interned in the</span>
+<span class="s">  namespace, with fixtures.&quot;</span>
+  <span class="p">([[</span><span class="k">quote </span><span class="nv">ns</span><span class="p">]]</span>
+   <span class="o">`</span><span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">env#</span> <span class="p">(</span><span class="nf">cljs.test/get-current-env</span><span class="p">)]</span>
+      <span class="p">(</span><span class="nb">when </span><span class="p">(</span><span class="nb">nil? </span><span class="nv">env#</span><span class="p">)</span>
+        <span class="p">(</span><span class="nf">cljs.test/set-env!</span> <span class="p">(</span><span class="nf">cljs.test/empty-env</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nf">cljs.test/test-vars</span>
+        <span class="p">[</span><span class="o">~@</span><span class="p">(</span><span class="nf">map</span>
+             <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">k</span> <span class="nv">_</span><span class="p">]]</span>
+               <span class="o">`</span><span class="p">(</span><span class="k">var </span><span class="o">~</span><span class="p">(</span><span class="nb">symbol </span><span class="p">(</span><span class="nb">name </span><span class="nv">ns</span><span class="p">)</span> <span class="p">(</span><span class="nb">name </span><span class="nv">k</span><span class="p">))))</span>
+             <span class="p">(</span><span class="nf">filter</span>
+               <span class="p">(</span><span class="k">fn </span><span class="p">[[</span><span class="nv">_</span> <span class="nv">v</span><span class="p">]]</span> <span class="p">(</span><span class="ss">:test</span> <span class="nv">v</span><span class="p">))</span>
+               <span class="p">(</span><span class="nf">ana-api/ns-interns</span> <span class="nv">ns</span><span class="p">)))])</span>
+      <span class="p">(</span><span class="nb">when </span><span class="p">(</span><span class="nb">nil? </span><span class="nv">env#</span><span class="p">)</span>
+        <span class="p">(</span><span class="nf">cljs.test/clear-env!</span><span class="p">)))))</span>
+</code></pre></div>
