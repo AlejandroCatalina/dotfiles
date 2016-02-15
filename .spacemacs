@@ -54,12 +54,15 @@ values."
      ;; dvorak
      erc
      (elfeed :variables
-             elfeed-feeds '("http://www.howardism.org/index.xml" ;; My Blog
+             elfeed-feeds '("http://www.howardism.org/index.xml"     ;; My Blog
                             "http://endlessparentheses.com/atom.xml" ;; Emacs Blog
                             "http://www.masteringemacs.org/feed/" ;; Emacs Blog
                             "http://emacs-fu.blogspot.com/feeds/posts/default"
-                            "http://emacsredux.com/atom.xml" ;; Emacs Blog
+                            "http://emacsredux.com/atom.xml"     ;; Emacs Blog
                             "http://www.lunaryorn.com/feed.atom" ;; Emacs Blog
+                            "http://www.terminally-incoherent.com/blog/feed" ;; Emacs Blog
+                            "http://nullprogram.com/feed"                    ;; Emacs Blog
+                            "http://planet.emacsen.org/atom.xml" ;; Emacs Blog
                             "http://emacshorrors.com/feed.atom"
                             "http://swannodette.github.com/atom.xml" ;; David Nolen, duh.
                             "http://batsov.com/atom.xml" ;; Bozhidar Batsov
@@ -335,7 +338,7 @@ layers configuration. You are free to put any user code."
 
   (add-to-list 'load-path "~/dev/emacs/evil-mu4e/")
   (require 'evil-mu4e)
-
+  
   ;; Multiple Cursors keybindings
   ;; Most used markers
   (global-set-key (kbd "C-M-+") 'mc/mark-all-dwim)
