@@ -733,6 +733,10 @@ This command does the reverse of `fill-region'."
 
   (add-to-list 'flycheck-checkers 'proselint)
 
+  ;;  display-time format
+  (setq display-time-day-and-date t)
+  (display-time-mode 1)
+
   ;; CUSTOM LAYOUTS
   ;; Define a custom layout to gather the mail
   (spacemacs|define-custom-layout "@mu4e"
