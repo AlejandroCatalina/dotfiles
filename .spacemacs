@@ -336,7 +336,16 @@ layers configuration. You are free to put any user code."
   (add-to-list 'load-path "~/dev/emacs/evil-mu4e/")
   (require 'evil-mu4e)
 
-  ;; FIXME: remap this
+  ;; Multiple Cursors keybindings
+  ;; Most used markers
+  (global-set-key (kbd "C-M-+") 'mc/mark-all-dwim)
+  (global-set-key "\M-+" 'mc/mark-previous-like-this)
+  (global-set-key "\M-]" 'mc/mark-next-like-this)
+
+  ;; Shifted versions of the above
+  (global-set-key (kbd "M-4") #'mc/unmark-next-like-this)
+  (global-set-key (kbd "M-6") #'mc/unmark-previous-like-this)
+
   ;; See (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
   ;; (global-set-key (kbd "C-S-c C-e") 'mc/edit-ends-of-lines)
   ;; (global-set-key (kbd "C-S-c C-a") 'mc/edit-beginnings-of-lines)
@@ -827,8 +836,7 @@ This command does the reverse of `fill-region'."
     :body
     (find-file "~/dev/tfg/TFG esUS/PLANTILLA_TFG.tex"))
 
-  (pdf-tools-install)
-  )
+  (pdf-tools-install))
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
 (custom-set-variables
