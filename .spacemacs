@@ -346,9 +346,9 @@ layers configuration. You are free to put any user code."
   (global-set-key (kbd "M-4") #'mc/unmark-next-like-this)
   (global-set-key (kbd "M-6") #'mc/unmark-previous-like-this)
 
-  ;; See (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-  ;; (global-set-key (kbd "C-S-c C-e") 'mc/edit-ends-of-lines)
-  ;; (global-set-key (kbd "C-S-c C-a") 'mc/edit-beginnings-of-lines)
+  (global-set-key (kbd "C-x <return> i") #'mc/insert-numbers)
+  (global-set-key (kbd "C-x <return> h") #'mc-hide-unmatched-lines-mode)
+  (global-set-key (kbd "C-x <return> a") #'mc/mark-all-like-this)
 
   ;; ;; Mark additional regions matching current region
   ;; (global-set-key (kbd "M-æ") 'mc/mark-all-dwim)
