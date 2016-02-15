@@ -51,7 +51,7 @@ values."
      eyebrowse
      semantic
      ;; unimpaired
-     dvorak
+     ;; dvorak
      erc
      (elfeed :variables
              elfeed-feeds '("http://www.howardism.org/index.xml" ;; My Blog
