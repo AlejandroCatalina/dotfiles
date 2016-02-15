@@ -2,7 +2,7 @@
 ;; This file is loaded by Spacemacs at startup.
 ;; It must be stored in your home directory.
 
- (defun dotspacemacs/layers ()
+(defun dotspacemacs/layers ()
   "Configuration Layers declaration.
 You should not put any user code in this function besides modifying the variable
 values."
@@ -71,7 +71,8 @@ values."
                             "http://www.rkn.io/feed.xml")) ;; Programming
      (mu4e :variables
            mu4e-installation-path "/usr/local/share/emacs/site-lisp/mu4e"
-           mu4e-alert-notifications-spaceline t
+           mu4e-enable-mode-line t
+           mu4e-enable-notifications t
            mu4e-account-alist '(("personal"
                                  ;; Under each account, set the account-specific variables you want.
                                  (mu4e-sent-messages-behavior delete)
@@ -720,6 +721,17 @@ This command does the reverse of `fill-region'."
     (interactive "r")
     (let ((fill-column 90002000))
       (fill-region start end)))
+
+  (flycheck-define-checker proselint
+    "A linter for prose."
+    :command ("proselint" source-inplace)
+    :error-patterns
+    ((warning line-start (file-name) ":" line ":" column ": "
+              (id (one-or-more (not (any " "))))
+              (message) line-end))
+    :modes (text-mode markdown-mode gfm-mode))
+
+  (add-to-list 'flycheck-checkers 'proselint)
 
   ;; CUSTOM LAYOUTS
   ;; Define a custom layout to gather the mail
