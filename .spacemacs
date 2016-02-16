@@ -375,6 +375,8 @@ layers configuration. You are free to put any user code."
   (global-set-key (kbd "M-~") 'mc/sort-regions)
   ;; (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
 
+  (global-set-key (kbd "C-=") 'er/expand-region)
+
   (global-set-key (kbd "M-y")                          'counsel-yank-pop)
 
   ;; Python environment setup
