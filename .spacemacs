@@ -338,7 +338,9 @@ layers configuration. You are free to put any user code."
 
   (add-to-list 'load-path "~/dev/emacs/evil-mu4e/")
   (require 'evil-mu4e)
-  
+
+  (global-set-key "\C-xg" 'magit-status)
+
   ;; Multiple Cursors keybindings
   ;; Most used markers
   (global-set-key (kbd "C-M-+") 'mc/mark-all-dwim)
