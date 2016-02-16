@@ -379,6 +379,23 @@ layers configuration. You are free to put any user code."
 
   (global-set-key (kbd "M-y")                          'counsel-yank-pop)
 
+  ;; Fix to create pull requests from magit
+  (defun endless/visit-pull-request-url ()
+    "Visit the current branch's PR on Github."
+    (interactive)
+    (browse-url
+     (format "https://github.com/%s/pull/new/%s"
+             (replace-regexp-in-string
+              "\\`.+github\\.com:\\(.+\\)\\.git\\'" "\\1"
+              (magit-get "remote"
+                         (magit-get-remote)
+                         "url"))
+             (cdr (or (magit-get-remote-branch)
+                      (user-error "No remote branch"))))))
+
+  (eval-after-load 'magit
+    '(define-key magit-mode-map "v" #'endless/visit-pull-request-url))
+
   ;; Python environment setup
   (setq
    gud-pdb-command-name "ipdb"
