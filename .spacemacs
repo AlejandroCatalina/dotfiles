@@ -377,7 +377,7 @@ layers configuration. You are free to put any user code."
 
   (global-set-key (kbd "C-=") 'er/expand-region)
 
-  (global-set-key (kbd "M-y")                          'counsel-yank-pop)
+  (global-set-key (kbd "M-y") 'counsel-yank-pop)
 
   ;; Fix to create pull requests from magit
   (defun endless/visit-pull-request-url ()
