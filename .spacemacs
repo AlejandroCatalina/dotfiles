@@ -863,7 +863,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(org-agenda-files
    (quote
-    ("~/dev/org/notes.org" "~/dev/org/todo.org" "~/dev/catedra/notebooks/cathedra_notes.org" "~/dev/org/schedule.org")))
+    ("~/org/literatedevops/work/dataimages.org" "~/dev/org/notes.org" "~/dev/org/todo.org" "~/dev/catedra/notebooks/cathedra_notes.org" "~/dev/org/schedule.org")))
  '(send-mail-function (quote smtpmail-send-it)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
