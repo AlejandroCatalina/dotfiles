@@ -373,13 +373,10 @@ layers configuration. You are free to put any user code."
     (interactive)
     (browse-url
      (format "https://github.com/%s/pull/new/%s"
-             (replace-regexp-in-string
-              "\\`.+github\\.com:\\(.+\\)\\.git\\'" "\\1"
-              (magit-get "remote"
-                         (magit-get-remote)
-                         "url"))
-             (cdr (or (magit-get-remote-branch)
-                      (user-error "No remote branch"))))))
+             (replace-regexp-in-string "\\`.+github\\.com:\\(.+\\)\\.git\\'"
+                                       "\\1"
+                                       (magit-get "remote" (magit-get-push-remote) "url"))
+             (magit-get-current-branch))))
 
   (eval-after-load 'magit
     '(define-key magit-mode-map "v" #'endless/visit-pull-request-url))
@@ -852,7 +849,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(org-agenda-files
    (quote
-    ("~/org/literatedevops/work/dataimages.org" "~/dev/org/notes.org" "~/dev/org/todo.org" "~/dev/catedra/notebooks/cathedra_notes.org" "~/dev/org/schedule.org")))
+    ("~/dev/org/notes.org" "~/dev/org/todo.org" "~/dev/catedra/notebooks/cathedra_notes.org" "~/dev/org/schedule.org")))
  '(send-mail-function (quote smtpmail-send-it)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
