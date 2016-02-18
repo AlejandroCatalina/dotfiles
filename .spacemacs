@@ -330,7 +330,7 @@ layers configuration. You are free to put any user code."
   (autoload 'enable-paredit-mode "paredit"
     "Turn on pseudo-structural editing of Lisp code."
     t)
-
+  
   (require 're-builder)
   (setq reb-re-syntax 'string)
 
@@ -419,6 +419,7 @@ layers configuration. You are free to put any user code."
   (add-hook 'clojure-mode-hook #'subword-mode)
   (add-hook 'clojure-mode-hook #'paredit-mode)
   (add-hook 'clojure-mode-hook #'rainbow-delimiters-mode)
+  (add-hook 'emacs-lisp-mode #'paredit-mode)
 
   ;; (load "~/.emacs.d.bak/setup-clojure.el")
 
