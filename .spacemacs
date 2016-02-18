@@ -109,7 +109,8 @@ values."
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages then consider to create a layer, you can also put the
    ;; configuration in `dotspacemacs/config'.
-   dotspacemacs-additional-packages '(ag
+   dotspacemacs-additional-packages '(4clojure
+                                      ag
                                       cl-generic
                                       clojure-mode-extra-font-locking
                                       eclipse-theme
