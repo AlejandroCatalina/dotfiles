@@ -331,7 +331,7 @@ layers configuration. You are free to put any user code."
   (autoload 'enable-paredit-mode "paredit"
     "Turn on pseudo-structural editing of Lisp code."
     t)
-  
+
   (require 're-builder)
   (setq reb-re-syntax 'string)
 
@@ -339,6 +339,22 @@ layers configuration. You are free to put any user code."
 
   (add-to-list 'load-path "~/dev/emacs/evil-mu4e/")
   (require 'evil-mu4e)
+
+  (require '4clojure)
+
+  (use-package 4clojure
+    :init
+    (bind-key "<f9> a" '4clojure-check-answers clojure-mode-map)
+    (bind-key "<f9> n" '4clojure-next-question clojure-mode-map)
+    (bind-key "<f9> p" '4clojure-previous-question clojure-mode-map)
+
+    :config
+    (defadvice 4clojure-open-question (around 4clojure-open-question-around)
+      "Start a cider/nREPL connection if one hasn't already been started when
+         opening 4clojure questions."
+      ad-do-it
+      (unless cider-current-clojure-buffer
+        (cider-jack-in))))
 
   (global-set-key "\C-xg" 'magit-status)
 
