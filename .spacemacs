@@ -648,12 +648,7 @@ IRC command completion is performed only if '/' is the first input char."
       ;; restore our own ispell arguments
       (setq ispell-extra-args old-ispell-extra-args)
       (ispell-kill-ispell t)))
-
-  ;; Setting some global variables i'll need
-  (setq elisp-dev-directory "~/dev/emacs")
-  (setq python-dev-directory "~/dev/catedra/notebooks")
-  (add-to-load-path elisp-dev-directory)
-
+  
   ;; Loading my custom utilities
   (load-file (concat elisp-dev-directory "/spaceline-utils.el"))
   (load-file (concat elisp-dev-directory "/swiper-buffer-additional-info/ivy_buffer_extend.el"))
