@@ -335,11 +335,12 @@ layers configuration. You are free to put any user code."
   (require 're-builder)
   (setq reb-re-syntax 'string)
 
-
   ;; Setting some global variables i'll need
   (setq elisp-dev-directory "~/dev/emacs")
   (setq python-dev-directory "~/dev/catedra/notebooks")
   (add-to-load-path elisp-dev-directory)
+
+  (add-to-list 'yas-snippet-dirs "/home/alex/dev/emacs/dot-files/snippets/")
 
   (add-to-list 'custom-theme-load-path "~/dev/emacs/themes/")
 
