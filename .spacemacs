@@ -606,15 +606,14 @@ IRC command completion is performed only if '/' is the first input char."
     "if RUN-TOGETHER is true, spell check the CamelCase words"
     (let (args)
       (cond
-       ((string-match  "aspell$" ispell-program-name)
+       ((string-match "aspell$" ispell-program-name)
         ;; force the English dictionary, support Camel Case spelling check (tested with aspell 0.6)
         (setq args (list "--sug-mode=ultra" "--lang=en_US"))
         (if RUN-TOGETHER
             (setq args (append args '("--run-together" "--run-together-limit=5" "--run-together-min=2")))))
        ((string-match "hunspell$" ispell-program-name)
         (setq args nil)))
-      args
-      ))
+      args))
 
   (cond
    ((executable-find "aspell")
@@ -648,7 +647,7 @@ IRC command completion is performed only if '/' is the first input char."
       ;; restore our own ispell arguments
       (setq ispell-extra-args old-ispell-extra-args)
       (ispell-kill-ispell t)))
-  
+
   ;; Loading my custom utilities
   (load-file (concat elisp-dev-directory "/spaceline-utils.el"))
   (load-file (concat elisp-dev-directory "/swiper-buffer-additional-info/ivy_buffer_extend.el"))
