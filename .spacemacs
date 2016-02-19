@@ -365,6 +365,8 @@ layers configuration. You are free to put any user code."
           (cider-jack-in))))
     (require 'setup-clojure-mode))
 
+  (add-hook 'clojure-mode-hook 'lispy-mode)
+
   (define-key yas-keymap (kbd "C-e") 'yas/goto-end-of-active-field)
   (define-key yas-keymap (kbd "C-a") 'yas/goto-start-of-active-field)
 
