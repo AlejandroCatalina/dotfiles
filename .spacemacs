@@ -361,7 +361,11 @@ layers configuration. You are free to put any user code."
          opening 4clojure questions."
         ad-do-it
         (unless cider-current-clojure-buffer
-          (cider-jack-in)))))
+          (cider-jack-in))))
+    (require 'setup-clojure-mode))
+
+  (define-key yas-keymap (kbd "C-e") 'yas/goto-end-of-active-field)
+  (define-key yas-keymap (kbd "C-a") 'yas/goto-start-of-active-field)
 
   (global-set-key "\C-xg" 'magit-status)
 
