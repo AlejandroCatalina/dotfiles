@@ -103,7 +103,7 @@ values."
                                  (smtpmail-smtp-server "smtpinterno.uam.es")
                                  (smtpmail-stream-type ssl)
                                  (smtpmail-smtp-service 465))))
-     spacemacs-ivy ;; Let's give this a shot
+     spacemacs-helm ;; Let's give this a shot
      )
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
