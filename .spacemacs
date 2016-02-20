@@ -822,28 +822,10 @@ This command does the reverse of `fill-region'."
              :nick "AlejandroCatalina"
              :password "c3359bed7a81b8871deb92679c73cb715ee784dc"))
 
-  (spacemacs|define-custom-layout "@python"
-    :binding "p"
-    :body
-    (progn
-      (ein:notebooklist-open 8888)
-      (split-window-right-and-focus)
-      (python-start-or-switch-repl)
-      (other-window -1)))
-
   (spacemacs|define-custom-layout "@elfeed"
     :binding "f"
     :body
     (elfeed))
-
-  (spacemacs|define-custom-layout "@clojure"
-    :binding "c"
-    :body
-    (progn
-      (find-file "~/dev/clojure/")
-      (split-window-right-and-focus)
-      (cider-jack-in)
-      (other-window 1)))
 
   (spacemacs|define-custom-layout "@Org"
     :binding "o"
@@ -853,14 +835,6 @@ This command does the reverse of `fill-region'."
       (switch-to-buffer "todo.org")
       (split-window-right-and-focus)
       (org-agenda)))
-
-  (spacemacs|define-custom-layout "@elisp"
-    :binding "l"
-    :body
-    (progn
-      (switch-to-buffer "*scratch")
-      (split-window-right)
-      (find-file elisp-dev-directory)))
 
   (spacemacs|define-custom-layout "@TFG"
     :binding "t"
