@@ -367,7 +367,7 @@ layers configuration. You are free to put any user code."
     (add-hook 'clojure-mode-hook (lambda ()
                                    (lispy-mode 1))))
 
-  (setq cider-pprint-fn 'pug)
+  (setq cider-pprint-fn 'puget)
 
   (with-eval-after-load 'yasnippet
     (define-key yas-keymap (kbd "C-e") 'yas/goto-end-of-active-field)
