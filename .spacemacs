@@ -174,15 +174,16 @@ values."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(eclipse
-                         github
-                         spacemacs-dark
-                         spacemacs-light
-                         solarized-light
-                         solarized-dark
-                         leuven
-                         monokai
-                         zenburn)
+   dotspacemacs-themes '(;; eclipse
+                         ;; github
+                         ;; spacemacs-dark
+                         ;; spacemacs-light
+                         ;; solarized-light
+                         ;; solarized-dark
+                         ;; leuven
+                         ;; monokai
+                         ;; zenburn
+                         )
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
    ;; Default font. `powerline-scale' allows to quickly tweak the mode-line
@@ -343,6 +344,12 @@ layers configuration. You are free to put any user code."
   (add-to-list 'yas-snippet-dirs "/home/alex/dev/emacs/dot-files/snippets/")
 
   (add-to-list 'custom-theme-load-path "~/dev/emacs/themes/")
+  (load-theme 'default-black)
+
+  (setq site-lisp-dir
+        (expand-file-name "site-lisp" (concat user-emacs-directory "private")))
+  (setq settings-dir
+        (expand-file-name "settings" (concat user-emacs-directory "private")))
 
   (add-to-list 'load-path "~/dev/emacs/evil-mu4e/")
   (require 'evil-mu4e)
@@ -363,7 +370,6 @@ layers configuration. You are free to put any user code."
         ad-do-it
         (unless cider-current-clojure-buffer
           (cider-jack-in))))
-    (require 'setup-clojure-mode)
     (add-hook 'clojure-mode-hook (lambda ()
                                    (lispy-mode 1)))
     (add-hook 'cider-mode-hook (lambda () (lispy-mode 1))))
@@ -850,6 +856,9 @@ This command does the reverse of `fill-region'."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("9527feeeec43970b1d725bdc04e97eb2b03b15be982ac50089ad223d3c6f2920" default)))
  '(org-agenda-files
    (quote
     ("~/dev/org/notes.org" "~/dev/org/todo.org" "~/dev/catedra/notebooks/cathedra_notes.org" "~/dev/org/schedule.org")))
