@@ -351,6 +351,10 @@ layers configuration. You are free to put any user code."
   (setq settings-dir
         (expand-file-name "settings" (concat user-emacs-directory "private")))
 
+  ;; Set up load path
+  (add-to-list 'load-path settings-dir)
+  (add-to-list 'load-path site-lisp-dir)
+
   (add-to-list 'load-path "~/dev/emacs/evil-mu4e/")
   (require 'evil-mu4e)
 
