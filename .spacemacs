@@ -115,6 +115,7 @@ values."
                                       clojure-mode-extra-font-locking
                                       eclipse-theme
                                       ess
+                                      flycheck-clojure
                                       helm-ag
                                       multiple-cursors
                                       ob-ipython
