@@ -374,8 +374,7 @@ layers configuration. You are free to put any user code."
         ad-do-it
         (unless cider-current-clojure-buffer
           (cider-jack-in))))
-    (add-hook 'clojure-mode-hook (lambda ()
-                                   (lispy-mode 1)))
+    (add-hook 'clojure-mode-hook (lambda () (lispy-mode 1)))
     (add-hook 'cider-mode-hook (lambda () (lispy-mode 1))))
 
   (setq cider-pprint-fn 'puget)
