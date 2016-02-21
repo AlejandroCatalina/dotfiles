@@ -120,7 +120,8 @@ values."
                                       multiple-cursors
                                       ob-ipython
                                       pdf-tools
-                                      paredit)
+                                      paredit
+                                      yesql-ghosts)
    ;; A list of packages and/or extensions that will not be install and loaded.
    dotspacemacs-excluded-packages '()
    ;; If non-nil spacemacs will delete any orphan packages, i.e. packages that
@@ -376,7 +377,8 @@ layers configuration. You are free to put any user code."
         (unless cider-current-clojure-buffer
           (cider-jack-in))))
     (add-hook 'clojure-mode-hook (lambda () (lispy-mode 1)))
-    (add-hook 'cider-mode-hook (lambda () (lispy-mode 1))))
+    (add-hook 'cider-mode-hook (lambda () (lispy-mode 1)))
+    (require 'setup-clojure-mode))
 
   (setq cider-pprint-fn 'puget)
 
