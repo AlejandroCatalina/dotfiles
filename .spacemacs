@@ -815,7 +815,9 @@ This command does the reverse of `fill-region'."
 
   (add-to-list 'flycheck-checkers 'proselint)
 
-  ;;  display-time format
+  ;; display-time format
+  ;; in case there is shit on the global-mode-string
+  (setq global-mode-string (remove '(:eval mu4e-alert-mode-line) global-mode-string))
   (setq display-time-day-and-date t)
   (display-time-mode 1)
 
