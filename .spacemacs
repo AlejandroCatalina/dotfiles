@@ -176,15 +176,15 @@ values."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(;; eclipse
-                         ;; github
-                         ;; spacemacs-dark
-                         ;; spacemacs-light
-                         ;; solarized-light
-                         ;; solarized-dark
-                         ;; leuven
-                         ;; monokai
-                         ;; zenburn
+   dotspacemacs-themes '(eclipse
+                         github
+                         spacemacs-dark
+                         spacemacs-light
+                         solarized-light
+                         solarized-dark
+                         leuven
+                         monokai
+                         zenburn
                          )
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
@@ -346,7 +346,7 @@ layers configuration. You are free to put any user code."
   (add-to-list 'yas-snippet-dirs "/home/alex/dev/emacs/dot-files/snippets/")
 
   (add-to-list 'custom-theme-load-path "~/dev/emacs/themes/")
-  (load-theme 'default-black)
+  ;; (load-theme 'default-black)
 
   (setq site-lisp-dir
         (expand-file-name "site-lisp" (concat user-emacs-directory "private")))
