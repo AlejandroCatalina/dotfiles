@@ -177,7 +177,6 @@ values."
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
    dotspacemacs-themes '(eclipse
-                         github
                          spacemacs-dark
                          spacemacs-light
                          solarized-light
@@ -567,8 +566,8 @@ layers configuration. You are free to put any user code."
     "#+BABEL: :session :cache yes :results output graphics :exports both :tangle yes \n"
     "#+STARTUP: content\n")
 
-  (spacemacs/set-leader-keys-for-major-mode 'org-mode
-    "Ss" 'org-skeleton)
+  "(spacemacs/set-leader-keys-for-major-mode 'org-mode
+    \"Ss\" 'org-skeleton)"
 
   (setq-default evil-escape-key-sequence "gp")
 
@@ -779,7 +778,7 @@ IRC command completion is performed only if '/' is the first input char."
   (spacemacs/set-leader-keys "oil" 'org-insert-link)
 
   ;; Little powerline/spaceline tweak
-  (setq powerline-default-separator 'alternate)
+  (setq powerline-default-separator 'arrow)
 
   ;; Lispy-mode settings and configurations
   (add-hook 'emacs-lisp-mode-hook (lambda () (lispy-mode 1)))
@@ -866,9 +865,12 @@ This command does the reverse of `fill-region'."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ansi-color-names-vector
+   ["#242424" "#e5786d" "#95e454" "#cae682" "#8ac6f2" "#333366" "#ccaa8f" "#f6f3e8"])
  '(custom-safe-themes
    (quote
-    ("9527feeeec43970b1d725bdc04e97eb2b03b15be982ac50089ad223d3c6f2920" default)))
+    ("5245ec643a4bc49038f45074a032038202ae91ee05e9bf63bce2d8119524c6fe" "79bed7f7bdbc9db3110c6174752d12b60095e21287fc7bfb2107ec27bc7d4b56" "9527feeeec43970b1d725bdc04e97eb2b03b15be982ac50089ad223d3c6f2920" default)))
+ '(evil-disable-insert-state-bindings nil)
  '(org-agenda-files
    (quote
     ("~/dev/org/notes.org" "~/dev/org/todo.org" "~/dev/catedra/notebooks/cathedra_notes.org" "~/dev/org/schedule.org")))
