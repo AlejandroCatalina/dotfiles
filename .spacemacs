@@ -338,6 +338,17 @@ layers configuration. You are free to put any user code."
   (require 're-builder)
   (setq reb-re-syntax 'string)
 
+  (defun endless/goto-match-beginning ()
+    "Go to the start of current isearch match.
+Use in `isearch-mode-end-hook'."
+    (when (and isearch-forward
+               (number-or-marker-p isearch-other-end)
+               (not mark-active)
+               (not isearch-mode-end-hook-quit))
+      (goto-char isearch-other-end)))
+  (add-hook 'isearch-mode-end-hook
+            #'endless/goto-match-beginning)
+
   ;; Setting some global variables i'll need
   (setq elisp-dev-directory "~/dev/emacs")
   (setq python-dev-directory "~/dev/catedra/notebooks")
