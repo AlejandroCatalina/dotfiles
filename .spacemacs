@@ -121,6 +121,7 @@ values."
                                       ob-ipython
                                       pdf-tools
                                       paredit
+                                      speed-of-thought-mode
                                       yesql-ghosts)
    ;; A list of packages and/or extensions that will not be install and loaded.
    dotspacemacs-excluded-packages '()
