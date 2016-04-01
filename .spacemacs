@@ -597,7 +597,7 @@ Use in `isearch-mode-end-hook'."
   (setq-default evil-escape-key-sequence "gp")
 
   (setq erc-autojoin-channels-alist
-        '(("freenode.net" "#emacs" "#clojure" "#clojure-beginners")
+        '(("freenode.net" "#emacs" "#hy" "#clojure" "#clojure-beginners")
           ("irc.gitter.im" "#syl20bnr/spacemacs")))
 
   ;; Custom rcirc-complete-nick
@@ -638,7 +638,7 @@ IRC command completion is performed only if '/' is the first input char."
            :user "alex``"
            :nick "alex``"
            :password ""
-           :channels ("#emacs" "#clojure" "#lisp"))
+           :channels ("#emacs" "#hy" "#clojure" "#lisp"))
           ("irc.gitter.im"
            :port 6697
            :nick "AlejandroCatalina"
