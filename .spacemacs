@@ -117,6 +117,7 @@ values."
                                       ess
                                       flycheck-clojure
                                       helm-ag
+                                      hy-mode
                                       multiple-cursors
                                       ob-ipython
                                       pdf-tools
