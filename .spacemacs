@@ -516,6 +516,18 @@ Use in `isearch-mode-end-hook'."
       (setq org-src-tab-acts-natively t)
       (setq org-confirm-babel-evaluate nil)))
 
+  ;; Org-Babel execute function for hy
+  ;; Look at http://docs.hylang.org/en/latest/style-guide.html for more info about it
+  (defun org-babel-execute:hy (body params)
+    (let* ((temporary-file-directory ".")
+           (tempfile (make-temp-file "hy-")))
+      (with-temp-file tempfile
+        (insert body))
+      (unwind-protect
+          (shell-command-to-string
+           (format "hy %s" tempfile))
+        (delete-file tempfile))))
+
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((ditaa . t)
