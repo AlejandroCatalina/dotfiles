@@ -695,6 +695,7 @@ IRC command completion is performed only if '/' is the first input char."
       (ispell-kill-ispell t)))
 
   ;; Loading my custom utilities
+  (load-file "/home/alex/dev/hy/ob-hy.el")
   (load-file (concat elisp-dev-directory "/spaceline-utils.el"))
   (load-file (concat elisp-dev-directory "/swiper-buffer-additional-info/ivy_buffer_extend.el"))
   (load-file (concat elisp-dev-directory "/evil-mc-setup.el"))
