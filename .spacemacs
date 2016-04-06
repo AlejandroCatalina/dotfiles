@@ -340,6 +340,18 @@ layers configuration. You are free to put any user code."
   (require 're-builder)
   (setq reb-re-syntax 'string)
 
+  ;; move-region-to-file
+  (defun move-region-to-file (beg end file)
+    (interactive
+     (let ((f (read-file-name "Move to file: ")))
+       (list (region-beginning) (region-end) f)))
+    (message file)
+    (save-excursion
+      (let ((reg (buffer-substring-no-properties beg end)))
+        (with-current-buffer (find-file-noselect file)
+          (goto-char (point-max))
+          (insert-string (concat "\n" reg))))))
+
   (defun endless/goto-match-beginning ()
     "Go to the start of current isearch match.
 Use in `isearch-mode-end-hook'."
