@@ -345,7 +345,6 @@ layers configuration. You are free to put any user code."
     (interactive
      (let ((f (read-file-name "Move to file: ")))
        (list (region-beginning) (region-end) f)))
-    (message file)
     (save-excursion
       (let ((reg (buffer-substring-no-properties beg end)))
         (with-current-buffer (find-file-noselect file)
