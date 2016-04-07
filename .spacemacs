@@ -362,16 +362,18 @@ layers configuration. You are free to put any user code."
           (goto-char (point-max))
           (insert-string (concat "\n" reg))))))
 
+  ;; make LaTeX-command a safe variable
   (put 'LaTeX-command 'safe-local-variable
        '(lambda (x)
           (stringp x)))
 
+  ;; show overlay when evaluating emacs-lisp
   (autoload 'cider--make-result-overlay "cider-overlays")
 
   (defun endless/eval-overlay (value point)
     (cider--make-result-overlay (format "%S" value)
-                                :where point
-                                :duration 'command)
+      :where point
+      :duration 'command)
     ;; Preserve the return value.
     value)
 
