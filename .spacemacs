@@ -349,7 +349,22 @@ layers configuration. You are free to put any user code."
       (let ((reg (buffer-substring-no-properties beg end)))
         (with-current-buffer (find-file-noselect file)
           (goto-char (point-max))
+          (insert-string (concat "\n" reg)))
+        (delete-region beg end))))
+
+  (defun copy-region-to-file (beg end file)
+    (interactive
+     (let ((f (read-file-name "Move to file: ")))
+       (list (region-beginning) (region-end) f)))
+    (save-excursion
+      (let ((reg (buffer-substring-no-properties beg end)))
+        (with-current-buffer (find-file-noselect file)
+          (goto-char (point-max))
           (insert-string (concat "\n" reg))))))
+
+  (put 'LaTeX-command 'safe-local-variable
+       '(lambda (x)
+          (stringp x)))
 
   (defun endless/goto-match-beginning ()
     "Go to the start of current isearch match.
