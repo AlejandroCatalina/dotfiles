@@ -10,7 +10,7 @@ URxvt.lineSpace:3
 !Xft.hintstyle:  hintslight
 
 URxvt.depth: 32
-URxvt.font: xft:Fira Mono:pixelsize=10
+URxvt.font: xft:Fira Mono:pixelsize=12
 
 !URxvt.background: [90]#161824
 
