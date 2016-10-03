@@ -2,7 +2,7 @@
 set $mod Mod4
 
 # Font for window titles. Will also be used by the bar unless a different font is set
-font pango:Fira Mono 8
+font pango:Fira Mono 10
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -11,6 +11,8 @@ floating_modifier $mod
 new_window 1pixel
 gaps inner 4
 gaps outer 2
+
+workspace_auto_back_and_forth yes
 
 # start a terminal
 bindsym $mod+Return exec i3-sensible-terminal
@@ -24,22 +26,22 @@ bindsym $mod+p exec --no-startup-id lpassdmenu
 bindsym $mod+shift+d exec dmenu_run
 
 # change window focus with arrow keys:
-bindsym $mod+Left focus left
-bindsym $mod+Down focus down
-bindsym $mod+Up focus up
-bindsym $mod+Right focus right
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
 
 # move windows with shift + arrow keys
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
 
 # split in horizontal orientation
-bindsym $mod+h split h
+bindsym $mod+Up split h
 
 # split in vertical orientation
-bindsym $mod+v split v
+bindsym $mod+Left split v
 
 # enter fullscreen mode for the focused container
 bindsym $mod+f fullscreen
@@ -133,7 +135,7 @@ bar {
 
 	separator_symbol "/"
 
-    font pango:Fura Mono for Powerline PNFT 7
+    font pango:Fura Mono for Powerline PNFT 8
 	# font pango: Fira Sans 11
 	colors {
     	background #151515
@@ -154,12 +156,10 @@ bindsym XF86MonBrightnessDown exec --no-startup-id backlight -5
 bindsym Shift+XF86MonBrightnessUp exec --no-startup-id backlight +15
 bindsym Shift+XF86MonBrightnessDown exec --no-startup-id backlight -15
 
-bindsym XF86AudioRaiseVolume exec --no-startup-id pulseaudio-ctl up
-bindsym XF86AudioLowerVolume exec --no-startup-id pulseaudio-ctl down
-bindsym Shift+XF86AudioRaiseVolume exec --no-startup-id pulseaudio-ctl up 15
-bindsym Shift+XF86AudioLowerVolume exec --no-startup-id pulseaudio-ctl down 15
-bindsym XF86AudioMute exec --no-startup-id pulseaudio-ctl mute
-bindsym XF86AudioMicMute exec --no-startup-id pulseaudio-ctl mute-input
+
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 1 +5% #increase sound volume
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume 1 -5% #decrease sound volume
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 1 toggle # mute sound
 
 bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
 bindsym XF86AudioNext exec --no-startup-id playerctl next
