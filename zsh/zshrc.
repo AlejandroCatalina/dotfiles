@@ -15,3 +15,5 @@ antigen apply
 # aliases
 alias gs='git status'
 alias xrdb-reload='xrdb -I$DOTFILES/x11 -load $DOTFILES/x11/xresources'
+
+export PATH=$PATH:/home/alex/.conda/envs/my_root/bin:/opt/anaconda/bin:/home/alex/.config/bspwm/panel:/home/alex/.local/bin:
