@@ -1,14 +1,14 @@
 [user]
-	email = jon@accidental.cc
-	name = Jonathan Raphaelson
+	email = alecatfel@gmail.com
+	name = Alejandro Catalina
 
 [core]
-    excludesfile = $DOTFILES/git/gitignore
+  excludesfile = $DOTFILES/git/gitignore
+	editor = emacs
 
 [push]
 	default = simple
 
 [github]
-	user = lygaret
-	password = E1pNMkFqtscOrpAmMD1kBCyh
-	oauth-token = 654bed18f1597030e4d579fc6dab7a402c940c94
+	user = alejandrocatalina
+	oauth-token = d88e120e8c4b2071ea0fcace8a26d6dfc4b826f1
