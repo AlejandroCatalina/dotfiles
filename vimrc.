@@ -1,6 +1,6 @@
 set runtimepath+=~/.vim_runtime
 
-set runtimepath+=~/.vim/bundle/Vundle.vim
+set runtimepath+=~/.vim_runtime/bundle/Vundle.vim
 call vundle#begin()
 
 Plugin 'gmarik/Vundle.vim'
