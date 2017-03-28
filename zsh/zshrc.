@@ -5,7 +5,7 @@ antigen use oh-my-zsh
 antigen bundle zsh-users/zsh-syntax-highlighting
 antigen bundle zsh-users/zsh-completions
 # antigen bundle colored-man
-antigen bundle vi-mode
+antigen bundle emacs
 antigen theme $DOTFILES/zsh local/teensy
 antigen apply
 
@@ -14,6 +14,8 @@ antigen apply
 
 # aliases
 alias gs='git status'
+alias g='git'
 alias xrdb-reload='xrdb -I$DOTFILES/x11 -load $DOTFILES/x11/xresources'
+export EDITOR="emacsclient -c"
 
-export PATH=$PATH:/home/alex/.conda/envs/my_root/bin:/opt/anaconda/bin:/home/alex/.config/bspwm/panel:/home/alex/.local/bin:
+export PATH=$PATH:/home/alex/.anaconda/bin:/home/alex/.config/bspwm/panel:/home/alex/.local/bin:

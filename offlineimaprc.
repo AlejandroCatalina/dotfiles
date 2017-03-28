@@ -1,0 +1,41 @@
+[general]
+accounts = Personal,College 
+maxsyncaccounts = 3
+pythonfile = ~/.offlineimap.py
+
+[Account Personal]
+localrepository = Personal-Local
+remoterepository = Personal-Remote
+
+[Repository Personal-Local]
+type = Maildir
+localfolders = ~/.mail/personal
+
+[Repository Personal-Remote]
+type = IMAP
+remotehost = imap.gmail.com
+remoteuser = alecatfel@gmail.com
+remotepasseval = get_password_emacs("smtp.gmail.com", "alecatfel@gmail.com", "587")
+ssl = yes
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+maxconnections = 1
+realdelete = no
+folderfilter = lambda folder: not re.search('(^\[Gmail\])', folder)
+
+[Account College]
+localrepository = College-Local
+remoterepository = College-Remote
+
+[Repository College-Local]
+type = Maildir
+localfolders = ~/.mail/college
+
+[Repository College-Remote]
+type = IMAP
+remotehost = correo.uam.es
+remoteuser = alejandro.catalina@estudiante.uam.es
+remotepasseval = get_password_emacs("smtpinterno.uam.es", "alejandro.catalina@estudiante.uam.es", "465")
+ssl = yes
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+maxconnections = 1
+realdelete = no
